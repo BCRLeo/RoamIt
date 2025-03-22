@@ -23,7 +23,7 @@ def create_app():
         app.config.from_object('config.ProductionConfig')
 
     # Initialize extensions
-    db.init_app(app)
+    """ db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
     login_manager.login_view = 'auth.login'
@@ -36,10 +36,10 @@ def create_app():
     def load_user(user_id):
         return User.query.get(int(user_id))
     
-    app.rembg_session = new_session('u2net')
+    app.rembg_session = new_session('u2net') """
 
     # Register blueprints
-
+    
 
     return app
 
