@@ -1,12 +1,10 @@
 from flask import Flask, Blueprint, current_app, render_template, redirect, request, url_for, jsonify, send_file
 from flask_login import LoginManager, login_required, current_user
 import io
+import json
 import os
-import app
-from .models import User, Like, Post
-from . import ImageBackgroundRemoverV1
-from . import db
-from . import models
+""" from . import db
+from . import models """
 from werkzeug.utils import secure_filename
 from json import dumps
 
@@ -17,16 +15,14 @@ login_manager.login_view = 'auth.login'
 
 # Get the correct JS and CSS file paths
 def get_js_and_css():
-    js_dir = os.path.join(main.root_path, 'static', 'js')
-    css_dir = os.path.join(main.root_path, 'static', 'css')
-
-    js_file = next((f for f in os.listdir(js_dir) if f.endswith('.js')), None)
-    css_file = next((f for f in os.listdir(css_dir) if f.endswith('.css')), None)
-
-    return {
-        'js': js_file if js_file else 'main.js',  # Default fallback
-        'css': css_file if css_file else 'main.css',  # Default fallback
-    }
+    manifest_path = os.path.join(main.root_path, "dist", "manifest.json")
+    with open(manifest_path) as file:
+        data = json.load(file)
+    
+    js_path = data['index.html']['file']
+    css_path = data['index.html']['css'][0]
+    
+    return {'js': js_path, 'css': css_path}
 
 # Register the function globally in all templates
 @main.context_processor
@@ -64,8 +60,8 @@ feed
 "/api/posts/<int:post_id>/likes", methods=["DELETE"]
 """
 
-
-""" @main.route("/api/wardrobe/items", methods=["POST"])
+""" 
+@main.route("/api/wardrobe/items", methods=["POST"])
 def upload_wardrobe_item():
     if not current_user.is_authenticated:
         return jsonify({"success": False, "message": "User not logged in"}), 401
@@ -121,7 +117,7 @@ def upload_wardrobe_item():
     new_clothing.image_data = file_data
     new_clothing.image_mimetype = mimetype
 
-     # Add and commit the new jacket to the database
+    # Add and commit the new jacket to the database
     db.session.add(new_clothing)
     db.session.commit()
         
@@ -207,7 +203,7 @@ def delete_wardrobe_item(item_type):
             db.session.commit()
             return jsonify({"success": True, "message": f"{item_type.capitalize()} deleted successfully"}), 200
     
-    return jsonify({"success": False, "message": "You do not have permission to delete this item"}), 403 """
+    return jsonify({"success": False, "message": "You do not have permission to delete this item"}), 403
 
 
 @main.route("/api/posts", methods=["POST"])
@@ -243,7 +239,7 @@ def upload_feed_post():
     new_post.image_data = file_data
     new_post.image_mimetype = mimetype
 
-     # Add and commit the new jacket to the database
+    # Add and commit the new jacket to the database
     db.session.add(new_post)
     db.session.commit()
         
@@ -268,7 +264,8 @@ def search_users():
     userNames = [user.UserName for user in results]
 
     return jsonify({"success" : True, "message" : "Search was successful", "userNames" : userNames})
-    
+"""
+
 ##this is just a quick function to return the favorited items, chnage it as you need
 # @app.route('/wardrobe/favorites')
 # def favorite_items():

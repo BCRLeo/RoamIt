@@ -6,13 +6,13 @@ from flask_migrate import Migrate
 from rembg import new_session
 
 # Initialize extensions
-db = SQLAlchemy()
+""" db = SQLAlchemy()
 login_manager = LoginManager()
-migrate = Migrate()
+migrate = Migrate() """
 
 def create_app():
-    app = Flask(__name__, template_folder="dist")
-
+    app = Flask(__name__, template_folder = "dist", static_folder = "dist/static", static_url_path = "/static")
+    
     # Load configuration
     env = os.environ.get('FLASK_ENV', 'production')
     if env == 'development':
@@ -39,7 +39,8 @@ def create_app():
     app.rembg_session = new_session('u2net') """
 
     # Register blueprints
-    
+    from .main import main as main_blueprint
+    app.register_blueprint(main_blueprint)
 
     return app
 

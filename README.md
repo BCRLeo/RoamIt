@@ -15,7 +15,7 @@ npm install
 to install the dependencies.
 
 Finally, run
-```npm install @mui/material @emotion/react @emotion/styled```
+```npm install @mui/material @mui/icons-material @emotion/react @emotion/styled```
 to install the Material UI design library.
 
 ### Project Setup
