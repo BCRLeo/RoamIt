@@ -3,7 +3,8 @@ import os
 
 ##UN COMMENT THE FOLLOWING LINE IF RUNNING LOCALLY
 
-#os.environ['FLASK_ENV'] = 'development'
+os.environ['FLASK_ENV'] = 'development'
+#######
 
 app = create_app()
 
