@@ -9,7 +9,6 @@ from . import db
 from . import models
 from werkzeug.utils import secure_filename
 from json import dumps
-from .algorithm import get_posts
 
 main = Blueprint('main', __name__)
 #redirect users trying to get to unaccessible pages

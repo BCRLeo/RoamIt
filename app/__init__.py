@@ -11,7 +11,7 @@ login_manager = LoginManager()
 migrate = Migrate()
 
 def create_app():
-    app = Flask(__name__)
+    app = Flask(__name__, template_folder="dist")
 
     # Load configuration
     env = os.environ.get('FLASK_ENV', 'production')

@@ -1,0 +1,11 @@
+Flask                     # The main framework for the web application
+Flask-SQLAlchemy          # ORM for database interactions
+Flask-Login               # For user authentication and session management
+Flask-Migrate             # Handles database migrations
+Werkzeug                  # Utility library for secure filenames and request handling
+Pillow                    # For image processing
+rembg                     # For removing image backgrounds
+sqlalchemy-imageattach    # For attaching images to SQLAlchemy models
+SQLAlchemy                # Core library for database operations
+alembic                   # Database migration tool used with SQLAlchemy
+onnxruntime
