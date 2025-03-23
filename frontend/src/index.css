@@ -1,4 +1,4 @@
-:root {
+/* :root {
     color-scheme: light dark;
     --hex__brand-white: #fffbfb;
     --hex__brand-black: #2f3232;
@@ -10,11 +10,11 @@
     :root {
         --hex__background: var(--hex__brand-black);
     }
-}
+} */
 
-html {
+/* html {
     background-color: var(--hex__background);
-}
+} */
 
 body {
 	min-height: 100dvh;
