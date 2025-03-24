@@ -6,9 +6,9 @@ from flask_migrate import Migrate
 from rembg import new_session
 
 # Initialize extensions
-""" db = SQLAlchemy()
+db = SQLAlchemy()
 login_manager = LoginManager()
-migrate = Migrate() """
+migrate = Migrate()
 
 def create_app():
     app = Flask(__name__, template_folder = "dist", static_folder = "dist/static", static_url_path = "/static")
@@ -23,7 +23,7 @@ def create_app():
         app.config.from_object('config.ProductionConfig')
 
     # Initialize extensions
-    """ db.init_app(app)
+    db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
     login_manager.login_view = 'auth.login'
@@ -35,11 +35,13 @@ def create_app():
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
-     """
     
     # Register blueprints
-    from .main import main as main_blueprint
+    from app.main import main as main_blueprint
     app.register_blueprint(main_blueprint)
+    
+    from app.auth import auth as auth_blueprint
+    app.register_blueprint(auth_blueprint)
 
     return app
 

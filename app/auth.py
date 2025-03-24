@@ -1,7 +1,7 @@
 # app/auth.py
 
 from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify
-from .models import User, Wardrobe
+from .models import User
 from . import db
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, login_required, logout_user, current_user
@@ -13,24 +13,6 @@ auth = Blueprint('auth', __name__)
 # Regular expression for basic email and password validation
 EMAIL_REGEX = r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
 PASSWORD_REGEX = r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)[A-Za-z\d@$!%*?&-]{8,}$"
-
-# Function to get the correct JS and CSS file paths
-def get_js_and_css():
-    js_dir = os.path.join(auth.root_path, 'static', 'js')
-    css_dir = os.path.join(auth.root_path, 'static', 'css')
-
-    js_file = next((f for f in os.listdir(js_dir) if f.endswith('.js')), None)
-    css_file = next((f for f in os.listdir(css_dir) if f.endswith('.css')), None)
-
-    return {
-        'js': js_file if js_file else 'main.js',  # Default fallback
-        'css': css_file if css_file else 'main.css',  # Default fallback
-    }
-
-# Register the function globally in all templates
-@auth.context_processor
-def inject_js_and_css():
-    return dict(get_js_and_css=get_js_and_css)
 
 @auth.route('/api/check-login', methods=['GET'])
 def check_login():
@@ -120,9 +102,7 @@ def signup():
         CreationDate = date.today()
     )
     
-    new_wardrobe = Wardrobe(user=new_user)
     db.session.add(new_user)
-    db.session.add(new_wardrobe)
     db.session.commit()
     login_user(new_user)
 
