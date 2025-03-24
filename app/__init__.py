@@ -11,8 +11,8 @@ login_manager = LoginManager()
 migrate = Migrate()
 
 def create_app():
-    app = Flask(__name__, template_folder="dist")
-
+    app = Flask(__name__, template_folder = "dist", static_folder = "dist/static", static_url_path = "/static")
+    
     # Load configuration
     env = os.environ.get('FLASK_ENV', 'production')
     if env == 'development':
@@ -38,7 +38,11 @@ def create_app():
     
 
     # Register blueprints
+    from app.main import main as main_blueprint
+    app.register_blueprint(main_blueprint)
     
+    from app.auth import auth as auth_blueprint
+    app.register_blueprint(auth_blueprint)
 
     return app
 
