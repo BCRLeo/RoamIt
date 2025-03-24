@@ -1,4 +1,4 @@
-from app import create_app
+from app import create_app, socketio
 import os
 
 ##UN COMMENT THE FOLLOWING LINE IF RUNNING LOCALLY
@@ -10,4 +10,4 @@ app = create_app()
 
 
 if __name__ == '__main__':
-    app.run(debug=False, port=5005)
+    socketio.run(app, debug=True, port=5005)
