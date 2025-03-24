@@ -1,24 +1,67 @@
-import { Menu } from "@mui/icons-material";
-import { AppBar, Box, Button, IconButton, Toolbar, useTheme } from "@mui/material";
+import { AccountCircle, Menu } from "@mui/icons-material";
+import { AppBar, Box, Button, IconButton, Toolbar, Typography, useTheme } from "@mui/material";
 import type {} from '@mui/material/themeCssVarsAugmentation';
-import { NavLink } from "react-router-dom";
+import { NavLink, NavLinkProps } from "react-router-dom";
 import DarkModeSwitch from "../DarkModeSwitch/DarkModeSwitch";
 
 export default function NavBar() {
     const theme = useTheme();
 
+    const CustomNavLink = ({ text, ...props}: NavLinkProps & { text: string }) => (
+        <NavLink
+            {...props}
+            style = {({ isActive }: { isActive: boolean }) => ({
+                fontWeight: isActive ? "bold" : "normal",
+            })}
+        >
+            {({ isActive }) => (
+                <Typography variant = "button" sx = {{
+                    position: "relative",
+                    "&::after": {
+                        position: "absolute",
+                        top: 0,
+                        left: "50%",
+                        content: "''",
+                        width: "80%",
+                        height: "100%",
+                        borderBottomColor: "inherit",
+                        borderBottomWidth: "0.1rem",
+                        borderBottomStyle: "inset",
+                        transform: "translate(-50%, -10%)",
+                        transition: "300ms",
+                        opacity: `${isActive ? "100%" : "0"}`
+                    }
+                    }}
+                >
+                    {text}
+                </Typography>
+            )}
+        </NavLink>
+    );
+
     return (
-        <AppBar position = "sticky">
-            <Box sx = {{ ml: 0, color: theme.vars.palette.primary.contrastText }}>
-                <Toolbar>
-                    <IconButton sx = {{ mr: "0.75rem" }} color = "inherit">
-                        <Menu />
-                    </IconButton>
-                    <Button component = {NavLink} to = "/" color = "inherit">Home</Button>
-                    <Button component = {NavLink} to = "/example" color = "inherit">Example</Button>
+        <AppBar position = "sticky" sx = {{ color: theme.vars.palette.primary.contrastText }}>
+            <Toolbar>
+                <IconButton sx = {{ mr: "0.75rem" }} color = "inherit">
+                    <Menu />
+                </IconButton>
+                <Box>
+                    <Button component = {CustomNavLink} to = "/" color = "inherit" text = "Home" />
+                    <Button component = {CustomNavLink} to = "/discover" color = "inherit" text = "Discover" />
+                    <Button component = {CustomNavLink} to = "/example" color = "inherit" text = "Example" />
+                </Box>
+                <Box sx = {{ flexGrow: 1 }}>
+                    
+                </Box>
+                <Box sx = {{ mr: 0, ml: "auto", width: "fit-content" }}>
                     <DarkModeSwitch />
-                </Toolbar>
-            </Box>
+                    <Button component = {CustomNavLink} to = "/login" color = "inherit" text = "Log In" />
+                    <Button component = {CustomNavLink} to = "/signup" color = "inherit" text = "Sign Up" />
+                    <IconButton>
+                        <AccountCircle />
+                    </IconButton>
+                </Box>
+            </Toolbar>
         </AppBar>
     );
 }
