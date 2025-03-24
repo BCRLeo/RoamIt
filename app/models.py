@@ -1,4 +1,4 @@
-from . import db
+from .extensions import db
 from flask_login import UserMixin
 from datetime import datetime
 from sqlalchemy import text
@@ -115,3 +115,24 @@ class User(db.Model, UserMixin):
         backref='blocked_by',
         lazy='dynamic'
     )
+
+class Message(db.Model):
+    __tablename__ = 'messages'
+
+    id = db.Column(db.Integer, primary_key=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    recipient_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+    sender = db.relationship('User', foreign_keys=[sender_id])
+    recipient = db.relationship('User', foreign_keys=[recipient_id])
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "sender_id": self.sender_id,
+            "recipient_id": self.recipient_id,
+            "content": self.content,
+            "timestamp": self.timestamp.isoformat()
+        }

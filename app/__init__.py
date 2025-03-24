@@ -4,11 +4,9 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_migrate import Migrate
 from rembg import new_session
-
-# Initialize extensions
-db = SQLAlchemy()
-login_manager = LoginManager()
-migrate = Migrate()
+from flask_socketio import SocketIO
+from .events import socketio
+from .extensions import db, login_manager, migrate
 
 def create_app():
     app = Flask(__name__, template_folder = "dist", static_folder = "dist/static", static_url_path = "/static")
@@ -43,6 +41,9 @@ def create_app():
     
     from app.auth import auth as auth_blueprint
     app.register_blueprint(auth_blueprint)
+
+    # Register socketio
+    socketio.init_app(app, cors_allowed_origins="*")
 
     return app
 

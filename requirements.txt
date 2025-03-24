@@ -1,6 +1,7 @@
 Flask                     # The main framework for the web application
 Flask-SQLAlchemy          # ORM for database interactions
 Flask-Login               # For user authentication and session management
+flask_socketio            # For real-time communication between the server and the client
 Flask-Migrate             # Handles database migrations
 Werkzeug                  # Utility library for secure filenames and request handling
 Pillow                    # For image processing
