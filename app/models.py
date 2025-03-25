@@ -108,7 +108,7 @@ class Destination(db.Model):
     budget_per_night = db.Column(db.Float, nullable=True)
     currency = db.Column(db.String(10), nullable=True)
     description = db.Column(db.Text, nullable=True)
-    trip_completed = db.Column(db.Bool, nullable = False, default = False)
+    trip_completed = db.Column(db.Boolean, nullable = False, default = False)
     # Indicates if only users of the same gender should be considered
     same_gender_preference = db.Column(db.Boolean, default=False)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
@@ -196,7 +196,7 @@ class Message(db.Model):
     discussion_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     content = db.Column(db.Text, nullable=False)
     file_url = db.Column(db.String(255), nullable=True) 
-    seen = db.Column(db.Bool, nullable = False, default = False)
+    seen = db.Column(db.Boolean, nullable = False, default = False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
     sender = db.relationship('User', foreign_keys=[sender_id])
