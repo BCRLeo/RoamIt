@@ -24,6 +24,12 @@ blocks = db.Table(
     db.Column('blocked_id', db.Integer, db.ForeignKey('users.id'), primary_key=True)
 )
 
+#Association tabke for discussions
+discussion_members = db.Table('discussion_members',
+    db.Column('discussion_id', db.Integer, db.ForeignKey('discussions.id'), primary_key=True),
+    db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True)
+)
+
 class Swipe(db.Model):
     __tablename__ = 'swipes'
     id = db.Column(db.Integer, primary_key=True)
@@ -116,23 +122,81 @@ class User(db.Model, UserMixin):
         lazy='dynamic'
     )
 
+
+
+class Discussion(db.Model):
+    __tablename__ = 'discussions'
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    members = db.relationship('User', secondary=discussion_members,
+                              backref=db.backref('discussions', lazy='dynamic'))
+    
+    messages = db.relationship('Message', backref='discussion', lazy='dynamic')
+
 class Message(db.Model):
     __tablename__ = 'messages'
 
     id = db.Column(db.Integer, primary_key=True)
     sender_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    recipient_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    discussion_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     content = db.Column(db.Text, nullable=False)
+    file_url = db.Column(db.String(255), nullable=True) 
+    seen = db.Column(db.Bool, nullable = False, default = False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
     sender = db.relationship('User', foreign_keys=[sender_id])
-    recipient = db.relationship('User', foreign_keys=[recipient_id])
+    conversaion = db.relationship('User', foreign_keys=[discussion_id])
+    reactions = db.relationship('Reaction', backref='message', lazy='dynamic')
 
     def to_dict(self):
+        """
+        IMO self explanatory but jsut returns info aboit the message, but not the reactions
+        """
         return {
             "id": self.id,
             "sender_id": self.sender_id,
-            "recipient_id": self.recipient_id,
+            "discussion_id": self.conversation_id,
             "content": self.content,
+            "file_url": self.file_url,
+            "seen": self.seen,
             "timestamp": self.timestamp.isoformat()
+        }   
+    def to_reactions(self):
+        """
+        Returns the reactions
+        """
+        return {
+            "reactions": [reaction.to_dict() for reaction in self.reactions.all()]
         }
+    def react(self, user, reaction_type):
+        """
+        Add or update a reaction from a user.
+        """
+        reaction = self.reactions.filter_by(user_id=user.id).first()
+        if reaction:
+           
+            reaction.reaction_type = reaction_type
+        else:
+            
+            reaction = Reaction(message_id=self.id, user_id=user.id, reaction_type=reaction_type)
+            db.session.add(reaction)
+        db.session.commit()
+
+    def unreact(self, user):
+        """
+        Remove a user's reaction.
+        """
+        reaction = self.reactions.filter_by(user_id=user.id).first()
+        if reaction:
+            db.session.delete(reaction)
+            db.session.commit()
+
+class Reaction(db.Model):
+    __tablename__ = 'reactions'
+    id = db.Column(db.Integer, primary_key=True)
+    message_id = db.Column(db.Integer, db.ForeignKey('messages.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    reaction_type = db.Column(db.String(20), nullable=False)  
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
