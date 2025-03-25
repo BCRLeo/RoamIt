@@ -145,7 +145,7 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(150), nullable=False)
     username = db.Column(db.String(150), unique=True, nullable=False)
     first_name = db.Column(db.String(150), nullable = False)
-    LAST_name = db.Column(db.String(150), nullable = False)
+    last_name = db.Column(db.String(150), nullable = False)
     birthday = db.Column(db.Date, nullable=False)
     creation_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     phone_number = db.Column(db.String(20), nullable=True, unique=True)
