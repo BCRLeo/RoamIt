@@ -49,7 +49,7 @@ class Swipe(db.Model):
         foreign_keys=[swiped_on_destination_id],
         backref='swipes_received'
     )
-    
+
     @classmethod
     def swipe(cls, swiped_by_destination, swiped_on_destination, is_right_swipe):
         """
@@ -124,7 +124,6 @@ class Destination(db.Model):
     # Relationships
     creator = db.relationship('User', back_populates='destinations')
     tags = db.relationship('Tag', secondary=destination_tags, back_populates='destinations')
-    swipes = db.relationship('Swipe', back_populates='destination', lazy='dynamic')
 
 class Tag(db.Model):
     __tablename__ = 'tags'
@@ -171,8 +170,12 @@ class User(db.Model, UserMixin):
     destinations = db.relationship('Destination', back_populates='creator', lazy='dynamic')
     profile_pictures = db.relationship('ProfilePicture', back_populates='user', lazy='dynamic')
     tags = db.relationship('Tag', secondary=user_tags, back_populates='users')
-    swipes_made = db.relationship('Swipe', foreign_keys='Swipe.swiped_by_id', back_populates='swiped_by', lazy='dynamic')
-    swipes_received = db.relationship('Swipe', foreign_keys='Swipe.swiped_on_id', back_populates='swiped_on', lazy='dynamic')
+    # swipes_made = db.relationship('Swipe', foreign_keys='Swipe.swiped_by_destination_id', back_populates='swiped_by_destination', lazy='dynamic')
+    # swipes_received = db.relationship('Swipe', foreign_keys='Swipe.swiped_on_destination_id', back_populates='swiped_on_destination', lazy='dynamic')
+    #this is commented out assuming that we will access user swipes through their desinations, thus the backref in destinations is sufficient, however
+    # if we need to access all the swipes across all destinations direclty from jsut the user, we will need to use backpopulates one each side of the 
+    # relationship 
+
     # Users that this user has blocked; the blocked users will also have a 'blocked_by' attribute via backref
     blocked_users = db.relationship(
         'User',
@@ -201,14 +204,16 @@ class Message(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     sender_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    discussion_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    discussion_id = db.Column(db.Integer, db.ForeignKey('discussions.id'), nullable=False)
     content = db.Column(db.Text, nullable=False)
     file_url = db.Column(db.String(255), nullable=True) 
     seen = db.Column(db.Boolean, nullable = False, default = False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
-    sender = db.relationship('User', foreign_keys=[sender_id])
-    conversaion = db.relationship('User', foreign_keys=[discussion_id])
+    sender = db.relationship('User', foreign_keys=[sender_id])  
+    #conversaion = db.relationship('User', foreign_keys=[discussion_id])
+    # Not deleting this line, as it was added (when we called discussion conversasions) to link chats to certain destinations
+    # I'm not sure if we want the chats to be independant of destinations or not so leaving this here for future me 
     reactions = db.relationship('Reaction', backref='message', lazy='dynamic')
 
     def to_dict(self):
@@ -218,7 +223,7 @@ class Message(db.Model):
         return {
             "id": self.id,
             "sender_id": self.sender_id,
-            "discussion_id": self.conversation_id,
+            "discussion_id": self.discussion_id,
             "content": self.content,
             "file_url": self.file_url,
             "seen": self.seen,
@@ -261,3 +266,12 @@ class Reaction(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     reaction_type = db.Column(db.String(20), nullable=False)  
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        """
+        Implement tmr I'm dead rn
+        """
+
+
+
+    
