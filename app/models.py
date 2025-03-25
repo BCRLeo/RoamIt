@@ -39,9 +39,17 @@ class Swipe(db.Model):
     is_right_swipe = db.Column(db.Boolean, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
-    swiped_by_destination = db.relationship('Destination', foreign_keys=[swiped_by_destination_id], backref='swipes_made')
-    swiped_on_destination = db.relationship('Destination', foreign_keys=[swiped_on_destination_id], backref='swipes_received')
-
+    swiped_by_destination = db.relationship(
+        'Destination',
+        foreign_keys=[swiped_by_destination_id],
+        backref='swipes_made'
+    )
+    swiped_on_destination = db.relationship(
+        'Destination',
+        foreign_keys=[swiped_on_destination_id],
+        backref='swipes_received'
+    )
+    
     @classmethod
     def swipe(cls, swiped_by_destination, swiped_on_destination, is_right_swipe):
         """
