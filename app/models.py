@@ -30,20 +30,70 @@ discussion_members = db.Table('discussion_members',
     db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True)
 )
 
+
 class Swipe(db.Model):
     __tablename__ = 'swipes'
     id = db.Column(db.Integer, primary_key=True)
-    swiped_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    swiped_on_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    destination_id = db.Column(db.Integer, db.ForeignKey('destinations.id'), nullable=False)
-    # True for right swipe (accept), False for left swipe (reject)
+    swiped_by_destination_id = db.Column(db.Integer, db.ForeignKey('destinations.id'), nullable=False)
+    swiped_on_destination_id = db.Column(db.Integer, db.ForeignKey('destinations.id'), nullable=False)
     is_right_swipe = db.Column(db.Boolean, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
-    # Relationships
-    swiped_by = db.relationship('User', foreign_keys=[swiped_by_id], back_populates='swipes_made')
-    swiped_on = db.relationship('User', foreign_keys=[swiped_on_id], back_populates='swipes_received')
-    destination = db.relationship('Destination', back_populates='swipes')
+    swiped_by_destination = db.relationship('Destination', foreign_keys=[swiped_by_destination_id], backref='swipes_made')
+    swiped_on_destination = db.relationship('Destination', foreign_keys=[swiped_on_destination_id], backref='swipes_received')
+
+    @classmethod
+    def swipe(cls, swiped_by_destination, swiped_on_destination, is_right_swipe):
+        """
+        Creates a swipe record using destination objects.
+        If it's a right swipe, checks for a reciprocal right swipe to create a match.
+        """
+        new_swipe = cls(
+            swiped_by_destination_id=swiped_by_destination.id,
+            swiped_on_destination_id=swiped_on_destination.id,
+            is_right_swipe=is_right_swipe
+        )
+        db.session.add(new_swipe)
+        db.session.commit()
+
+        if is_right_swipe:
+            reciprocal_swipe = cls.query.filter_by(
+                swiped_by_destination_id=swiped_on_destination.id,
+                swiped_on_destination_id=swiped_by_destination.id,
+                is_right_swipe=True
+            ).first()
+            if reciprocal_swipe:
+                Match.create_match(swiped_by_destination, swiped_on_destination)
+        return new_swipe
+
+class Match(db.Model):
+    __tablename__ = 'matches'
+    id = db.Column(db.Integer, primary_key=True)
+    destination1_id = db.Column(db.Integer, db.ForeignKey('destinations.id'), nullable=False)
+    destination2_id = db.Column(db.Integer, db.ForeignKey('destinations.id'), nullable=False)
+    matched_on = db.Column(db.DateTime, default=datetime.utcnow)
+
+    destination1 = db.relationship('Destination', foreign_keys=[destination1_id])
+    destination2 = db.relationship('Destination', foreign_keys=[destination2_id])
+
+    @classmethod
+    def create_match(cls, destination_a, destination_b):
+        """
+        Creates a match between two destination objects.
+        To maintain consistency, orders the destination IDs.
+        """
+        d1, d2 = sorted([destination_a.id, destination_b.id])
+        existing_match = cls.query.filter_by(destination1_id=d1, destination2_id=d2).first()
+        if not existing_match:
+            new_match = cls(
+                destination1_id=d1,
+                destination2_id=d2
+            )
+            db.session.add(new_match)
+            db.session.commit()
+            return new_match
+        return existing_match
+
 
 class Destination(db.Model):
     __tablename__ = 'destinations'
@@ -58,6 +108,7 @@ class Destination(db.Model):
     budget_per_night = db.Column(db.Float, nullable=True)
     currency = db.Column(db.String(10), nullable=True)
     description = db.Column(db.Text, nullable=True)
+    trip_completed = db.Column(db.Bool, nullable = False, default = False)
     # Indicates if only users of the same gender should be considered
     same_gender_preference = db.Column(db.Boolean, default=False)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
@@ -93,6 +144,8 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(150), nullable=False)
     username = db.Column(db.String(150), unique=True, nullable=False)
+    first_name = db.Column(db.String(150), nullable = False)
+    LAST_name = db.Column(db.String(150), nullable = False)
     birthday = db.Column(db.Date, nullable=False)
     creation_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     phone_number = db.Column(db.String(20), nullable=True, unique=True)
