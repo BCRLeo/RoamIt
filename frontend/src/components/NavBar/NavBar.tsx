@@ -40,7 +40,7 @@ export default function NavBar() {
     );
 
     return (
-        <AppBar position = "sticky" sx = {{ color: theme.vars.palette.primary.contrastText }}>
+        <AppBar position = "sticky" sx = {{ color: theme.vars.palette.primary.contrastText }} enableColorOnDark>
             <Toolbar>
                 <IconButton sx = {{ mr: "0.75rem" }} color = "inherit">
                     <Menu />

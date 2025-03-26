@@ -1,16 +1,16 @@
-import { DarkModeContext } from "../Providers/Providers";
 import { DarkMode, LightMode } from "@mui/icons-material";
 import { Switch } from "@mui/material";
-import { useContext } from "react";
+import useThemeContext from "../../features/theme/hooks/useThemeContext";
 
 export default function DarkModeSwitch() {
-    const darkModeContext = useContext(DarkModeContext);
+    const darkModeContext = useThemeContext();
+
     if (!darkModeContext) {
         return (
             <Switch
                 icon = {<LightMode sx = {{ verticalAlign: "middle", transform: "translateY(-0.12rem)" }} />}
                 checkedIcon = {<DarkMode sx = {{ verticalAlign: "middle", transform: "translateY(-0.15rem)" }} />}
-                color = "secondary"
+                color = "default"
                 disableRipple
                 disabled
             />
@@ -25,7 +25,7 @@ export default function DarkModeSwitch() {
             onChange = {event => setDarkMode(event.target.checked)}
             icon = {<LightMode sx = {{ verticalAlign: "middle", transform: "translateY(-0.12rem)" }} />}
             checkedIcon = {<DarkMode sx = {{ verticalAlign: "middle", transform: "translateY(-0.15rem)" }} />}
-            color = "secondary"
+            color = "default"
             disableRipple
         />
     );
