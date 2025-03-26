@@ -1,5 +1,7 @@
 import { createContext, Dispatch, ReactNode, SetStateAction, useState } from "react";
 import { createTheme, GlobalStyles, ThemeProvider, useMediaQuery } from "@mui/material";
+import { LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 export interface DarkModeContextType {
     darkMode: boolean,
@@ -47,7 +49,9 @@ export default function Providers({ children }: ProvidersProps) {
                         backgroundColor: theme.palette.background.default
                     }
                 }} />
-                {children}
+                <LocalizationProvider dateAdapter = {AdapterDayjs}>
+                    {children}
+                </LocalizationProvider>
             </DarkModeContext.Provider>
         </ThemeProvider>
     );

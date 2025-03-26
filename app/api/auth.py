@@ -1,5 +1,3 @@
-# app/auth.py
-
 from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify
 from ..models import User
 from ..extensions import db
@@ -19,6 +17,8 @@ def get_user():
     if current_user.is_authenticated:
         return jsonify({
             "data": {
+                "firstName": current_user.first_name,
+                "lastName": current_user.last_name,
                 "username": current_user.username,
                 "email": current_user.email
                 }
@@ -50,6 +50,8 @@ def log_in():
         login_user(user)
         return jsonify({
             "data": {
+                "firstName": current_user.first_name,
+                "lastName": current_user.last_name,
                 "username": user.username,
                 "email": user.email
                 }
@@ -69,6 +71,8 @@ def sign_up():
     data = request.get_json()
     email = data.get("email")
     username = data.get("username")
+    first_name = data.get("first_name")
+    last_name = data.get("last_name")
     password = data.get("password")
     birthday_str = data.get("birthday")
     gender = data.get("gender")
@@ -88,16 +92,18 @@ def sign_up():
         return jsonify({"error": "Invalid date format."}), 400
     
     # Check if user exists
-    if user := User.query.filter_by(email = email).first():
+    if db.session.execute(db.select(User).filter_by(email = email)).scalar_one_or_none():
         return jsonify({"error": "Email address already in use."}), 400
     
-    if user := User.query.filter_by(username = username).first():
+    if db.session.execute(db.select(User).filter_by(username = username)).scalar_one_or_none():
         return jsonify({"error": "Username already in use."}), 400
     
     # Create new user
     new_user = User(
         email = email,
         username = username,
+        first_name = first_name,
+        last_name = last_name,
         password = generate_password_hash(password, method='pbkdf2:sha256'),
         birthday = birthday,
         creation_date = date.today(),
@@ -107,9 +113,11 @@ def sign_up():
     db.session.add(new_user)
     db.session.commit()
     login_user(new_user)
-
+    
     return jsonify({
         "data": {
+            "firstName": current_user.first_name,
+            "lastName": current_user.last_name,
             "username": username,
             "email": email
         }
