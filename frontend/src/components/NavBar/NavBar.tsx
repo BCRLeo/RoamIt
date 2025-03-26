@@ -2,7 +2,7 @@ import { AccountCircle, Menu } from "@mui/icons-material";
 import { AppBar, Box, Button, IconButton, Toolbar, Typography, useTheme } from "@mui/material";
 import type {} from '@mui/material/themeCssVarsAugmentation';
 import { NavLink, NavLinkProps } from "react-router-dom";
-import DarkModeSwitch from "../DarkModeSwitch/DarkModeSwitch";
+import DarkModeSwitch from "../../features/theme/components/DarkModeSwitch";
 
 export default function NavBar() {
     const theme = useTheme();

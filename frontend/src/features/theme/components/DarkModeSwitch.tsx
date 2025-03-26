@@ -1,6 +1,6 @@
 import { DarkMode, LightMode } from "@mui/icons-material";
 import { Switch } from "@mui/material";
-import useThemeContext from "../../features/theme/hooks/useThemeContext";
+import useThemeContext from "../hooks/useThemeContext";
 
 export default function DarkModeSwitch() {
     const darkModeContext = useThemeContext();
