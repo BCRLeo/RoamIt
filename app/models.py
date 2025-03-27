@@ -125,6 +125,11 @@ class Listing(db.Model):
     creator = db.relationship('User', back_populates='listings')
     tags = db.relationship('Tag', secondary=listing_tags, back_populates='listings')
 
+
+    def get_listing_ids(self):
+        """Return a list of all listing IDs associated with this user."""
+        return [listing.id for listing in self.listings.all()]
+
 class Tag(db.Model):
     __tablename__ = 'tags'
     id = db.Column(db.Integer, primary_key=True)
