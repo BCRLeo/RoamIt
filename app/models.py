@@ -3,10 +3,10 @@ from flask_login import UserMixin
 from datetime import datetime
 from sqlalchemy import text
 
-# Association table for destination tags
-destination_tags = db.Table(
-    'destination_tags',
-    db.Column('destination_id', db.Integer, db.ForeignKey('destinations.id'), primary_key=True),
+# Association table for listing tags
+listing_tags = db.Table(
+    'listing_tags',
+    db.Column('listing_id', db.Integer, db.ForeignKey('listings.id'), primary_key=True),
     db.Column('tag_id', db.Integer, db.ForeignKey('tags.id'), primary_key=True)
 )
 
@@ -34,31 +34,31 @@ discussion_members = db.Table('discussion_members',
 class Swipe(db.Model):
     __tablename__ = 'swipes'
     id = db.Column(db.Integer, primary_key=True)
-    swiped_by_destination_id = db.Column(db.Integer, db.ForeignKey('destinations.id'), nullable=False)
-    swiped_on_destination_id = db.Column(db.Integer, db.ForeignKey('destinations.id'), nullable=False)
+    swiped_by_listing_id = db.Column(db.Integer, db.ForeignKey('listings.id'), nullable=False)
+    swiped_on_listing_id = db.Column(db.Integer, db.ForeignKey('listings.id'), nullable=False)
     is_right_swipe = db.Column(db.Boolean, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
-    swiped_by_destination = db.relationship(
-        'Destination',
-        foreign_keys=[swiped_by_destination_id],
+    swiped_by_listing = db.relationship(
+        'Listing',
+        foreign_keys=[swiped_by_listing_id],
         backref='swipes_made'
     )
-    swiped_on_destination = db.relationship(
-        'Destination',
-        foreign_keys=[swiped_on_destination_id],
+    swiped_on_listing = db.relationship(
+        'Listing',
+        foreign_keys=[swiped_on_listing_id],
         backref='swipes_received'
     )
 
     @classmethod
-    def swipe(cls, swiped_by_destination, swiped_on_destination, is_right_swipe):
+    def swipe(cls, swiped_by_listing, swiped_on_listing, is_right_swipe):
         """
-        Creates a swipe record using destination objects.
+        Creates a swipe record using listing objects.
         If it's a right swipe, checks for a reciprocal right swipe to create a match.
         """
         new_swipe = cls(
-            swiped_by_destination_id=swiped_by_destination.id,
-            swiped_on_destination_id=swiped_on_destination.id,
+            swiped_by_listing_id=swiped_by_listing.id,
+            swiped_on_listing_id=swiped_on_listing.id,
             is_right_swipe=is_right_swipe
         )
         db.session.add(new_swipe)
@@ -66,36 +66,36 @@ class Swipe(db.Model):
 
         if is_right_swipe:
             reciprocal_swipe = cls.query.filter_by(
-                swiped_by_destination_id=swiped_on_destination.id,
-                swiped_on_destination_id=swiped_by_destination.id,
+                swiped_by_listing_id=swiped_on_listing.id,
+                swiped_on_listing_id=swiped_by_listing.id,
                 is_right_swipe=True
             ).first()
             if reciprocal_swipe:
-                Match.create_match(swiped_by_destination, swiped_on_destination)
+                Match.create_match(swiped_by_listing, swiped_on_listing)
         return new_swipe
 
 class Match(db.Model):
     __tablename__ = 'matches'
     id = db.Column(db.Integer, primary_key=True)
-    destination1_id = db.Column(db.Integer, db.ForeignKey('destinations.id'), nullable=False)
-    destination2_id = db.Column(db.Integer, db.ForeignKey('destinations.id'), nullable=False)
+    listing1_id = db.Column(db.Integer, db.ForeignKey('listings.id'), nullable=False)
+    listing2_id = db.Column(db.Integer, db.ForeignKey('listings.id'), nullable=False)
     matched_on = db.Column(db.DateTime, default=datetime.utcnow)
 
-    destination1 = db.relationship('Destination', foreign_keys=[destination1_id])
-    destination2 = db.relationship('Destination', foreign_keys=[destination2_id])
+    listing1 = db.relationship('Listing', foreign_keys=[listing1_id])
+    listing2 = db.relationship('Listing', foreign_keys=[listing2_id])
 
     @classmethod
-    def create_match(cls, destination_a, destination_b):
+    def create_match(cls, listing_a, listing_b):
         """
-        Creates a match between two destination objects.
-        To maintain consistency, orders the destination IDs.
+        Creates a match between two listing objects.
+        To maintain consistency, orders the listing IDs.
         """
-        d1, d2 = sorted([destination_a.id, destination_b.id])
-        existing_match = cls.query.filter_by(destination1_id=d1, destination2_id=d2).first()
+        d1, d2 = sorted([listing_a.id, listing_b.id])
+        existing_match = cls.query.filter_by(listing1_id=d1, listing2_id=d2).first()
         if not existing_match:
             new_match = cls(
-                destination1_id=d1,
-                destination2_id=d2
+                listing1_id=d1,
+                listing2_id=d2
             )
             db.session.add(new_match)
             db.session.commit()
@@ -103,11 +103,11 @@ class Match(db.Model):
         return existing_match
 
 
-class Destination(db.Model):
-    __tablename__ = 'destinations'
+class Listing(db.Model):
+    __tablename__ = 'listings'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    destination_type = db.Column(db.String(20), nullable=False)  # 'short', 'long', or 'hosting'
+    listing_type = db.Column(db.String(20), nullable=False)  # 'short', 'long', or 'hosting'
     country = db.Column(db.String(100), nullable=False)
     city = db.Column(db.String(100), nullable=False)
     start_date = db.Column(db.Date, nullable=False)
@@ -122,16 +122,16 @@ class Destination(db.Model):
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
 
     # Relationships
-    creator = db.relationship('User', back_populates='destinations')
-    tags = db.relationship('Tag', secondary=destination_tags, back_populates='destinations')
+    creator = db.relationship('User', back_populates='listings')
+    tags = db.relationship('Tag', secondary=listing_tags, back_populates='listings')
 
 class Tag(db.Model):
     __tablename__ = 'tags'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), unique=True, nullable=False)
 
-    # Relationships for both destinations and users
-    destinations = db.relationship('Destination', secondary=destination_tags, back_populates='tags')
+    # Relationships for both listings and users
+    listings = db.relationship('Listing', secondary=listing_tags, back_populates='tags')
     users = db.relationship('User', secondary=user_tags, back_populates='tags')
 
 class ProfilePicture(db.Model):
@@ -167,13 +167,13 @@ class User(db.Model, UserMixin):
     )
 
     # Relationships
-    destinations = db.relationship('Destination', back_populates='creator', lazy='dynamic')
+    listings = db.relationship('Listing', back_populates='creator', lazy='dynamic')
     profile_pictures = db.relationship('ProfilePicture', back_populates='user', lazy='dynamic')
     tags = db.relationship('Tag', secondary=user_tags, back_populates='users')
-    # swipes_made = db.relationship('Swipe', foreign_keys='Swipe.swiped_by_destination_id', back_populates='swiped_by_destination', lazy='dynamic')
-    # swipes_received = db.relationship('Swipe', foreign_keys='Swipe.swiped_on_destination_id', back_populates='swiped_on_destination', lazy='dynamic')
-    #this is commented out assuming that we will access user swipes through their desinations, thus the backref in destinations is sufficient, however
-    # if we need to access all the swipes across all destinations direclty from jsut the user, we will need to use backpopulates one each side of the 
+    # swipes_made = db.relationship('Swipe', foreign_keys='Swipe.swiped_by_listing_id', back_populates='swiped_by_listing', lazy='dynamic')
+    # swipes_received = db.relationship('Swipe', foreign_keys='Swipe.swiped_on_listing_id', back_populates='swiped_on_listing', lazy='dynamic')
+    #this is commented out assuming that we will access user swipes through their desinations, thus the backref in listings is sufficient, however
+    # if we need to access all the swipes across all listings direclty from jsut the user, we will need to use backpopulates one each side of the 
     # relationship 
 
     # Users that this user has blocked; the blocked users will also have a 'blocked_by' attribute via backref
@@ -212,8 +212,8 @@ class Message(db.Model):
 
     sender = db.relationship('User', foreign_keys=[sender_id])  
     #conversaion = db.relationship('User', foreign_keys=[discussion_id])
-    # Not deleting this line, as it was added (when we called discussion conversasions) to link chats to certain destinations
-    # I'm not sure if we want the chats to be independant of destinations or not so leaving this here for future me 
+    # Not deleting this line, as it was added (when we called discussion conversasions) to link chats to certain listings
+    # I'm not sure if we want the chats to be independant of listings or not so leaving this here for future me 
     reactions = db.relationship('Reaction', backref='message', lazy='dynamic')
 
     def to_dict(self):
@@ -275,18 +275,18 @@ class Reaction(db.Model):
 class Rating(db.Model):
     __tablename__ = 'ratings'
     id = db.Column(db.Integer, primary_key = True)
-    destination_id = db.Column(db.Integer, db.ForeignKey('destinations.id'), nullable=False)
-    rater_id = db.Column(db.Integer, db.ForeignKey('destinations.id'), nullable=False)
+    listing_id = db.Column(db.Integer, db.ForeignKey('listings.id'), nullable=False)
+    rater_id = db.Column(db.Integer, db.ForeignKey('listings.id'), nullable=False)
     rating = db.Column(db.Integer, nullable=False)
 
-    destination = db.relationship('Destination', foreign_keys=[destination_id])
-    rater = db.relationship('Destination', foreign_keys=[rater_id])
+    listing = db.relationship('Listing', foreign_keys=[listing_id])
+    rater = db.relationship('Listing', foreign_keys=[rater_id])
 
 
     @classmethod
-    def rate(cls, destination, rater, rating):
+    def rate(cls, listing, rater, rating):
         new_rating = cls(
-            destination_id = destination.id,
+            listing_id = listing.id,
             rater_id = rater.id,
             rating = rating
         )
