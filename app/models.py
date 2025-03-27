@@ -272,6 +272,23 @@ class Reaction(db.Model):
         Implement tmr I'm dead rn
         """
 
+class Rating(db.Model):
+    __tablename__ = 'ratings'
+    id = db.Column(db.Integer, primary_key = True)
+    destination_id = db.Column(db.Integer, db.ForeignKey('destinations.id'), nullable=False)
+    rater_id = db.Column(db.Integer, db.ForeignKey('destinations.id'), nullable=False)
+    rating = db.Column(db.Integer, nullable=False)
+
+    destination = db.relationship('Destination', foreign_keys=[destination_id])
+    rater = db.relationship('Destination', foreign_keys=[rater_id])
 
 
-    
+    @classmethod
+    def rate(cls, destination, rater, rating):
+        new_rating = cls(
+            destination_id = destination.id,
+            rater_id = rater.id,
+            rating = rating
+        )
+        db.session.add(new_rating)
+        db.session.commit()
