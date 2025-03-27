@@ -12,7 +12,7 @@ auth = Blueprint('auth', __name__)
 EMAIL_REGEX = r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
 PASSWORD_REGEX = r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)[A-Za-z\d@$!%*?&-]{8,}$"
 
-@auth.route("/session", methods = ["GET"])
+@auth.route("/sessions", methods = ["GET"])
 def get_user():
     if current_user.is_authenticated:
         return jsonify({
@@ -26,7 +26,7 @@ def get_user():
     
     return jsonify({"error": "User not authenticated."}), 401
 
-@auth.route("/session", methods = ["POST"])
+@auth.route("/sessions", methods = ["POST"])
 def log_in():
     data = request.get_json(True)
     login = data.get('login')
@@ -59,14 +59,14 @@ def log_in():
     
     return jsonify({"error": f"Invalid {login_type} or password."}), 400
 
-@auth.route("/session", methods = ["DELETE"])
+@auth.route("/sessions", methods = ["DELETE"])
 def log_out():
     if current_user.is_authenticated:
         logout_user()
         return "", 200
     return jsonify({"error": "User not authenticated."}), 401
 
-@auth.route("/user", methods = ["POST"])
+@auth.route("/users", methods = ["POST"])
 def sign_up():
     data = request.get_json()
     email = data.get("email")
@@ -122,3 +122,41 @@ def sign_up():
             "email": email
         }
         }), 200
+
+@auth.route("/users/email/<email>", methods = ["GET"])
+def get_user_from_email(email: str):
+    user = db.session.execute(db.select(User).filter_by(email = email)).scalar_one_or_none()
+    
+    if not user:
+        return jsonify({"error": "Email not associated to a user."}), 404
+    
+    if current_user.is_authenticated and current_user.email == email:
+        return jsonify({
+        "data": {
+            "firstName": current_user.first_name,
+            "lastName": current_user.last_name,
+            "username": current_user.username,
+            "email": current_user.email
+        }
+        }), 200
+    else:
+        return jsonify({"error": "User not authenticated."}), 401
+
+@auth.route("/users/username/<username>", methods = ["GET"])
+def get_user_from_username(username: str):
+    user = db.session.execute(db.select(User).filter_by(username = username)).scalar_one_or_none()
+    
+    if not user:
+        return jsonify({"error": "Username not associated to a user."}), 404
+    
+    if current_user.is_authenticated and current_user.username == username:
+        return jsonify({
+        "data": {
+            "firstName": current_user.first_name,
+            "lastName": current_user.last_name,
+            "username": current_user.username,
+            "email": current_user.email
+        }
+        }), 200
+    else:
+        return jsonify({"error": "User not authenticated."}), 401
