@@ -2,14 +2,18 @@ import { AccountCircle, Menu } from "@mui/icons-material";
 import { AppBar, Box, Button, IconButton, Toolbar, Typography, useTheme } from "@mui/material";
 import type {} from '@mui/material/themeCssVarsAugmentation';
 import { NavLink, NavLinkProps } from "react-router-dom";
+
 import DarkModeSwitch from "../../features/theme/components/DarkModeSwitch";
+import useUserContext from "../../features/auth/hooks/useUserContext";
+import LogOutButton from "../../features/auth/components/LogOutButton";
 
 export default function NavBar() {
     const theme = useTheme();
+    const user = useUserContext().user;
 
-    const CustomNavLink = ({ text, ...props}: NavLinkProps & { text: string }) => (
+    const CustomNavLink = ({ text, ...props }: NavLinkProps & { text: string }) => (
         <NavLink
-            {...props}
+            { ...props }
             style = {({ isActive }: { isActive: boolean }) => ({
                 fontWeight: isActive ? "bold" : "normal",
             })}
@@ -29,11 +33,11 @@ export default function NavBar() {
                         borderBottomStyle: "inset",
                         transform: "translate(-50%, -10%)",
                         transition: "300ms",
-                        opacity: `${isActive ? "100%" : "0"}`
+                        opacity: `${ isActive ? "100%" : "0" }`
                     }
                     }}
                 >
-                    {text}
+                    { text }
                 </Typography>
             )}
         </NavLink>
@@ -46,20 +50,28 @@ export default function NavBar() {
                     <Menu />
                 </IconButton>
                 <Box>
-                    <Button component = {CustomNavLink} to = "/" color = "inherit" text = "Home" />
-                    <Button component = {CustomNavLink} to = "/discover" color = "inherit" text = "Discover" />
-                    <Button component = {CustomNavLink} to = "/example" color = "inherit" text = "Example" />
+                    <Button component = { CustomNavLink } to = "/" color = "inherit" text = "Home" />
+                    { user &&
+                        <Button component = { CustomNavLink } to = "/discover" color = "inherit" text = "Discover" />
+                    }
+                    <Button component = { CustomNavLink } to = "/example" color = "inherit" text = "Example" />
                 </Box>
-                <Box sx = {{ flexGrow: 1 }}>
-                    
-                </Box>
+                <Box sx = {{ flexGrow: 1 }} />
                 <Box sx = {{ mr: 0, ml: "auto", width: "fit-content" }}>
                     <DarkModeSwitch />
-                    <Button component = {CustomNavLink} to = "/login" color = "inherit" text = "Log In" />
-                    <Button component = {CustomNavLink} to = "/signup" color = "inherit" text = "Sign Up" />
-                    <IconButton>
-                        <AccountCircle />
-                    </IconButton>
+                    { user ? (
+                        <>
+                            <LogOutButton />
+                            <IconButton color = "inherit">
+                                <AccountCircle />
+                            </IconButton>
+                        </>
+                    ) : (
+                        <>
+                            <Button component = { CustomNavLink } to = "/login" color = "inherit" text = "Log In" />
+                            <Button component = { CustomNavLink } to = "/signup" color = "inherit" text = "Sign Up" />
+                        </>
+                    ) }
                 </Box>
             </Toolbar>
         </AppBar>

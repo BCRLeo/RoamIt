@@ -2,14 +2,18 @@ import { useState, FormEvent, ChangeEvent } from "react";
 
 import { Box, Button, Container, Grid2, TextField, Typography } from "@mui/material";
 import { Error } from "@mui/icons-material";
-import { NavLink } from "react-router";
+import { NavLink, useNavigate } from "react-router";
 
 import { logIn } from "../authApi";
+import useUserContext from "../hooks/useUserContext";
 
 export default function LogInForm() {
     const [login, setLogin] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    
+    const setUser = useUserContext().setUser;
+    const navigate = useNavigate();
 
     function updateLogin(event: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) {
         setLogin(event.target.value);
@@ -30,7 +34,8 @@ export default function LogInForm() {
             return;
         }
 
-        setError("User successfully logged in.");
+        setUser(response);
+        navigate("/");
     }
 
     return (

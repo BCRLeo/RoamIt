@@ -1,9 +1,9 @@
 import { createTheme, GlobalStyles, ThemeProvider, useMediaQuery } from "@mui/material";
 import { createContext, Dispatch, ReactNode, SetStateAction, useEffect, useState } from "react";
 
-export const ThemeContext = createContext<{darkMode: boolean, setDarkMode: Dispatch<SetStateAction<boolean>>} | null>(null);
+export const ThemeContext = createContext<{ darkMode: boolean, setDarkMode: Dispatch<SetStateAction<boolean>> } | null>(null);
 
-export default function ThemeContextProvider({ children }: { children: ReactNode}) {
+export default function ThemeContextProvider({ children }: { children: ReactNode }) {
     const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
     const [darkMode, setDarkMode] = useState(prefersDarkMode);
 
@@ -31,15 +31,17 @@ export default function ThemeContextProvider({ children }: { children: ReactNode
         cssVariables: true
     });
 
+    const inputGlobalStyles = <GlobalStyles styles = {{
+        html: {
+            backgroundColor: theme.palette.background.default
+        }
+    }} />;
+
     return (
-        <ThemeProvider theme = {theme}>
+        <ThemeProvider theme = { theme }>
             <ThemeContext.Provider value = {{ darkMode: darkMode, setDarkMode: setDarkMode }}>
-                <GlobalStyles styles = {{
-                        html: {
-                            backgroundColor: theme.palette.background.default
-                        }
-                    }} />
-                {children}
+                { inputGlobalStyles }
+                { children }
             </ThemeContext.Provider>
         </ThemeProvider>
     );

@@ -1,4 +1,4 @@
-interface UserData {
+export interface UserData {
     firstName: string,
     lastName: string,
     username: string,
@@ -59,7 +59,7 @@ export async function logOut() {
     }
 }
 
-export async function signUp(firstName: string, lastName: string, username: string, email: string, password: string, birthday: string, gender: string): Promise<boolean> {
+export async function signUp(firstName: string, lastName: string, username: string, email: string, password: string, birthday: string, gender: string): Promise<UserData | null> {
     try {
         const response = await fetch("/api/users", {
             method: "POST",
@@ -80,14 +80,14 @@ export async function signUp(firstName: string, lastName: string, username: stri
         
         if (!response.ok) {
             console.error(data.error);
-            return false;
+            return null;
         }
         
-        return true;
+        return data.data;
     } catch (error) {
         console.error("Error signing up user:", error);
     }
-    return false;
+    return null;
 }
 
 export async function isEmailAvailable(email: string): Promise<boolean> {

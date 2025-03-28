@@ -3,10 +3,11 @@ import { ChangeEvent, FormEvent, useState } from "react";
 import { Button, Container, FormControl, FormHelperText, Grid2, InputLabel, MenuItem, Select, SelectChangeEvent, TextField, Typography } from "@mui/material";
 import { DateField } from "@mui/x-date-pickers";
 import { Dayjs } from "dayjs";
-import { NavLink } from "react-router";
+import { NavLink, useNavigate } from "react-router";
 
 import { isEmailAvailable, isUsernameAvailable, signUp } from "../authApi";
 import { EMAIL_REGEX, MAX_BIRTHDAY, MIN_BIRTHDAY, PASSWORD_REGEX } from "../authConstants";
+import useUserContext from "../hooks/useUserContext";
 
 enum Gender {
     Man = "Man",
@@ -39,6 +40,9 @@ export default function SignUpForm() {
     const passwordRegExDescription = "Password must contain at least 8 characters, including an uppercase, a lowercase, and a number.";
 
     const [formError, setFormError] = useState("");
+
+    const setUser = useUserContext().setUser;
+    const navigate = useNavigate();
 
     async function updateFirstName(event: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) {
         // Check name RegEx once we define it
@@ -202,12 +206,14 @@ export default function SignUpForm() {
 
         const response = await signUp(firstName, lastName, username, email, password, birthday, gender);
 
-        if (response) {
-            setFormError("User successfully registered.");
+        if (!response) {
+            setFormError("Error signing up user.");
             return;
         }
 
-        setFormError("Error signing up user.");
+        setFormError("User successfully registered.");
+        setUser(response);
+        navigate("/");
     }
 
     return (
