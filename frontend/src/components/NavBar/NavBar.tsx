@@ -6,6 +6,7 @@ import { NavLink, NavLinkProps } from "react-router-dom";
 import DarkModeSwitch from "../../features/theme/components/DarkModeSwitch";
 import useUserContext from "../../features/auth/hooks/useUserContext";
 import LogOutButton from "../../features/auth/components/LogOutButton";
+import AuthModals from "../../features/auth/components/AuthModals";
 
 export default function NavBar() {
     const theme = useTheme();
@@ -68,8 +69,7 @@ export default function NavBar() {
                         </>
                     ) : (
                         <>
-                            <Button component = { CustomNavLink } to = "/login" color = "inherit" text = "Log In" />
-                            <Button component = { CustomNavLink } to = "/signup" color = "inherit" text = "Sign Up" />
+                            <AuthModals color = "inherit" />
                         </>
                     ) }
                 </Box>

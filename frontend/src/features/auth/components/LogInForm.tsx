@@ -1,13 +1,15 @@
 import { useState, FormEvent, ChangeEvent } from "react";
 
-import { Box, Button, Container, Grid2, TextField, Typography } from "@mui/material";
+import { Box, Button, Container, Grid2, TextField, Typography, useTheme } from "@mui/material";
 import { Error } from "@mui/icons-material";
-import { NavLink, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 
 import { logIn } from "../authApi";
 import useUserContext from "../hooks/useUserContext";
 
-export default function LogInForm() {
+export default function LogInForm({ openSignUp }: { openSignUp?: () => void }) {
+    const theme = useTheme();
+
     const [login, setLogin] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
@@ -39,7 +41,19 @@ export default function LogInForm() {
     }
 
     return (
-        <Container maxWidth = "xs" sx = {{ p: "1rem" }}>
+        <Container
+            maxWidth = "xs"
+            sx = {{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                p: "2rem",
+                backgroundColor: theme.vars.palette.background.default,
+                borderRadius: `calc(${theme.vars.shape.borderRadius.valueOf()} + 1rem)`
+            }}
+        >
+            <Typography variant = "h2" pb = "1rem">Log In</Typography>
             <Grid2 container component = "form" spacing = { 2 } onSubmit = { event => handleSubmitForm(event) }>
                 <Grid2 size = { 12 }>
                     <TextField
@@ -69,9 +83,13 @@ export default function LogInForm() {
                 <Grid2 size = { 12 }>
                     <Button type = "submit" variant = "contained">Log In</Button>
                 </Grid2>
-                <Grid2 size = { 12 }>
-                    <Button component = { NavLink } to = "/signup">Don't have an account? Sign up</Button>
-                </Grid2>
+                { openSignUp &&
+                    <Grid2 size = { 12 }>
+                        <Button variant = "text" onClick = { () => openSignUp() }>
+                            Don't have an account? Sign up
+                        </Button>
+                    </Grid2>
+                }
             </Grid2>
         </Container>
     );

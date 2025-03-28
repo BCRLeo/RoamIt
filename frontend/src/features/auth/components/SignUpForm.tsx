@@ -1,9 +1,9 @@
 import { ChangeEvent, FormEvent, useState } from "react";
 
-import { Button, Container, FormControl, FormHelperText, Grid2, InputLabel, MenuItem, Select, SelectChangeEvent, TextField, Typography } from "@mui/material";
+import { Button, Container, FormControl, FormHelperText, Grid2, InputLabel, MenuItem, Select, SelectChangeEvent, TextField, Typography, useTheme } from "@mui/material";
 import { DateField } from "@mui/x-date-pickers";
 import { Dayjs } from "dayjs";
-import { NavLink, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 
 import { isEmailAvailable, isUsernameAvailable, signUp } from "../authApi";
 import { EMAIL_REGEX, MAX_BIRTHDAY, MIN_BIRTHDAY, PASSWORD_REGEX } from "../authConstants";
@@ -16,7 +16,9 @@ enum Gender {
     NA = "NA"
 }
 
-export default function SignUpForm() {
+export default function SignUpForm({ openLogIn }: { openLogIn?: () => void }) {
+    const theme = useTheme();
+
     const [firstName, setFirstName] = useState("");
     const [firstNameError, setFirstNameError] = useState("");
 
@@ -217,7 +219,19 @@ export default function SignUpForm() {
     }
 
     return (
-        <Container maxWidth = "xs" sx = {{ p: "1rem" }}>
+        <Container
+            maxWidth = "xs"
+            sx = {{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                p: "2rem",
+                backgroundColor: theme.vars.palette.background.default,
+                borderRadius: `calc(${theme.vars.shape.borderRadius.valueOf()} + 1rem)`
+            }}
+        >
+            <Typography variant = "h2" pb = "1rem">Sign Up</Typography>
             <Grid2 container component = "form" spacing = { 2 } onSubmit = { handleSubmitForm } noValidate >
                 <Grid2 size = { 6 }>
                     <TextField
@@ -330,11 +344,13 @@ export default function SignUpForm() {
                         </Typography>
                     }
                 </Grid2>
-                <Grid2 size = { 12 }>
-                    <Button component = { NavLink } to = "/login" variant = "text">
-                        Already have an account? Log in
-                    </Button>
-                </Grid2>
+                { openLogIn && 
+                    <Grid2 size = { 12 }>
+                        <Button variant = "text" onClick = { () => openLogIn() }>
+                            Already have an account? Log in
+                        </Button>
+                    </Grid2>
+                }
             </Grid2>
         </Container>
     );
