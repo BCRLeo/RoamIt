@@ -8,6 +8,7 @@ import HomePage from './pages/Home/HomePage';
 import LogInPage from './pages/LogIn/LogInPage';
 import NotFoundPage from './pages/NotFound/NotFoundPage';
 import SignUpPage from './pages/SignUp/SignUpPage';
+import ChatPage from './pages/Chat/ChatPage'; 
 
 import { BrowserRouter, Route, Routes } from 'react-router';
 
@@ -24,6 +25,7 @@ export default function App() {
                     <Route path = "example" element = {<ExamplePage />} />
                     <Route path = "login" element = {<LogInPage />} />
                     <Route path = "signup" element = {<SignUpPage />} />
+                    <Route path="/chat/:discussionId" element={<ChatPage />} /> // ❌ Missing props
                 </Routes>
             </BrowserRouter>
         </>

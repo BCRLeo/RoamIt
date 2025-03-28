@@ -7,39 +7,41 @@ from .models import Message
 @socketio.on('join')
 def handle_join(data):
     discussion_id = data.get('discussion_id')
-    discussion_title = data.get('discussion_title')
-    
-    if not discussion_id or not discussion_title:
-        emit('error', {'msg': 'Missing discussion ID or title'})
+
+    if not discussion_id:
+        emit('error', {'msg': 'Missing discussion ID'})
         return
 
-    room = discussion_title
+    room = f"discussion_{discussion_id}"
     join_room(room)
-    emit('status', {'msg': f'User joined discussion: {discussion_title}'}, room=room)
+    emit('status', {'msg': f'User joined discussion {discussion_id}'}, room=room)
+
 
 @socketio.on('send_message')
 def handle_send_message(data):
-    sender_id = data.get('sender_id')
+    print("[send_message] Received:", data)
+    sender_id = 1
     discussion_id = data.get('discussion_id')
-    discussion_title = data.get('discussion_title')
     content = data.get('content')
-    file_url = data.get('file_url')  # Optional file URL for message attachment
+    file_url = data.get('file_url')
 
-    if not sender_id or not discussion_id or not discussion_title or not content:
-        emit('error', {'msg': 'Missing sender ID, discussion details, or message content'})
+    if not discussion_id or not content:
+        emit('error', {'msg': 'Missing discussion ID or message content'})
         return
 
-    room = discussion_title
+    room = f"discussion_{discussion_id}"
     msg = Message(
-        sender_id=sender_id, 
-        discussion_id=discussion_id, 
-        content=content, 
+        sender_id=sender_id,
+        discussion_id=discussion_id,
+        content=content,
         file_url=file_url
     )
     db.session.add(msg)
     db.session.commit()
 
+    print("[send_message] Broadcasting message to room:", room)
     emit('receive_message', msg.to_dict(), room=room)
+
 
 @socketio.on('react_message')
 def handle_react_message(data):
