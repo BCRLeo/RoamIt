@@ -56,6 +56,8 @@ export default function NavBar() {
                         <Button component = { CustomNavLink } to = "/discover" color = "inherit" text = "Discover" />
                     }
                     <Button component = { CustomNavLink } to = "/example" color = "inherit" text = "Example" />
+                    <Button component = { CustomNavLink } to = "/profile" color = "inherit" text = "Profile" />
+                    <Button component = { CustomNavLink } to = "/listings" color = "inherit" text = "Listings" />
                 </Box>
                 <Box sx = {{ flexGrow: 1 }} />
                 <Box sx = {{ mr: 0, ml: "auto", width: "fit-content" }}>
