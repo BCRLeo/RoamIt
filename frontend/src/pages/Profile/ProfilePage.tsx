@@ -1,10 +1,12 @@
 import {
+    Autocomplete,
+    Chip,
     Box,
     Button,
     TextField,
-    Typography
+    Typography,
   } from "@mui/material";
-  import { useState, useRef } from "react";
+  import { SyntheticEvent, useState, useRef } from "react";
   import { useAvatarUploader } from "../../features/images/hooks/useAvatarUploader";
   import AvatarUploader from "../../features/images/components/AvatarUploader";
   import PersonIcon from "@mui/icons-material/Person";
@@ -12,8 +14,29 @@ import {
   
   export default function ProfilePage() {
     const [bio, setBio] = useState("");
-    const [interests, setInterests] = useState("");
+    const [interests, setInterests] = useState<string[]>([]);
   
+    const interestOptions = [
+        "Travel",
+        "Cooking",
+        "Reading",
+        "Gaming",
+        "Music",
+        "Art",
+        "Writing",
+        "Photography",
+        "Fitness",
+        "Hiking",
+        "Volunteering",
+        "Machine Learning",
+        "Data Science",
+        "Design",
+        "UX/UI",
+        "Philosophy",
+        "Psychology",
+        "Chess"
+      ];
+
     const {
       file: imageFile,
       previewUrl: image,
@@ -36,7 +59,7 @@ import {
           previewUrl={image ?? undefined}
           onFileInput={handleFileChange}
           size={120}
-          labelSx={{  // not strictly necessary because this is current default
+          labelSx={{  // not strictly necessary because this is the current default
             position: "absolute",
             bottom: -25,
             left: "50%",
@@ -59,15 +82,39 @@ import {
             onChange={(e) => setBio(e.target.value)}
           />
   
-          <TextField
-            fullWidth
-            label="Interests"
-            placeholder="e.g. AI, Music, Hiking"
-            variant="outlined"
-            margin="normal"
+            <Autocomplete
+            multiple
+            freeSolo
+            options={interestOptions}
             value={interests}
-            onChange={(e) => setInterests(e.target.value)}
-          />
+            onChange={(_: SyntheticEvent, newValue: string[]) => setInterests(newValue)}
+            renderTags={(value, getTagProps) =>
+                value.map((option, index) => (
+                <Chip variant="outlined" label={option} {...getTagProps({ index })} />
+                ))
+            }
+            renderInput={(params) => (
+                <TextField
+                {...params}
+                variant="outlined"
+                label="Interests"
+                placeholder="Add interests"
+                />
+            )}
+            slotProps={{
+                popper: {
+                modifiers: [
+                    {
+                    name: "flip",
+                    enabled: false, // force dropdown below
+                    },
+                ],
+                },
+                listbox: {
+                sx: { maxHeight: 250 }, // limit height of dropdown box
+                },
+            }}
+            />
         </Box>
   
         <Button
