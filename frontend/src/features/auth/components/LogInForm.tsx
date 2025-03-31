@@ -1,15 +1,14 @@
 import { useState, FormEvent, ChangeEvent } from "react";
 
-import { Box, Button, Container, Grid2, TextField, Typography, useTheme } from "@mui/material";
+import { Box, Button, Grid2, TextField, Typography } from "@mui/material";
 import { Error } from "@mui/icons-material";
 import { useNavigate } from "react-router";
 
 import { logIn } from "../authApi";
 import useUserContext from "../hooks/useUserContext";
+import PopUp from "../../../components/PopUp/PopUp";
 
 export default function LogInForm({ openSignUp }: { openSignUp?: () => void }) {
-    const theme = useTheme();
-
     const [login, setLogin] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
@@ -29,6 +28,18 @@ export default function LogInForm({ openSignUp }: { openSignUp?: () => void }) {
 
     async function handleSubmitForm(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
+
+        if (!login && !password) {
+            setError("Please enter an email/username and password.");
+            return;
+        } else if (!login) {
+            setError("Please enter an email/username.");
+            return;
+        } else if (!password) {
+            setError("Please enter a password.");
+            return;
+        }
+
         const response = await logIn(login, password);
 
         if (!response) {
@@ -41,23 +52,12 @@ export default function LogInForm({ openSignUp }: { openSignUp?: () => void }) {
     }
 
     return (
-        <Container
-            maxWidth = "xs"
-            sx = {{
-                position: "absolute",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-                p: "2rem",
-                backgroundColor: theme.vars.palette.background.default,
-                borderRadius: `calc(${theme.vars.shape.borderRadius.valueOf()} + 1rem)`
-            }}
-        >
+        <PopUp>
             <Typography variant = "h2" pb = "1rem">Log In</Typography>
-            <Grid2 container component = "form" spacing = { 2 } onSubmit = { event => handleSubmitForm(event) }>
+            <Grid2 container component = "form" spacing = { 2 } onSubmit = { handleSubmitForm }>
                 <Grid2 size = { 12 }>
                     <TextField
-                        label = "Email or Username"
+                        label = "Email or username"
                         variant = "filled"
                         fullWidth
                         onChange = { updateLogin }
@@ -91,6 +91,6 @@ export default function LogInForm({ openSignUp }: { openSignUp?: () => void }) {
                     </Grid2>
                 }
             </Grid2>
-        </Container>
+        </PopUp>
     );
 }

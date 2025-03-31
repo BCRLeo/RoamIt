@@ -1,6 +1,6 @@
 import { ChangeEvent, FormEvent, useState } from "react";
 
-import { Button, Container, FormControl, FormHelperText, Grid2, InputLabel, MenuItem, Select, SelectChangeEvent, TextField, Typography, useTheme } from "@mui/material";
+import { Button, FormControl, FormHelperText, Grid2, InputLabel, MenuItem, Select, SelectChangeEvent, TextField, Typography } from "@mui/material";
 import { DateField } from "@mui/x-date-pickers";
 import { Dayjs } from "dayjs";
 import { useNavigate } from "react-router";
@@ -8,6 +8,7 @@ import { useNavigate } from "react-router";
 import { isEmailAvailable, isUsernameAvailable, signUp } from "../authApi";
 import { EMAIL_REGEX, MAX_BIRTHDAY, MIN_BIRTHDAY, PASSWORD_REGEX } from "../authConstants";
 import useUserContext from "../hooks/useUserContext";
+import PopUp from "../../../components/PopUp/PopUp";
 
 enum Gender {
     Man = "Man",
@@ -17,8 +18,6 @@ enum Gender {
 }
 
 export default function SignUpForm({ openLogIn }: { openLogIn?: () => void }) {
-    const theme = useTheme();
-
     const [firstName, setFirstName] = useState("");
     const [firstNameError, setFirstNameError] = useState("");
 
@@ -151,6 +150,16 @@ export default function SignUpForm({ openLogIn }: { openLogIn?: () => void }) {
         setPasswordError("");
     }
 
+    function resetAllErrors() {
+        setFirstNameError("");
+        setLastNameError("");
+        setEmailError("");
+        setUsernameError("");
+        setBirthdayError("");
+        setGenderError("");
+        setPasswordError("");
+    }
+
     async function handleSubmitForm(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         let missingError = false;
@@ -198,15 +207,14 @@ export default function SignUpForm({ openLogIn }: { openLogIn?: () => void }) {
             missingError = true;
         }
 
-        if (otherError) {
-            setFormError("Please resolve all erroneous values.");
-            return;
-        } else if (missingError) {
-            setFormError("Please fill in all missing values.");
+        if (otherError || missingError) {
+            setFormError("Please ensure all values are correct.");
             return;
         }
 
         const response = await signUp(firstName, lastName, username, email, password, birthday, gender);
+
+        resetAllErrors();
 
         if (!response) {
             setFormError("Error signing up user.");
@@ -219,18 +227,7 @@ export default function SignUpForm({ openLogIn }: { openLogIn?: () => void }) {
     }
 
     return (
-        <Container
-            maxWidth = "xs"
-            sx = {{
-                position: "absolute",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-                p: "2rem",
-                backgroundColor: theme.vars.palette.background.default,
-                borderRadius: `calc(${theme.vars.shape.borderRadius.valueOf()} + 1rem)`
-            }}
-        >
+        <PopUp>
             <Typography variant = "h2" pb = "1rem">Sign Up</Typography>
             <Grid2 container component = "form" spacing = { 2 } onSubmit = { handleSubmitForm } noValidate >
                 <Grid2 size = { 6 }>
@@ -352,6 +349,6 @@ export default function SignUpForm({ openLogIn }: { openLogIn?: () => void }) {
                     </Grid2>
                 }
             </Grid2>
-        </Container>
+        </PopUp>
     );
 }
