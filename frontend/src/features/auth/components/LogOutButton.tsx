@@ -1,6 +1,7 @@
 import { Button } from "@mui/material";
 import { useNavigate } from "react-router";
 
+import { logOut } from "../authApi";
 import useUserContext from "../hooks/useUserContext";
 
 export default function LogOutButton() {
@@ -16,6 +17,7 @@ export default function LogOutButton() {
     const setUser = userContext.setUser;
 
     function handleLogOut() {
+        logOut()
         setUser(null);
         navigate("/");
     }

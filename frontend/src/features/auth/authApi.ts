@@ -59,7 +59,7 @@ export async function logOut() {
     }
 }
 
-export async function signUp(firstName: string, lastName: string, username: string, email: string, password: string, birthday: string, gender: string): Promise<UserData | null> {
+export async function signUp(firstName: string, lastName: string, username: string, email: string, password: string, birthday: string, gender: string): Promise<UserData | null> {
     try {
         const response = await fetch("/api/users", {
             method: "POST",

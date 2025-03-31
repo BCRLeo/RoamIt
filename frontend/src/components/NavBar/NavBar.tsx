@@ -13,12 +13,7 @@ export default function NavBar() {
     const user = useUserContext().user;
 
     const CustomNavLink = ({ text, ...props }: NavLinkProps & { text: string }) => (
-        <NavLink
-            { ...props }
-            style = {({ isActive }: { isActive: boolean }) => ({
-                fontWeight: isActive ? "bold" : "normal",
-            })}
-        >
+        <NavLink { ...props }>
             {({ isActive }) => (
                 <Typography variant = "button" sx = {{
                     position: "relative",
@@ -45,7 +40,14 @@ export default function NavBar() {
     );
 
     return (
-        <AppBar position = "sticky" sx = {{ color: theme.vars.palette.primary.contrastText }} enableColorOnDark>
+        <AppBar
+            position = "sticky"
+            sx = {{
+                color: theme.vars.palette.primary.contrastText,
+                mb: "1.5rem"
+            }}
+            enableColorOnDark
+        >
             <Toolbar>
                 <IconButton sx = {{ mr: "0.75rem" }} color = "inherit">
                     <Menu />
