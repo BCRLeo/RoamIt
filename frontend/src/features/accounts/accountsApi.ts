@@ -131,7 +131,7 @@ export async function getUserFromUsername(username: string): Promise<UserData | 
     return null;
 }
 
-export async function getPublicUserDataFromUsername(username: string): Promise<number | null> {
+export async function getPublicUserDataFromUsername(username: string): Promise<PublicUserData | null> {
     try {
         const response = await fetch (`/api/users/username/${username}?privacy=public`, { method: "GET" });
         const data = await response.json()
@@ -169,9 +169,9 @@ export async function uploadProfilePicture(image: File): Promise<boolean> {
     return false;
 }
 
-export async function getProfilePicture(userId: number): Promise<Blob | null>
-export async function getProfilePicture(username: string): Promise<Blob | null>
-export async function getProfilePicture(): Promise<Blob | null>
+export async function getProfilePicture(userId: number): Promise<Blob | null>;
+export async function getProfilePicture(username: string): Promise<Blob | null>;
+export async function getProfilePicture(): Promise<Blob | null>;
 export async function getProfilePicture(userIdOrUsername?: number | string): Promise<Blob | null> {
     if (userIdOrUsername === undefined) {
         try {

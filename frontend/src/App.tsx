@@ -20,16 +20,17 @@ export default function App() {
             <BrowserRouter>
                 <NavBar></NavBar>
                 <Routes>
-                    <Route path = "*" element = {<NotFoundPage />} />
+                    {/* <Route path = "*" element = { <NotFoundPage /> } /> */}
 
-                    <Route index element = {<HomePage />} />
-                    <Route path = "discover" element = {<DiscoverPage />} />
-                    <Route path = "example" element = {<ExamplePage />} />
-                    <Route path = "profile" element = {<ProfilePage />} />
-                    <Route path = "login" element = {<LogInPage />} />
-                    <Route path = "signup" element = {<SignUpPage />} />
-                    <Route path="/listings" element={<ListingsPage />} />
-                    <Route path="/chat/:discussionId" element={<ChatPage />} /> // ❌ Missing props
+                    <Route index element = { <HomePage /> } />
+                    <Route path = "/discover" element = { <DiscoverPage /> } />
+                    <Route path = "/example" element = { <ExamplePage /> } />
+                    <Route path = "/:username" element = { <ProfilePage /> } />
+                    <Route path = "/login" element = { <LogInPage /> } />
+                    <Route path = "/signup" element = { <SignUpPage /> } />
+                    <Route path = "/listings" element={ <ListingsPage /> } />
+                    <Route path = "/chat/:discussionId" element = { <ChatPage /> } /> // ❌ Missing props
+                    <Route path = "/not-found" element = { <NotFoundPage /> } />
                 </Routes>
             </BrowserRouter>
         </>

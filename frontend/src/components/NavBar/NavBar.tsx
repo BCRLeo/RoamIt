@@ -55,11 +55,11 @@ export default function NavBar() {
                 <Box>
                     <Button component = { CustomNavLink } to = "/" color = "inherit" text = "Home" />
                     { user &&
-                        <Button component = { CustomNavLink } to = "/discover" color = "inherit" text = "Discover" />
+                        <>
+                            <Button component = { CustomNavLink } to = "/discover" color = "inherit" text = "Discover" />
+                            <Button component = { CustomNavLink } to = "/listings" color = "inherit" text = "Listings" />
+                        </>
                     }
-                    <Button component = { CustomNavLink } to = "/example" color = "inherit" text = "Example" />
-                    <Button component = { CustomNavLink } to = "/profile" color = "inherit" text = "Profile" />
-                    <Button component = { CustomNavLink } to = "/listings" color = "inherit" text = "Listings" />
                 </Box>
                 <Box sx = {{ flexGrow: 1 }} />
                 <Box sx = {{ mr: 0, ml: "auto", width: "fit-content" }}>
@@ -67,7 +67,7 @@ export default function NavBar() {
                     { user ? (
                         <>
                             <LogOutButton />
-                            <IconButton color = "inherit">
+                            <IconButton component = { NavLink } to = { `/${user.username}` } color = "inherit">
                                 <AccountCircle />
                             </IconButton>
                         </>

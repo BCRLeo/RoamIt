@@ -132,10 +132,21 @@ def get_user_from_email(email: str):
 
 @accounts.route("/users/username/<username>", methods = ["GET"])
 def get_user_from_username(username: str):
+    privacy = request.args.get("privacy")
     user = db.session.execute(db.select(User).filter_by(username = username)).scalar_one_or_none()
     
     if not user:
         return jsonify({"error": "Username not associated to a user."}), 404
+    
+    if privacy and privacy == "public":
+        return jsonify({
+            "data": {
+                "userId": user.id,
+                "firstName": user.first_name,
+                "lastName": user.last_name,
+                "username": user.username
+            }
+        }), 200
     
     if current_user.is_authenticated and current_user.username == username:
         return jsonify({
