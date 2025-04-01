@@ -41,6 +41,9 @@ def create_app():
     
     from app.api.auth import auth as auth_blueprint
     app.register_blueprint(auth_blueprint, url_prefix = "/api")
+    
+    from app.api.accounts import accounts as accounts_blueprint
+    app.register_blueprint(accounts_blueprint, url_prefix = "/api")
 
     # Register socketio
     socketio.init_app(app, cors_allowed_origins="*")

@@ -5,7 +5,7 @@ import { DateField } from "@mui/x-date-pickers";
 import { Dayjs } from "dayjs";
 import { useNavigate } from "react-router";
 
-import { isEmailAvailable, isUsernameAvailable, signUp } from "../authApi";
+import { isEmailAvailable, isUsernameAvailable, signUp } from "../../accounts/accountsApi";
 import { EMAIL_REGEX, MAX_BIRTHDAY, MIN_BIRTHDAY, PASSWORD_REGEX } from "../authConstants";
 import useUserContext from "../hooks/useUserContext";
 import PopUp from "../../../components/PopUp/PopUp";
