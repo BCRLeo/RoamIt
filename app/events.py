@@ -1,8 +1,15 @@
 from .extensions import socketio, db, login_manager, migrate
 from flask_socketio import emit, join_room, leave_room
+from flask import request, session
 from flask_login import current_user
 from .models import Message
 
+@socketio.on('connect')
+def handle_connect():
+    print("[SOCKET] CONNECT")
+    print("Session contents:", dict(session))
+    print("current_user.is_authenticated:", current_user.is_authenticated)
+    emit("auth_check", {"authenticated": current_user.is_authenticated, "user_id": current_user.get_id()})
 
 @socketio.on('join')
 def handle_join(data):
@@ -14,19 +21,25 @@ def handle_join(data):
 
     room = f"discussion_{discussion_id}"
     join_room(room)
+    print(f"[join] User {current_user.id if current_user.is_authenticated else 'anonymous'} joined room: {room}")
     emit('status', {'msg': f'User joined discussion {discussion_id}'}, room=room)
 
 
 @socketio.on('send_message')
 def handle_send_message(data):
     print("[send_message] Received:", data)
-    sender_id = 1
+    if not current_user.is_authenticated:
+        emit('error', {'msg': 'User not authenticated'})
+        print("[send_message] Blocked: unauthenticated user")
+        return
+    sender_id = current_user.id
     discussion_id = data.get('discussion_id')
     content = data.get('content')
     file_url = data.get('file_url')
 
     if not discussion_id or not content:
         emit('error', {'msg': 'Missing discussion ID or message content'})
+        print("[send_message] Blocked: missing fields")
         return
 
     room = f"discussion_{discussion_id}"
@@ -39,6 +52,7 @@ def handle_send_message(data):
     db.session.add(msg)
     db.session.commit()
 
+    print("[send_message] Saved message to DB:", msg.to_dict())
     print("[send_message] Broadcasting message to room:", room)
     emit('receive_message', msg.to_dict(), room=room)
 
@@ -59,11 +73,12 @@ def handle_react_message(data):
         emit('error', {'msg': 'Message not found'})
         return
 
-    # Use current_user if available; alternatively, you could fetch the user via sender_id.
     user = current_user
     msg.react(user, reaction_type)
     room = discussion_title
+    print(f"[react_message] User {user.id} reacted with '{reaction_type}' to message {msg.id} in {room}")
     emit('reaction_updated', {'message_id': msg.id, 'reaction_type': reaction_type}, room=room)
+
 
 @socketio.on('unreact_message')
 def handle_unreact_message(data):
@@ -83,4 +98,5 @@ def handle_unreact_message(data):
     user = current_user
     msg.unreact(user)
     room = discussion_title
+    print(f"[unreact_message] User {user.id} removed reaction from message {msg.id} in {room}")
     emit('reaction_removed', {'message_id': msg.id}, room=room)

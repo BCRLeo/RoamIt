@@ -7,6 +7,7 @@ from rembg import new_session
 from flask_socketio import SocketIO
 from .events import socketio
 from .extensions import db, login_manager, migrate
+from flask_cors import CORS
 
 def create_app():
     app = Flask(__name__, template_folder = "dist", static_folder = "dist/static", static_url_path = "/static")
@@ -46,7 +47,18 @@ def create_app():
     app.register_blueprint(accounts_blueprint, url_prefix = "/api")
 
     # Register socketio
-    socketio.init_app(app, cors_allowed_origins="*")
+    socketio.init_app(app,
+    manage_session=False,
+    cors_allowed_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173"
+        "http://localhost:5005",
+        "http://127.0.0.1:5005",
+    ],
+    cors_credentials=True
+)
+    # Initialize CORS
+    CORS(app, supports_credentials=True)
 
     return app
 

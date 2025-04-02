@@ -9,3 +9,4 @@ sqlalchemy-imageattach    # For attaching images to SQLAlchemy models
 SQLAlchemy                # Core library for database operations
 alembic                   # Database migration tool used with SQLAlchemy
 onnxruntime
+flask-cors                # For handling CORS (Cross-Origin Resource Sharing) in Flask
