@@ -62,7 +62,7 @@ export default function ProfilePage({ username = useParams()?.username }: { user
 
     if (!user) {
         return (
-            <Typography variant = "h1">Loading...</Typography>
+            <NotFoundPage />
         );
     }
 

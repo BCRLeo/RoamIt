@@ -8,6 +8,15 @@ export default defineConfig({
         outDir: "../app/dist",
         assetsDir: "static",
         manifest: "manifest.json",
-        emptyOutDir: true
+        emptyOutDir: true,
+        rollupOptions: {
+            output: {
+                manualChunks: {
+                    vendor: ["react", "react-dom"],
+                    mui: ["@mui/material", "@mui/icons-material"],
+                    router: ["react-router-dom"]
+                }
+            }
+        }
     }
 })
