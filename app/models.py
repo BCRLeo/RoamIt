@@ -161,7 +161,7 @@ class User(db.Model, UserMixin):
     birthday = db.Column(db.Date, nullable=False)
     creation_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     phone_number = db.Column(db.String(20), nullable=True, unique=True)
-    description = db.Column(db.String(500), nullable=True)
+    bio = db.Column(db.String(500), nullable=True)
     gender = db.Column(db.String(20), nullable=False)  # User's gender
 
     premium = db.Column(db.Boolean, nullable=False, default=False, server_default=text('false'))
