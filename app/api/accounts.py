@@ -227,3 +227,58 @@ def get_profile_picture():
         return jsonify({"error": "User not authenticated."}), 401
     
     return get_profile_picture_from_user_id(current_user.id)
+
+@accounts.route("/users/bio", methods = ["POST"])
+def upload_bio():
+    if not current_user.is_authenticated:
+        return jsonify({"error": "User not authenticated."}), 401
+    
+    try:
+        data = request.data
+        bio = data.decode()
+    except UnicodeDecodeError:
+        return jsonify({"error": "Invalid UTF-8 encoding in request body"}), 400
+    except Exception as error:
+        return jsonify({"error": str(error)}), 400
+    
+    if not bio:
+        return jsonify({"error": "No bio provided."}), 400
+    
+    try:
+        current_user.bio = bio
+        db.session.commit()
+        
+        return "", 200
+    except Exception as error:
+        print(f"Error uploading bio:", error)
+        db.session.rollback()
+        
+        return jsonify({"error": "Error uploading bio."}), 500
+
+@accounts.route("/users/<int:user_id>/bio", methods = ["GET"])
+def get_bio_from_user_id(user_id: int):
+    user = db.session.execute(db.select(User).filter_by(id = user_id)).scalar_one_or_none()
+    
+    if not user:
+        return jsonify({"error": f"User #{user_id} not found."}), 404
+    
+    bio = user.bio
+    
+    if not bio:
+        return jsonify({"error": f"User {user.username} does not have a bio."}), 404
+    
+    return jsonify({"data": bio}), 200
+
+@accounts.route("/users/<username>/bio", methods = ["GET"])
+def get_bio_from_username(username: str):
+    user = db.session.execute(db.select(User).filter_by(username = username)).scalar_one_or_none()
+    
+    if not user:
+        return jsonify({"error": f"User {username} not found."}), 404
+    
+    bio = user.bio
+    
+    if not bio:
+        return jsonify({"error": f"User {user.username} does not have a bio."}), 404
+    
+    return jsonify({"data": bio}), 200

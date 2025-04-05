@@ -151,6 +151,7 @@ export async function getPublicUserDataFromUsername(username: string): Promise<P
 
 export async function uploadProfilePicture(image: File): Promise<boolean> {
     const formData = new FormData();
+
     formData.append("file", image);
 
     try {
@@ -268,6 +269,41 @@ export async function getProfilePictureUrl(userIdOrUsername?: number | string): 
         return URL.createObjectURL(image);
     } catch (error) {
         console.error("Error retrieving user's profile picture url:", error);
+    }
+
+    return null;
+}
+
+export async function uploadBio(bio: string): Promise<boolean> {
+    try {
+        const response = await fetch("/api/users/bio", {
+            method: "POST",
+            body: bio
+        });
+        
+        if (response.ok) {
+            return true;
+        }
+    } catch (error) {
+        console.error("Error uploading bio:", error);
+    }
+    return false;
+}
+
+export async function getBio(userId: number): Promise<string | null>;
+export async function getBio(userIdOrUsername: number | string): Promise<string | null> {
+    try {
+        const response = await fetch(`/api/users/${userIdOrUsername}/bio`, { method: "GET" });
+        const data = await response.json();
+
+        if (!response.ok) {
+            console.error(data.error);
+            return null;
+        }
+
+        return data.data;
+    } catch (error) {
+        console.error(`Error retrieving user ${typeof(userIdOrUsername) === "number" ? "#" : ""}${userIdOrUsername}'s bio.`);
     }
 
     return null;
