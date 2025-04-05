@@ -290,7 +290,6 @@ export async function uploadBio(bio: string): Promise<boolean> {
     return false;
 }
 
-export async function getBio(userId: number): Promise<string | null>;
 export async function getBio(userIdOrUsername: number | string): Promise<string | null> {
     try {
         const response = await fetch(`/api/users/${userIdOrUsername}/bio`, { method: "GET" });
@@ -306,5 +305,48 @@ export async function getBio(userIdOrUsername: number | string): Promise<string 
         console.error(`Error retrieving user ${typeof(userIdOrUsername) === "number" ? "#" : ""}${userIdOrUsername}'s bio.`);
     }
 
+    return null;
+}
+
+export async function uploadTags(tags: string | string[]) {
+    if (!Array.isArray(tags)) {
+        tags = [tags];
+    }
+
+    try {
+        const response = await fetch("/api/users/tags", {
+            method: "POST",
+            body: JSON.stringify(tags),
+            headers: {
+                "Content-Type": "application/json"
+            }
+        });
+
+        if (response.ok) {
+            return true;
+        }
+
+        const data = await response.json();
+        console.error("Error uploading tags:", data.error);
+    } catch (error) {
+        console.error("Error uploading tags:", error);
+    }
+
+    return false;
+}
+
+export async function getTags(userIdOrUsername: number | string): Promise<string[] | null> {
+    try {
+        const response = await fetch(`/api/users/${userIdOrUsername}/tags`, { method: "GET" });
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error);
+        }
+
+        return data.data;
+    } catch (error) {
+        console.error(`Error retrieving user ${typeof(userIdOrUsername) === "number" ? "#" : ""}${userIdOrUsername}'s tags:`, error);
+    }
     return null;
 }

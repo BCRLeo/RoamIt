@@ -35,8 +35,8 @@ export default function Bio(props: { userId: number } | { userId: number, onEdit
         })();
     }, []);
 
-    // <Bio userId = { userId } /> and <Bio userId = { userId } canEdit = { false } />
-    if (!("onEdit" in props)) {
+    // <Bio userId = { userId } />
+    if (!("onEdit" in props) || props.onEdit === undefined) {
         return (
             <TextField
                 fullWidth

@@ -59,8 +59,8 @@ export default function ProfilePicture(props: {userId?: number} | {userId: numbe
         );
     }
 
-    // <ProfilePicture userId = { userId } />
-    if (!("onUpload" in props)) {
+    // <ProfilePicture userId = { userId } /> and <ProfilePicture userId = { userId } onUpload = { undefined } />
+    if (!("onUpload" in props) || props.onUpload === undefined) {
         return (
             <Box sx = {{ width: "8rem", height: "8rem", mx: "auto" }}>
                 <Avatar src = { imageUrl } alt = { username ?? undefined } sx = {{ width: "100%", height: "100%" }} />

@@ -1,14 +1,15 @@
 import { ChangeEvent, JSX, useEffect, useState } from "react";
 
-import { Autocomplete, Chip, Box, Button, TextField, Typography, Container } from "@mui/material";
+import { Box, Button, Typography, Container } from "@mui/material";
 import { Link, useParams } from "react-router-dom";
 
-import { getPublicUserDataFromUsername, uploadBio, uploadProfilePicture } from "../../features/accounts/accountsApi";
+import { getPublicUserDataFromUsername, uploadBio, uploadProfilePicture, uploadTags } from "../../features/accounts/accountsApi";
 import ProfilePicture from "../../features/accounts/components/ProfilePicture";
 import { PublicUserData } from "../../features/auth/authApi";
 import useUserContext from "../../features/auth/hooks/useUserContext";
 import NotFoundPage from "../NotFound/NotFoundPage";
 import Bio from "../../features/accounts/components/Bio";
+import Tags from "../../features/accounts/components/Tags";
 
 export default function ProfilePage({ username = useParams()?.username }: { username?: string }): JSX.Element {
     if (!username) {
@@ -21,7 +22,7 @@ export default function ProfilePage({ username = useParams()?.username }: { user
     const [user, setUser] = useState<PublicUserData | null>(null);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isNotFound, setIsNotFound] = useState(false);
-    const [isEditing,] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
 
     useEffect(() => {
         (async () => {
@@ -41,28 +42,16 @@ export default function ProfilePage({ username = useParams()?.username }: { user
 
     const [unsavedProfilePicture, setUnsavedProfilePicture] = useState<File | null>(null);
     const [unsavedBio, setUnsavedBio] = useState("");
-    const [interests, setInterests] = useState<string[]>([]);
+    const [unsavedTags, setUnsavedTags] = useState<string[]>([]);
+    const [isUnsaved, setIsUnsaved] = useState(false);
 
-    const interestOptions = [
-        "Travel",
-        "Cooking",
-        "Reading",
-        "Gaming",
-        "Music",
-        "Art",
-        "Writing",
-        "Photography",
-        "Fitness",
-        "Hiking",
-        "Volunteering",
-        "Machine Learning",
-        "Data Science",
-        "Design",
-        "UX/UI",
-        "Philosophy",
-        "Psychology",
-        "Chess"
-    ];
+    useEffect(() => {
+        if (unsavedProfilePicture || unsavedBio || unsavedTags.length) {
+            setIsUnsaved(true);
+            return;
+        }
+        setIsUnsaved(false);
+    }, [unsavedBio, unsavedProfilePicture, unsavedTags]);
 
     async function handleUpload(event: ChangeEvent<HTMLInputElement>) {
         if (event.target.files) {
@@ -90,6 +79,25 @@ export default function ProfilePage({ username = useParams()?.username }: { user
                 setUnsavedBio("");
             }
         }
+
+        if (unsavedTags.length) {
+            console.log(unsavedTags)
+            const success = await uploadTags(unsavedTags);
+
+            if (!success) {
+                console.error("Failed to save tags.")
+            } else {
+                setUnsavedTags([]);
+            }
+        }
+    }
+
+    async function handleToggleEdit() {
+        if (isEditing) {
+            handleSave();
+        }
+
+        setIsEditing((isEditing) => !isEditing);
     }
 
     if (!user && isNotFound) {
@@ -114,41 +122,7 @@ export default function ProfilePage({ username = useParams()?.username }: { user
                 <Box sx = {{ width: "60%", mx: "auto", textAlign: "left" }}>
                     <Bio userId = { user.userId } />
 
-                    <Autocomplete // replace with static interests component
-                        multiple
-                        freeSolo
-                        options = { interestOptions }
-                        value = { interests }
-                        onChange = { (_, newValue) => setInterests(newValue) }
-                        renderTags = { (value, getTagProps) =>
-                            <Box sx = {{ display: "flex", flexWrap: "nowrap", overflowX: "scroll" }}>
-                                { value.map((interest, index) => (
-                                    <Chip variant = "outlined" label = { interest } { ...getTagProps({ index }) } />
-                                )).reverse() }
-                            </Box>
-                        }
-                        renderInput = { (params) => (
-                            <TextField
-                                { ...params }
-                                variant = "outlined"
-                                label = "Interests"
-                                placeholder = "Add interests"
-                            />
-                        )}
-                        slotProps = {{
-                            popper: {
-                                modifiers: [
-                                    {
-                                        name: "flip",
-                                        enabled: false, // force dropdown below
-                                    },
-                                ],
-                            },
-                            listbox: {
-                                sx: { maxHeight: 250 }, // limit height of dropdown box
-                            }
-                        }}
-                    />
+                    <Tags userId = { user.userId } />
                 </Box>
             </Container>
         );
@@ -156,7 +130,7 @@ export default function ProfilePage({ username = useParams()?.username }: { user
 
     return (
         <Container maxWidth = "md">
-            <ProfilePicture userId = { user.userId } onUpload = { handleUpload } />
+            <ProfilePicture userId = { user.userId } onUpload = { isEditing ? handleUpload : undefined } />
                 
             <Typography variant = "h1">
                 { `${user.firstName} ${user.lastName}` }
@@ -165,62 +139,35 @@ export default function ProfilePage({ username = useParams()?.username }: { user
             <Box sx = {{ width: "60%", mx: "auto", textAlign: "left" }}>
                 <Bio userId = { user.userId } onEdit = { isEditing ? (event) => setUnsavedBio(event.target.value) : undefined } />
 
-                <Autocomplete
-                    multiple
-                    freeSolo
-                    options = { interestOptions }
-                    value = { interests }
-                    onChange = { (_, newValue) => setInterests(newValue) }
-                    renderTags = { (value, getTagProps) =>
-                        <Box sx = {{ display: "flex", flexWrap: "nowrap", overflowX: "scroll" }}>
-                            { value.map((interest, index) => (
-                                <Chip variant = "outlined" label = { interest } { ...getTagProps({ index }) } />
-                            )).reverse() }
-                        </Box>
-                    }
-                    renderInput = { (params) => (
-                        <TextField
-                            { ...params }
-                            variant = "outlined"
-                            label = "Interests"
-                            placeholder = "Add interests"
-                        />
-                    )}
-                    slotProps = {{
-                        popper: {
-                            modifiers: [
-                                {
-                                    name: "flip",
-                                    enabled: false, // force dropdown below
-                                },
-                            ],
-                        },
-                        listbox: {
-                            sx: { maxHeight: 250 }, // limit height of dropdown box
-                        }
-                    }}
-                />
+                <Tags userId = { user.userId } onEdit = { isEditing ? setUnsavedTags : undefined } />
             </Box>
-            
-            { isAuthenticated &&
-                <Box sx = {{ display: "flex", width: "fit-content", mt: "1rem", mx: "auto" }} gap = "1rem">
+
+            <Box sx = {{ display: "flex", width: "fit-content", mt: "1rem", mx: "auto" }} gap = "1rem">
+                { isEditing ?
                     <Button
                         variant = "contained"
-                        onClick = { handleSave }
-                        disabled = { unsavedProfilePicture === null && unsavedBio === "" }
+                        onClick = { handleToggleEdit }
                     >
-                        Save changes
+                        { isUnsaved ? "Finish editing" : "Save changes" }
                     </Button>
-
+                :
                     <Button
-                        component = { Link }
-                        to = "/listings"
-                        variant = "outlined"
+                        variant = "contained"
+                        onClick = { handleToggleEdit }
                     >
-                        Go to your listings
+                        Edit profile
                     </Button>
-                </Box>
-            }
+                }
+                    
+
+                <Button
+                    component = { Link }
+                    to = "/listings"
+                    variant = "outlined"
+                >
+                    Go to your listings
+                </Button>
+            </Box>
         </Container>
     );
 }

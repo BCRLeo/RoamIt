@@ -1,0 +1,20 @@
+export const USER_TAG_OPTIONS = [
+    "Travel",
+    "Cooking",
+    "Reading",
+    "Gaming",
+    "Music",
+    "Art",
+    "Writing",
+    "Photography",
+    "Fitness",
+    "Hiking",
+    "Volunteering",
+    "Machine Learning",
+    "Data Science",
+    "Design",
+    "UX/UI",
+    "Philosophy",
+    "Psychology",
+    "Chess"
+];

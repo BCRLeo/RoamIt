@@ -1,4 +1,4 @@
-from ..models import ProfilePicture, User
+from ..models import ProfilePicture, Tag, User
 from ..extensions import db
 from .auth import EMAIL_REGEX, PASSWORD_REGEX
 from datetime import date, datetime
@@ -282,3 +282,62 @@ def get_bio_from_username(username: str):
         return jsonify({"error": f"User {user.username} does not have a bio."}), 404
     
     return jsonify({"data": bio}), 200
+
+@accounts.route("/users/tags", methods = ["POST"])
+def upload_interests():
+    if not current_user.is_authenticated:
+        return jsonify({"error": "User not authenticated."}), 401
+    
+    data = request.get_json(silent = True)
+    
+    if not data:
+        return jsonify({"error": "No tags provided."}), 400
+    
+    try:
+        for tag_name in data:
+            tag = db.session.execute(db.select(Tag).filter_by(name = str(tag_name))).scalar_one_or_none()
+            
+            if not tag:
+                tag = Tag(name = tag_name)
+                current_user.tags.append(tag)
+            elif tag not in current_user.tags:
+                current_user.tags.append(tag)
+        
+        db.session.commit()
+        
+        return "", 200
+    except Exception as error:
+        print(f"Error uploading interests: {error}")
+        db.session.rollback()
+        
+        return jsonify({"error": error}), 500
+
+@accounts.route("/users/<int:user_id>/tags", methods = ["GET"])
+def get_tags_from_user_id(user_id: int):
+    user = db.session.execute(db.select(User).filter_by(id = user_id)).scalar_one_or_none()
+    
+    if not user:
+        return jsonify({"error": f"User #{user_id} not found."}), 404
+    
+    tags = user.tags
+    
+    if not tags:
+        return jsonify({"error": f"User #{user_id} does not have any tags."}), 404
+    
+    tag_names = [tag.name for tag in tags]
+    return jsonify({"data": tag_names}), 200
+
+@accounts.route("/users/<username>/tags", methods = ["GET"])
+def get_tags_from_username(username: int):
+    user = db.session.execute(db.select(User).filter_by(username = username)).scalar_one_or_none()
+    
+    if not user:
+        return jsonify({"error": f"User {username} not found."}), 404
+    
+    tags = user.tags
+    
+    if not tags:
+        return jsonify({"error": f"User {username} does not have any tags."}), 404
+    
+    tag_names = [tag.name for tag in tags]
+    return jsonify({"data": tag_names}), 200
