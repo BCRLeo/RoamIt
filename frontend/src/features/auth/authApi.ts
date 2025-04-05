@@ -50,12 +50,14 @@ export async function logIn(login: string, password: string): Promise<UserData |
 export async function logOut() {
     try {
         const response = await fetch("/api/sessions", { method: "DELETE" });
-        const data = await response.json();
 
-        if (!response.ok) {
-            console.error(data.error);
+        if (response.ok) {
             return;
         }
+
+        const data = await response.json();
+
+        throw new Error(data.error);
     } catch (error) {
         console.error("Error logging out user:", error);
     }

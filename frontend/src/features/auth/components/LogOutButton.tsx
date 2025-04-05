@@ -17,7 +17,7 @@ export default function LogOutButton() {
     const setUser = userContext.setUser;
 
     function handleLogOut() {
-        logOut()
+        logOut();
         setUser(null);
         navigate("/");
     }

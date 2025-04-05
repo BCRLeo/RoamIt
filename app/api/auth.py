@@ -29,7 +29,7 @@ def get_current_user():
 
 @auth.route("/sessions", methods = ["POST"])
 def log_in():
-    data = request.get_json(True)
+    data = request.get_json(silent = True)
     login = data.get('login')
     password = data.get('password')
     
@@ -49,6 +49,7 @@ def log_in():
     
     if user and check_password_hash(user.password, password):
         login_user(user)
+        
         return jsonify({
             "data": {
                 "userId": current_user.id,
@@ -57,7 +58,7 @@ def log_in():
                 "username": user.username,
                 "email": user.email
                 }
-            }), 200
+            }), 201
     
     return jsonify({"error": f"Invalid {login_type} or password."}), 400
 
@@ -65,5 +66,6 @@ def log_in():
 def log_out():
     if current_user.is_authenticated:
         logout_user()
-        return "", 200
+        return "", 204
+    
     return jsonify({"error": "User not authenticated."}), 401

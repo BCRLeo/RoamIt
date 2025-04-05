@@ -33,6 +33,7 @@ export default function App() {
                         <Route path = "/listings" element={ <ListingsPage /> } />
                         <Route path = "/chat/:discussionId" element = { <ChatPage /> } />
 
+                        <Route path = "/*" element = { <NotFoundPage /> } />
                         <Route path = "/not-found" element = { <NotFoundPage /> } />
                     </Routes>
                 </Suspense>
