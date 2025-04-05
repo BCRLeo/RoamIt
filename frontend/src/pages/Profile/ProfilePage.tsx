@@ -20,12 +20,15 @@ export default function ProfilePage({ username = useParams()?.username }: { user
     const currentUser = useUserContext().user;
     const [user, setUser] = useState<PublicUserData | null>(null);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [isNotFound, setIsNotFound] = useState(false);
+    const [isEditing,] = useState(false);
 
     useEffect(() => {
         (async () => {
             const response = await getPublicUserDataFromUsername(username);
             
             if (!response) {
+                setIsNotFound(true);
                 return;
             }
             setUser(response);
@@ -89,30 +92,78 @@ export default function ProfilePage({ username = useParams()?.username }: { user
         }
     }
 
-    if (!user) {
+    if (!user && isNotFound) {
         return (
             <NotFoundPage />
+        );
+    } else if (!user) {
+        return (
+            <NotFoundPage /> // replace with something that throws suspense or something in the future
+        );
+    }
+
+    if (!isAuthenticated) {
+        return (
+            <Container maxWidth = "md">
+                <ProfilePicture userId = { user.userId } />
+                    
+                <Typography variant = "h1">
+                    { `${user.firstName} ${user.lastName}` }
+                </Typography>
+
+                <Box sx = {{ width: "60%", mx: "auto", textAlign: "left" }}>
+                    <Bio userId = { user.userId } />
+
+                    <Autocomplete // replace with static interests component
+                        multiple
+                        freeSolo
+                        options = { interestOptions }
+                        value = { interests }
+                        onChange = { (_, newValue) => setInterests(newValue) }
+                        renderTags = { (value, getTagProps) =>
+                            <Box sx = {{ display: "flex", flexWrap: "nowrap", overflowX: "scroll" }}>
+                                { value.map((interest, index) => (
+                                    <Chip variant = "outlined" label = { interest } { ...getTagProps({ index }) } />
+                                )).reverse() }
+                            </Box>
+                        }
+                        renderInput = { (params) => (
+                            <TextField
+                                { ...params }
+                                variant = "outlined"
+                                label = "Interests"
+                                placeholder = "Add interests"
+                            />
+                        )}
+                        slotProps = {{
+                            popper: {
+                                modifiers: [
+                                    {
+                                        name: "flip",
+                                        enabled: false, // force dropdown below
+                                    },
+                                ],
+                            },
+                            listbox: {
+                                sx: { maxHeight: 250 }, // limit height of dropdown box
+                            }
+                        }}
+                    />
+                </Box>
+            </Container>
         );
     }
 
     return (
         <Container maxWidth = "md">
-            { isAuthenticated ?
-                <ProfilePicture userId = { user.userId } upload onUpload = { handleUpload } />
-            :
-                <ProfilePicture userId = { user.userId } />
-            }
+            <ProfilePicture userId = { user.userId } onUpload = { handleUpload } />
                 
             <Typography variant = "h1">
                 { `${user.firstName} ${user.lastName}` }
             </Typography>
 
             <Box sx = {{ width: "60%", mx: "auto", textAlign: "left" }}>
-                { isAuthenticated ? 
-                    <Bio userId = { user.userId } onEdit = { (event) => setUnsavedBio(event.target.value) } />
-                :
-                    <Bio userId = { user.userId } />
-                }
+                <Bio userId = { user.userId } onEdit = { isEditing ? (event) => setUnsavedBio(event.target.value) : undefined } />
 
                 <Autocomplete
                     multiple
