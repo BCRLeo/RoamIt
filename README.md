@@ -48,3 +48,23 @@ To automatically build the project after a change, run
 ```
 npm run build-watch
 ```
+
+
+## Backend 
+### Migrating database
+Run 
+```
+pip install alembi
+```
+to make sure you have alembic installed and installs it if you don't.
+
+Next, run 
+```
+alembic revision --autogenerate -m "migration name"
+```
+to generate a migration script. Finally, run
+```
+alembic upgrade head
+```
+to apply the migration. 
+WARNING: if your migration involves the renaming of tables, you will have to do that manually as alembic won't do it and instead will give you an error.
