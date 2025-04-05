@@ -1,12 +1,12 @@
-import { MouseEvent, MouseEventHandler, useEffect, useState } from "react";
+import { MouseEvent, MouseEventHandler, SyntheticEvent, useEffect, useState } from "react";
 
-import { Autocomplete, Box, Chip, Fab, TextField } from "@mui/material";
+import { Autocomplete, AutocompleteChangeReason, Box, Chip, Fab, TextField } from "@mui/material";
 
 import { getTags } from "../accountsApi";
 import { USER_TAG_OPTIONS } from "../accountsConstants";
 import { Done, Edit } from "@mui/icons-material";
 
-export default function Tags(props: { userId: number } | { userId: number, onEdit: ((value: string[]) => void), onSave?: MouseEventHandler<HTMLButtonElement> }) {
+export default function Tags(props: { userId: number } | { userId: number, onEdit: ((event: SyntheticEvent, value: string[], reason: AutocompleteChangeReason) => void), onSave?: MouseEventHandler<HTMLButtonElement> }) {
     const userId = props.userId;
     const [tags, setTags] = useState<string[]>([]);
     const [isEditing, setIsEditing] = useState(false);
@@ -25,7 +25,7 @@ export default function Tags(props: { userId: number } | { userId: number, onEdi
             freeSolo
             options = { USER_TAG_OPTIONS }
             value = { tags }
-            onChange = { (_, newValue) => handleEdit(newValue) }
+            onChange = { handleEdit }
             renderTags = { (value, getTagProps) =>
                 <Box sx = {{ display: "flex", flexWrap: "nowrap", overflowX: "scroll" }}>
                     { value.map((interest, index) => (
@@ -57,9 +57,9 @@ export default function Tags(props: { userId: number } | { userId: number, onEdi
         />
     );
 
-    function handleEdit(value: string[]) {
+    function handleEdit(event: SyntheticEvent, value: string[], reason: AutocompleteChangeReason) {
         if ("onEdit" in props) {
-            props.onEdit(value);
+            props.onEdit(event, value, reason);
         }
 
         setTags(value);

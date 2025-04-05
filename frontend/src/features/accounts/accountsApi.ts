@@ -348,5 +348,33 @@ export async function getTags(userIdOrUsername: number | string): Promise<string
     } catch (error) {
         console.error(`Error retrieving user ${typeof(userIdOrUsername) === "number" ? "#" : ""}${userIdOrUsername}'s tags:`, error);
     }
+
     return null;
+}
+
+export async function deleteTags(tags?: string | string[]) {
+    if (tags && !Array.isArray(tags)) {
+        tags = [tags];
+    }
+
+    try {
+        const response = await fetch("/api/users/tags", {
+            method: "DELETE",
+            body: tags ? JSON.stringify(tags) : undefined,
+            headers: tags ? {
+                "Content-Type": "application/json"
+            } : undefined
+        });
+
+        if (response.ok) {
+            return true;
+        }
+
+        const data = await response.json();
+        throw new Error(data.error);
+    } catch (error) {
+        console.error("Error deleting tags:", error);
+    }
+
+    return false;
 }

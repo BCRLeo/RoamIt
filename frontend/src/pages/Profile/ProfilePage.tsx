@@ -1,9 +1,9 @@
 import { ChangeEvent, JSX, useEffect, useState } from "react";
 
-import { Box, Button, Typography, Container } from "@mui/material";
+import { Box, Button, Typography, Container, AutocompleteChangeReason } from "@mui/material";
 import { Link, useParams } from "react-router-dom";
 
-import { getPublicUserDataFromUsername, uploadBio, uploadProfilePicture, uploadTags } from "../../features/accounts/accountsApi";
+import { deleteTags, getPublicUserDataFromUsername, uploadBio, uploadProfilePicture, uploadTags } from "../../features/accounts/accountsApi";
 import ProfilePicture from "../../features/accounts/components/ProfilePicture";
 import { PublicUserData } from "../../features/auth/authApi";
 import useUserContext from "../../features/auth/hooks/useUserContext";
@@ -40,18 +40,25 @@ export default function ProfilePage({ username = useParams()?.username }: { user
         })();
     }, [currentUser]);
 
+    type TagChanges = {
+        add: string[],
+        remove: string[],
+        clear: boolean
+    };
+
     const [unsavedProfilePicture, setUnsavedProfilePicture] = useState<File | null>(null);
-    const [unsavedBio, setUnsavedBio] = useState("");
-    const [unsavedTags, setUnsavedTags] = useState<string[]>([]);
+    const [unsavedBio, setUnsavedBio] = useState<string | null>(null);
+    const [tagChanges, setTagChanges] = useState<TagChanges>({ add: [], remove: [], clear: false });
     const [isUnsaved, setIsUnsaved] = useState(false);
 
     useEffect(() => {
-        if (unsavedProfilePicture || unsavedBio || unsavedTags.length) {
+        if (unsavedProfilePicture || unsavedBio || tagChanges.add.length || tagChanges.remove.length || tagChanges.clear) {
             setIsUnsaved(true);
             return;
         }
+        
         setIsUnsaved(false);
-    }, [unsavedBio, unsavedProfilePicture, unsavedTags]);
+    }, [unsavedBio, unsavedProfilePicture, tagChanges]);
 
     async function handleUpload(event: ChangeEvent<HTMLInputElement>) {
         if (event.target.files) {
@@ -80,16 +87,78 @@ export default function ProfilePage({ username = useParams()?.username }: { user
             }
         }
 
-        if (unsavedTags.length) {
-            console.log(unsavedTags)
-            const success = await uploadTags(unsavedTags);
+        if (tagChanges.clear) {
+            const success = await deleteTags();
 
-            if (!success) {
-                console.error("Failed to save tags.")
-            } else {
-                setUnsavedTags([]);
+            if (success) {
+                setTagChanges((prev) => ({
+                    add: prev.add,
+                    remove: prev.remove,
+                    clear: false
+                }));
             }
         }
+
+        if (tagChanges.add.length) {
+            const success = await uploadTags(tagChanges.add);
+
+            if (success) {
+                setTagChanges((prev) => ({
+                    add: [],
+                    remove: prev.remove,
+                    clear: false
+                }));
+            }
+        }
+
+        if (tagChanges.remove.length) {
+            const success = await deleteTags(tagChanges.remove);
+
+            if (success) {
+                setTagChanges((prev) => ({
+                    add: prev.add,
+                    remove: [],
+                    clear: false
+                }));
+            }
+        }
+    }
+
+    async function handleChangeTags(value: string[], reason: AutocompleteChangeReason) {
+        const add = new Set(tagChanges.add);
+        const remove = new Set(tagChanges.remove);
+        let clear = tagChanges.clear;
+        
+        switch (reason){
+            case "createOption":
+                value.forEach((tag) => add.add(tag));
+                break;
+            case "selectOption":
+                value.forEach((tag) => add.add(tag));
+                break;
+            case "removeOption":
+                value.forEach((tag) => remove.add(tag));
+                break;
+            case "clear":
+                add.clear();
+                remove.clear();
+                clear = true;
+                break;
+        }
+
+        add.forEach((tag) => {
+            if (remove.has(tag)) {
+                console.log("delete!");
+                add.delete(tag);
+                remove.delete(tag);
+            }
+        });
+
+        setTagChanges({
+            add: Array.from(add),
+            remove: Array.from(remove),
+            clear: clear
+        });
     }
 
     async function handleToggleEdit() {
@@ -121,7 +190,6 @@ export default function ProfilePage({ username = useParams()?.username }: { user
 
                 <Box sx = {{ width: "60%", mx: "auto", textAlign: "left" }}>
                     <Bio userId = { user.userId } />
-
                     <Tags userId = { user.userId } />
                 </Box>
             </Container>
@@ -139,7 +207,7 @@ export default function ProfilePage({ username = useParams()?.username }: { user
             <Box sx = {{ width: "60%", mx: "auto", textAlign: "left" }}>
                 <Bio userId = { user.userId } onEdit = { isEditing ? (event) => setUnsavedBio(event.target.value) : undefined } />
 
-                <Tags userId = { user.userId } onEdit = { isEditing ? setUnsavedTags : undefined } />
+                <Tags userId = { user.userId } onEdit = { isEditing ? (_, value, reason) => handleChangeTags(value, reason) : undefined } />
             </Box>
 
             <Box sx = {{ display: "flex", width: "fit-content", mt: "1rem", mx: "auto" }} gap = "1rem">
@@ -148,7 +216,7 @@ export default function ProfilePage({ username = useParams()?.username }: { user
                         variant = "contained"
                         onClick = { handleToggleEdit }
                     >
-                        { isUnsaved ? "Finish editing" : "Save changes" }
+                        { isUnsaved ? "Save changes" : "Finish editing" }
                     </Button>
                 :
                     <Button

@@ -66,7 +66,7 @@ def sign_up():
             "username": current_user.username,
             "email": current_user.email
         }
-        }), 200
+        }), 201
 
 @accounts.route("/users/<int:user_id>", methods = ["GET"])
 def get_user_from_id(user_id: int):
@@ -341,3 +341,43 @@ def get_tags_from_username(username: int):
     
     tag_names = [tag.name for tag in tags]
     return jsonify({"data": tag_names}), 200
+
+@accounts.route("/users/tags", methods = ["DELETE"])
+def delete_tags():
+    if not current_user.is_authenticated:
+        return jsonify({"error": "User not authenticated."}), 401
+    
+    if not len(current_user.tags):
+        return "", 204
+    
+    data = request.get_json(silent = True)
+    
+    if not data:
+        try:
+            current_user.tags.clear()
+            db.session.commit()
+            
+            return "", 204
+        except Exception as error:
+            print(f"Error uploading interests: {error}")
+            db.session.rollback()
+            
+            return jsonify({"error": error}), 500
+    
+    try:
+        for tag_name in data:
+            tag = db.session.execute(db.select(Tag).filter_by(name = str(tag_name))).scalar_one_or_none()
+            
+            if not tag:
+                continue
+            
+            current_user.tags.remove(tag)
+        
+        db.session.commit()
+        
+        return "", 200
+    except Exception as error:
+        print(f"Error uploading interests: {error}")
+        db.session.rollback()
+        
+        return jsonify({"error": error}), 500
