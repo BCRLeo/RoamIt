@@ -274,7 +274,7 @@ export async function getProfilePictureUrl(userIdOrUsername?: number | string): 
     return null;
 }
 
-export async function uploadBio(bio: string): Promise<boolean> {
+export async function uploadBio(bio: string) {
     try {
         const response = await fetch("/api/users/bio", {
             method: "POST",
@@ -306,6 +306,23 @@ export async function getBio(userIdOrUsername: number | string): Promise<string 
     }
 
     return null;
+}
+
+export async function deleteBio() {
+    try {
+        const response = await fetch("/api/users/bio", { method: "DELETE" });
+
+        if (response.ok) {
+            return true;
+        }
+
+        const data = await response.json();
+        throw new Error(data.error);
+    } catch (error) {
+        console.error("Error deleting bio:", error);
+    }
+
+    return false;
 }
 
 export async function uploadTags(tags: string | string[]) {

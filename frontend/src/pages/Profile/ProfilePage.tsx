@@ -1,15 +1,15 @@
 import { ChangeEvent, JSX, useEffect, useState } from "react";
 
-import { Box, Button, Typography, Container, AutocompleteChangeReason } from "@mui/material";
+import { AutocompleteChangeReason, Box, Button, Container, Typography } from "@mui/material";
 import { Link, useParams } from "react-router-dom";
 
-import { deleteTags, getPublicUserDataFromUsername, uploadBio, uploadProfilePicture, uploadTags } from "../../features/accounts/accountsApi";
+import { deleteBio, deleteTags, getPublicUserDataFromUsername, uploadBio, uploadProfilePicture, uploadTags } from "../../features/accounts/accountsApi";
+import Bio from "../../features/accounts/components/Bio";
 import ProfilePicture from "../../features/accounts/components/ProfilePicture";
+import Tags from "../../features/accounts/components/Tags";
 import { PublicUserData } from "../../features/auth/authApi";
 import useUserContext from "../../features/auth/hooks/useUserContext";
 import NotFoundPage from "../NotFound/NotFoundPage";
-import Bio from "../../features/accounts/components/Bio";
-import Tags from "../../features/accounts/components/Tags";
 
 export default function ProfilePage({ username = useParams()?.username }: { username?: string }): JSX.Element {
     if (!username) {
@@ -52,7 +52,7 @@ export default function ProfilePage({ username = useParams()?.username }: { user
     const [isUnsaved, setIsUnsaved] = useState(false);
 
     useEffect(() => {
-        if (unsavedProfilePicture || unsavedBio || tagChanges.add.length || tagChanges.remove.length || tagChanges.clear) {
+        if (unsavedProfilePicture || unsavedBio !== null || tagChanges.add.length || tagChanges.remove.length || tagChanges.clear) {
             setIsUnsaved(true);
             return;
         }
@@ -70,9 +70,7 @@ export default function ProfilePage({ username = useParams()?.username }: { user
         if (unsavedProfilePicture) {
             const success = await uploadProfilePicture(unsavedProfilePicture);
             
-            if (!success) {
-                console.error("Failed to save profile picture.");
-            } else {
+            if (success) {
                 setUnsavedProfilePicture(null);
             }
         }
@@ -80,10 +78,14 @@ export default function ProfilePage({ username = useParams()?.username }: { user
         if (unsavedBio) {
             const success = await uploadBio(unsavedBio);
 
-            if (!success) {
-                console.error("Failed to save bio.");
-            } else {
-                setUnsavedBio("");
+            if (success) {
+                setUnsavedBio(null);
+            }
+        } else if (unsavedBio === "") {
+            const success = await deleteBio();
+
+            if (success) {
+                setUnsavedBio(null);
             }
         }
 
@@ -148,7 +150,6 @@ export default function ProfilePage({ username = useParams()?.username }: { user
 
         add.forEach((tag) => {
             if (remove.has(tag)) {
-                console.log("delete!");
                 add.delete(tag);
                 remove.delete(tag);
             }

@@ -265,7 +265,7 @@ def get_bio_from_user_id(user_id: int):
     bio = user.bio
     
     if not bio:
-        return jsonify({"error": f"User {user.username} does not have a bio."}), 404
+        return jsonify({"data": ""}), 200
     
     return jsonify({"data": bio}), 200
 
@@ -279,9 +279,25 @@ def get_bio_from_username(username: str):
     bio = user.bio
     
     if not bio:
-        return jsonify({"error": f"User {user.username} does not have a bio."}), 404
+        return jsonify({"data": ""}), 200
     
     return jsonify({"data": bio}), 200
+
+@accounts.route("/users/bio", methods = ["DELETE"])
+def delete_bio():
+    if not current_user.is_authenticated:
+        return jsonify({"error": "User not authenticated."}), 401
+    
+    try:
+        current_user.bio = None
+        db.session.commit()
+        
+        return "", 204
+    except Exception as error:
+        print(f"Error deleting bio: {error}")
+        db.session.rollback()
+        
+        return jsonify({"error": error}), 500
 
 @accounts.route("/users/tags", methods = ["POST"])
 def upload_interests():
@@ -322,7 +338,7 @@ def get_tags_from_user_id(user_id: int):
     tags = user.tags
     
     if not tags:
-        return jsonify({"error": f"User #{user_id} does not have any tags."}), 404
+        return jsonify({"data": ""}), 200
     
     tag_names = [tag.name for tag in tags]
     return jsonify({"data": tag_names}), 200
@@ -337,7 +353,7 @@ def get_tags_from_username(username: int):
     tags = user.tags
     
     if not tags:
-        return jsonify({"error": f"User {username} does not have any tags."}), 404
+        return jsonify({"data": ""}), 200
     
     tag_names = [tag.name for tag in tags]
     return jsonify({"data": tag_names}), 200

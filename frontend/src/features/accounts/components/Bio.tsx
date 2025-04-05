@@ -56,7 +56,6 @@ export default function Bio(props: { userId: number } | { userId: number, onEdit
                 <TextField
                     fullWidth
                     label = "Bio"
-                    rows = { 4 }
                     variant = "outlined"
                     margin = "normal"
                     value = { bio }
@@ -72,7 +71,6 @@ export default function Bio(props: { userId: number } | { userId: number, onEdit
             <TextField
                 fullWidth
                 label = "Bio"
-                rows = { 4 }
                 variant = "outlined"
                 margin = "normal"
                 value = { bio }
