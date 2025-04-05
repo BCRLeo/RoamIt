@@ -3,11 +3,12 @@ import { ChangeEvent, JSX, useEffect, useState } from "react";
 import { Autocomplete, Chip, Box, Button, TextField, Typography, Container } from "@mui/material";
 import { Link, useParams } from "react-router-dom";
 
-import { getPublicUserDataFromUsername, uploadProfilePicture } from "../../features/accounts/accountsApi";
+import { getPublicUserDataFromUsername, uploadBio, uploadProfilePicture } from "../../features/accounts/accountsApi";
 import ProfilePicture from "../../features/accounts/components/ProfilePicture";
 import { PublicUserData } from "../../features/auth/authApi";
 import useUserContext from "../../features/auth/hooks/useUserContext";
 import NotFoundPage from "../NotFound/NotFoundPage";
+import Bio from "../../features/accounts/components/Bio";
 
 export default function ProfilePage({ username = useParams()?.username }: { username?: string }): JSX.Element {
     if (!username) {
@@ -36,7 +37,7 @@ export default function ProfilePage({ username = useParams()?.username }: { user
     }, [currentUser]);
 
     const [unsavedProfilePicture, setUnsavedProfilePicture] = useState<File | null>(null);
-    const [bio, setBio] = useState("");
+    const [unsavedBio, setUnsavedBio] = useState("");
     const [interests, setInterests] = useState<string[]>([]);
 
     const interestOptions = [
@@ -60,12 +61,6 @@ export default function ProfilePage({ username = useParams()?.username }: { user
         "Chess"
     ];
 
-    if (!user) {
-        return (
-            <NotFoundPage />
-        );
-    }
-
     async function handleUpload(event: ChangeEvent<HTMLInputElement>) {
         if (event.target.files) {
             setUnsavedProfilePicture(event.target.files[0]);
@@ -78,10 +73,26 @@ export default function ProfilePage({ username = useParams()?.username }: { user
             
             if (!success) {
                 console.error("Failed to save profile picture.");
+            } else {
+                setUnsavedProfilePicture(null);
             }
-
-            setUnsavedProfilePicture(null);
         }
+
+        if (unsavedBio) {
+            const success = await uploadBio(unsavedBio);
+
+            if (!success) {
+                console.error("Failed to save bio.");
+            } else {
+                setUnsavedBio("");
+            }
+        }
+    }
+
+    if (!user) {
+        return (
+            <NotFoundPage />
+        );
     }
 
     return (
@@ -97,16 +108,11 @@ export default function ProfilePage({ username = useParams()?.username }: { user
             </Typography>
 
             <Box sx = {{ width: "60%", mx: "auto", textAlign: "left" }}>
-                <TextField
-                    fullWidth
-                    label = "Bio"
-                    multiline
-                    rows = { 4 }
-                    variant = "outlined"
-                    margin = "normal"
-                    value = { bio }
-                    onChange = { (e) => setBio(e.target.value) }
-                />
+                { isAuthenticated ? 
+                    <Bio userId = { user.userId } onEdit = { (event) => setUnsavedBio(event.target.value) } />
+                :
+                    <Bio userId = { user.userId } />
+                }
 
                 <Autocomplete
                     multiple
@@ -150,7 +156,7 @@ export default function ProfilePage({ username = useParams()?.username }: { user
                     <Button
                         variant = "contained"
                         onClick = { handleSave }
-                        disabled = { unsavedProfilePicture === null }
+                        disabled = { unsavedProfilePicture === null && unsavedBio === "" }
                     >
                         Save changes
                     </Button>
