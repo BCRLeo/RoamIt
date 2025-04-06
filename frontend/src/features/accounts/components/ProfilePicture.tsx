@@ -1,42 +1,39 @@
-import { ChangeEvent, ChangeEventHandler, useEffect, useState } from "react";
+import { ChangeEvent, ChangeEventHandler, useState } from "react";
 
 import { PhotoCamera } from "@mui/icons-material";
 import { Avatar, Badge, Box } from "@mui/material";
 
 import UploadButton from "../../../components/UploadButton/UploadButton";
 import { getProfilePictureUrl, getPublicUserDataFromId } from "../accountsApi";
+import { useSuspenseQueries } from "@tanstack/react-query";
 
 export default function ProfilePicture(props: {userId?: number} | {userId: number, onUpload: ChangeEventHandler<HTMLInputElement>}) {
     const userId = props.userId;
 
-    const [username, setUsername] = useState("");
-    const [imageUrl, setImageUrl] = useState("");
+    // <ProfilePicture />
+    if (userId === undefined) {
+        return (
+            <Box sx = {{ width: "8rem", height: "8rem", mx: "auto" }}>
+                <Avatar sx = {{ width: "100%", height: "100%" }} />
+            </Box>
+        );
+    }
 
-    useEffect(() => {
-        if (userId === undefined) {
-            return;
-        }
-
-        (async () => {
-            const response = await getPublicUserDataFromId(userId);
-            if (response) {
-                setUsername(response.username);
+    const [{ data: user }, { data: profilePictureUrl }] = useSuspenseQueries({
+        queries: [
+            {
+                queryKey: ["username", userId],
+                queryFn: () => getPublicUserDataFromId(userId)
+            },
+            {
+                queryKey: ["profilePictureUrl", userId],
+                queryFn: () => getProfilePictureUrl(userId)
             }
-        })();
-    }, []);
+        ]
+    })
 
-    useEffect(() => {
-        if (userId === undefined) {
-            return;
-        }
-
-        (async () => {
-            const response = await getProfilePictureUrl(userId);
-            if (response) {
-                setImageUrl(response);
-            }
-        })();
-    }, [userId]);
+    const username = user?.username;
+    const [imageUrl, setImageUrl] = useState(profilePictureUrl);
 
     async function handleUpload(event: ChangeEvent<HTMLInputElement>) {
         if (event.target.files) {
@@ -50,20 +47,11 @@ export default function ProfilePicture(props: {userId?: number} | {userId: numbe
         }
     }
 
-    // <ProfilePicture />
-    if (userId === undefined) {
-        return (
-            <Box sx = {{ width: "8rem", height: "8rem", mx: "auto" }}>
-                <Avatar sx = {{ width: "100%", height: "100%" }} />
-            </Box>
-        );
-    }
-
     // <ProfilePicture userId = { userId } /> and <ProfilePicture userId = { userId } onUpload = { undefined } />
     if (!("onUpload" in props) || props.onUpload === undefined) {
         return (
             <Box sx = {{ width: "8rem", height: "8rem", mx: "auto" }}>
-                <Avatar src = { imageUrl } alt = { username ?? undefined } sx = {{ width: "100%", height: "100%" }} />
+                <Avatar src = { imageUrl ?? undefined } alt = { username ?? undefined } sx = {{ width: "100%", height: "100%" }} />
             </Box>
         );
     }
@@ -79,7 +67,7 @@ export default function ProfilePicture(props: {userId?: number} | {userId: numbe
                 }
                 sx = {{ width: "8rem", height: "8rem" }}
             >
-                <Avatar src = { imageUrl } alt = { username ?? undefined } sx = {{ width: "100%", height: "100%" }} />
+                <Avatar src = { imageUrl ?? undefined } alt = { username ?? undefined } sx = {{ width: "100%", height: "100%" }} />
             </Badge>
         </Box>
     );

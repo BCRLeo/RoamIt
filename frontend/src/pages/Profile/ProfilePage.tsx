@@ -19,7 +19,7 @@ export default function ProfilePage({ username = useParams()?.username }: { user
         );
     }
 
-    const { user, isAuthenticated, isUserFound } = usePublicUserData(username);
+    const { user, isAuthenticated } = usePublicUserData(username);
     const [isEditing, toggleIsEditing] = useToggleState(false, (isEditing) => {
         if (isEditing) {
             saveChanges();
@@ -80,13 +80,9 @@ export default function ProfilePage({ username = useParams()?.username }: { user
         setUpdatedTags(value);
     }
 
-    if (!user && !isUserFound) {
+    if (!user) {
         return (
             <NotFoundPage />
-        );
-    } else if (!user) {
-        return (
-            <NotFoundPage /> // todo: replace with something that throws suspense or something in the future to get a loading page and not a 404 page
         );
     }
 

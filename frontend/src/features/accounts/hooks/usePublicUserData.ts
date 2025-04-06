@@ -1,26 +1,17 @@
-import { useEffect, useState } from "react";
-import { PublicUserData } from "../../auth/authApi";
+import { useSuspenseQuery } from "@tanstack/react-query";
+
 import useUserContext from "../../auth/hooks/useUserContext";
 import { getPublicUserDataFromUsername } from "../accountsApi";
 
 export default function usePublicUserData(username: string) {
     const currentUser = useUserContext().user;
-    const [user, setUser] = useState<PublicUserData | null>(null);
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [isUserFound, setIsUserFound] = useState(true);
 
-    useEffect(() => {
-        (async () => {
-            const response = await getPublicUserDataFromUsername(username);
-            
-            setIsUserFound(response !== null);
+    const { data: user } = useSuspenseQuery({
+        queryKey: ["publicUserData", username],
+        queryFn: () => getPublicUserDataFromUsername(username)
+    });
 
-            if (!response) return;
-            
-            setUser(response);
-            setIsAuthenticated(response.userId == currentUser?.userId);
-        })();
-    }, [currentUser]);
+    const isAuthenticated = !!user && !!currentUser && user.userId === currentUser.userId;
 
-    return { user, isAuthenticated, isUserFound };
+    return { user, isAuthenticated };
 }
