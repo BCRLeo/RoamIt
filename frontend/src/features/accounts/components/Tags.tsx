@@ -28,8 +28,8 @@ export default function Tags(props: { userId: number } | { userId: number, onEdi
             onChange = { handleEdit }
             renderTags = { (value, getTagProps) =>
                 <Box sx = {{ display: "flex", flexWrap: "nowrap", overflowX: "scroll" }}>
-                    { value.map((interest, index) => (
-                        <Chip variant = "outlined" label = { interest } { ...getTagProps({ index }) } />
+                    { value.map((tag, index) => (
+                        <Chip variant = "outlined" label = { tag } { ...getTagProps({ index }) } />
                     )).reverse() }
                 </Box>
             }
@@ -37,8 +37,8 @@ export default function Tags(props: { userId: number } | { userId: number, onEdi
                 <TextField
                     { ...params }
                     variant = "outlined"
-                    label = "Interests"
-                    placeholder = "Add interests"
+                    label = "Tags"
+                    placeholder = "Add tags"
                 />
             )}
             slotProps = {{

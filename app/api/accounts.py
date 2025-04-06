@@ -301,7 +301,7 @@ def delete_bio():
         return jsonify({"error": error}), 500
 
 @accounts.route("/users/tags", methods = ["POST"])
-def upload_interests():
+def upload_tags():
     if not current_user.is_authenticated:
         return jsonify({"error": "User not authenticated."}), 401
     
@@ -311,14 +311,15 @@ def upload_interests():
         return jsonify({"error": "No tags provided."}), 400
     
     try:
+        current_user.tags.clear()
+        
         for tag_name in data:
             tag = db.session.execute(db.select(Tag).filter_by(name = str(tag_name))).scalar_one_or_none()
             
             if not tag:
                 tag = Tag(name = tag_name)
-                current_user.tags.append(tag)
-            elif tag not in current_user.tags:
-                current_user.tags.append(tag)
+            
+            current_user.tags.append(tag)
         
         db.session.commit()
         

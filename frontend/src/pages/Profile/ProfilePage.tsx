@@ -1,15 +1,16 @@
-import { ChangeEvent, JSX, useEffect, useState } from "react";
+import { ChangeEvent, JSX, SyntheticEvent, useState } from "react";
 
 import { AutocompleteChangeReason, Box, Button, Container, Typography } from "@mui/material";
 import { Link, useParams } from "react-router-dom";
 
-import { deleteBio, deleteTags, getPublicUserDataFromUsername, uploadBio, uploadProfilePicture, uploadTags } from "../../features/accounts/accountsApi";
+import { deleteBio, deleteTags, uploadBio, uploadProfilePicture, uploadTags } from "../../features/accounts/accountsApi";
 import Bio from "../../features/accounts/components/Bio";
 import ProfilePicture from "../../features/accounts/components/ProfilePicture";
 import Tags from "../../features/accounts/components/Tags";
-import { PublicUserData } from "../../features/auth/authApi";
-import useUserContext from "../../features/auth/hooks/useUserContext";
+import usePublicUserData from "../../features/accounts/hooks/usePublicUserData";
+import useUnsavedStatus from "../../hooks/useUnsavedStatus";
 import NotFoundPage from "../NotFound/NotFoundPage";
+import { useToggleState } from "../../hooks/useToggleState";
 
 export default function ProfilePage({ username = useParams()?.username }: { username?: string }): JSX.Element {
     if (!username) {
@@ -18,165 +19,74 @@ export default function ProfilePage({ username = useParams()?.username }: { user
         );
     }
 
-    const currentUser = useUserContext().user;
-    const [user, setUser] = useState<PublicUserData | null>(null);
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [isNotFound, setIsNotFound] = useState(false);
-    const [isEditing, setIsEditing] = useState(false);
-
-    useEffect(() => {
-        (async () => {
-            const response = await getPublicUserDataFromUsername(username);
-            
-            if (!response) {
-                setIsNotFound(true);
-                return;
-            }
-            setUser(response);
-
-            if (currentUser && response.userId == currentUser.userId) {
-                setIsAuthenticated(true);
-            }
-        })();
-    }, [currentUser]);
-
-    type TagChanges = {
-        add: string[],
-        remove: string[],
-        clear: boolean
-    };
-
-    const [unsavedProfilePicture, setUnsavedProfilePicture] = useState<File | null>(null);
-    const [unsavedBio, setUnsavedBio] = useState<string | null>(null);
-    const [tagChanges, setTagChanges] = useState<TagChanges>({ add: [], remove: [], clear: false });
-    const [isUnsaved, setIsUnsaved] = useState(false);
-
-    useEffect(() => {
-        if (unsavedProfilePicture || unsavedBio !== null || tagChanges.add.length || tagChanges.remove.length || tagChanges.clear) {
-            setIsUnsaved(true);
-            return;
+    const { user, isAuthenticated, isUserFound } = usePublicUserData(username);
+    const [isEditing, toggleIsEditing] = useToggleState(false, (isEditing) => {
+        if (isEditing) {
+            saveChanges();
         }
-        
-        setIsUnsaved(false);
-    }, [unsavedBio, unsavedProfilePicture, tagChanges]);
+    });
 
-    async function handleUpload(event: ChangeEvent<HTMLInputElement>) {
+    const [updatedProfilePicture, setUpdatedProfilePicture] = useState<File | null>(null);
+    const [updatedBio, setUpdatedBio] = useState<string | null>(null);
+    const [updatedTags, setUpdatedTags] = useState<string[] | null>(null);
+    
+    const isUnsaved = useUnsavedStatus([updatedProfilePicture, updatedBio, updatedTags]);
+
+    async function handleUploadProfilePicture(event: ChangeEvent<HTMLInputElement>) {
         if (event.target.files) {
-            setUnsavedProfilePicture(event.target.files[0]);
+            setUpdatedProfilePicture(event.target.files[0]);
         }
     }
 
-    async function handleSave() {
-        if (unsavedProfilePicture) {
-            const success = await uploadProfilePicture(unsavedProfilePicture);
+    async function saveChanges() {
+        if (updatedProfilePicture) {
+            const success = await uploadProfilePicture(updatedProfilePicture);
             
             if (success) {
-                setUnsavedProfilePicture(null);
+                setUpdatedProfilePicture(null);
             }
         }
 
-        if (unsavedBio) {
-            const success = await uploadBio(unsavedBio);
+        if (updatedBio) {
+            const success = await uploadBio(updatedBio);
 
             if (success) {
-                setUnsavedBio(null);
+                setUpdatedBio(null);
             }
-        } else if (unsavedBio === "") {
+        } else if (updatedBio === "") {
             const success = await deleteBio();
 
             if (success) {
-                setUnsavedBio(null);
+                setUpdatedBio(null);
             }
         }
 
-        if (tagChanges.clear) {
+        if (updatedTags?.length) {
+            const success = await uploadTags(updatedTags);
+
+            if (success) {
+                setUpdatedTags(null);
+            }
+        } else if (updatedTags) {
             const success = await deleteTags();
 
             if (success) {
-                setTagChanges((prev) => ({
-                    add: prev.add,
-                    remove: prev.remove,
-                    clear: false
-                }));
-            }
-        }
-
-        if (tagChanges.add.length) {
-            const success = await uploadTags(tagChanges.add);
-
-            if (success) {
-                setTagChanges((prev) => ({
-                    add: [],
-                    remove: prev.remove,
-                    clear: false
-                }));
-            }
-        }
-
-        if (tagChanges.remove.length) {
-            const success = await deleteTags(tagChanges.remove);
-
-            if (success) {
-                setTagChanges((prev) => ({
-                    add: prev.add,
-                    remove: [],
-                    clear: false
-                }));
+                setUpdatedTags(null);
             }
         }
     }
 
-    async function handleChangeTags(value: string[], reason: AutocompleteChangeReason) {
-        const add = new Set(tagChanges.add);
-        const remove = new Set(tagChanges.remove);
-        let clear = tagChanges.clear;
-        
-        switch (reason){
-            case "createOption":
-                value.forEach((tag) => add.add(tag));
-                break;
-            case "selectOption":
-                value.forEach((tag) => add.add(tag));
-                break;
-            case "removeOption":
-                value.forEach((tag) => remove.add(tag));
-                break;
-            case "clear":
-                add.clear();
-                remove.clear();
-                clear = true;
-                break;
-        }
-
-        add.forEach((tag) => {
-            if (remove.has(tag)) {
-                add.delete(tag);
-                remove.delete(tag);
-            }
-        });
-
-        setTagChanges({
-            add: Array.from(add),
-            remove: Array.from(remove),
-            clear: clear
-        });
+    async function handleUpdateTags(_event: SyntheticEvent, value: string[], _reason: AutocompleteChangeReason) {
+        setUpdatedTags(value);
     }
 
-    async function handleToggleEdit() {
-        if (isEditing) {
-            handleSave();
-        }
-
-        setIsEditing((isEditing) => !isEditing);
-    }
-
-    if (!user && isNotFound) {
+    if (!user && !isUserFound) {
         return (
             <NotFoundPage />
         );
     } else if (!user) {
         return (
-            <NotFoundPage /> // replace with something that throws suspense or something in the future
+            <NotFoundPage /> // todo: replace with something that throws suspense or something in the future to get a loading page and not a 404 page
         );
     }
 
@@ -185,8 +95,11 @@ export default function ProfilePage({ username = useParams()?.username }: { user
             <Container maxWidth = "md">
                 <ProfilePicture userId = { user.userId } />
                     
-                <Typography variant = "h1">
-                    { `${user.firstName} ${user.lastName}` }
+                <Typography variant = "h1" marginBottom = { 0 }>
+                    { `${ user.firstName + " " + user.lastName }` }
+                </Typography>
+                <Typography variant = "body1" marginTop = { 0 }>
+                    @{ user.username }
                 </Typography>
 
                 <Box sx = {{ width: "60%", mx: "auto", textAlign: "left" }}>
@@ -199,35 +112,37 @@ export default function ProfilePage({ username = useParams()?.username }: { user
 
     return (
         <Container maxWidth = "md">
-            <ProfilePicture userId = { user.userId } onUpload = { isEditing ? handleUpload : undefined } />
+            <ProfilePicture userId = { user.userId } onUpload = { isEditing ? handleUploadProfilePicture : undefined } />
                 
-            <Typography variant = "h1">
-                { `${user.firstName} ${user.lastName}` }
+            <Typography variant = "h1" marginBottom = { 0 }>
+                { `${ user.firstName + " " + user.lastName }` }
+            </Typography>
+            <Typography variant = "body1" marginTop = { 0 }>
+                @{ user.username }
             </Typography>
 
             <Box sx = {{ width: "60%", mx: "auto", textAlign: "left" }}>
-                <Bio userId = { user.userId } onEdit = { isEditing ? (event) => setUnsavedBio(event.target.value) : undefined } />
+                <Bio userId = { user.userId } onEdit = { isEditing ? (event) => setUpdatedBio(event.target.value) : undefined } />
 
-                <Tags userId = { user.userId } onEdit = { isEditing ? (_, value, reason) => handleChangeTags(value, reason) : undefined } />
+                <Tags userId = { user.userId } onEdit = { isEditing ? handleUpdateTags : undefined } />
             </Box>
 
             <Box sx = {{ display: "flex", width: "fit-content", mt: "1rem", mx: "auto" }} gap = "1rem">
                 { isEditing ?
                     <Button
                         variant = "contained"
-                        onClick = { handleToggleEdit }
+                        onClick = { () => toggleIsEditing() }
                     >
                         { isUnsaved ? "Save changes" : "Finish editing" }
                     </Button>
                 :
                     <Button
                         variant = "contained"
-                        onClick = { handleToggleEdit }
+                        onClick = { () => toggleIsEditing() }
                     >
                         Edit profile
                     </Button>
                 }
-                    
 
                 <Button
                     component = { Link }

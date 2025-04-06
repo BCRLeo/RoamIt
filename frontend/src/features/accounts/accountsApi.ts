@@ -330,8 +330,8 @@ export async function deleteTags(tags?: string | string[]) {
     try {
         const response = await fetch("/api/users/tags", {
             method: "DELETE",
-            body: tags ? JSON.stringify(tags) : undefined,
-            headers: tags ? {
+            body: tags?.length ? JSON.stringify(tags) : undefined,
+            headers: tags?.length ? {
                 "Content-Type": "application/json"
             } : undefined
         });
