@@ -1,5 +1,5 @@
 import { Typography } from "@mui/material";
-import SignUpForm from "../../features/auth/components/SignUpForm";
+import SignUpForm from "../../features/accounts/components/SignUpForm";
 
 export default function SignUpPage() {
     return (

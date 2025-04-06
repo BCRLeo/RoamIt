@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { Button, ButtonProps, Modal } from "@mui/material";
-import SignUpForm from "./SignUpForm";
+import SignUpForm from "../../accounts/components/SignUpForm";
 import LogInForm from "./LogInForm";
 
 export default function AuthModals( buttonProps: ButtonProps) {

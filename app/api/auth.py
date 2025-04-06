@@ -1,16 +1,13 @@
-from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify
-from ..models import User
-from ..extensions import db
-from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import login_user, login_required, logout_user, current_user
-import os
 import re
-from datetime import datetime, date
+from flask import Blueprint, request, jsonify
+from flask_login import login_user, logout_user, current_user
+from werkzeug.security import check_password_hash
+from ..extensions import db
+from ..models import User
+from .accounts import EMAIL_REGEX
 
 auth = Blueprint('auth', __name__)
 # Regular expression for basic email and password validation
-EMAIL_REGEX = r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
-PASSWORD_REGEX = r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)[A-Za-z\d@$!%*?&-]{8,}$"
 
 @auth.route("/sessions", methods = ["GET"])
 def get_current_user():
@@ -41,10 +38,10 @@ def log_in():
         return jsonify({"error": "Missing password."}), 400
     
     if re.match(EMAIL_REGEX, login):
-        user = User.query.filter_by(email = login).first()
+        user = db.session.execute(db.select(User).filter_by(email = login)).scalar_one_or_none()
         login_type = "email"
     else:
-        user = User.query.filter_by(username = login).first()
+        user = db.session.execute(db.select(User).filter_by(username = login)).scalar_one_or_none()
         login_type = "username"
     
     if user and check_password_hash(user.password, password):

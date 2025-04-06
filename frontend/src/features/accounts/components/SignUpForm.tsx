@@ -5,17 +5,10 @@ import { DateField } from "@mui/x-date-pickers";
 import { Dayjs } from "dayjs";
 import { useNavigate } from "react-router";
 
-import { isEmailAvailable, isUsernameAvailable, signUp } from "../../accounts/accountsApi";
-import { EMAIL_REGEX, MAX_BIRTHDAY, MIN_BIRTHDAY, PASSWORD_REGEX } from "../authConstants";
-import useUserContext from "../hooks/useUserContext";
 import PopUp from "../../../components/PopUp/PopUp";
-
-enum Gender {
-    Man = "Man",
-    Woman = "Woman",
-    Other = "Other",
-    NA = "NA"
-}
+import useUserContext from "../../auth/hooks/useUserContext";
+import { isEmailAvailable, isUsernameAvailable, signUp } from "../accountsApi";
+import { EMAIL_REGEX, Gender, isGender, MAX_BIRTHDAY, MIN_BIRTHDAY, PASSWORD_REGEX, USERNAME_REGEX } from "../accountsConstants";
 
 export default function SignUpForm({ openLogIn }: { openLogIn?: () => void }) {
     const [firstName, setFirstName] = useState("");
@@ -33,7 +26,7 @@ export default function SignUpForm({ openLogIn }: { openLogIn?: () => void }) {
     const [birthday, setBirthday] = useState("");
     const [birthdayError, setBirthdayError] = useState("");
 
-    const [gender, setGender] = useState("");
+    const [gender, setGender] = useState<Gender | null>(null);
     const [genderError, setGenderError] = useState("");
 
     const [password, setPassword] = useState("");
@@ -83,7 +76,12 @@ export default function SignUpForm({ openLogIn }: { openLogIn?: () => void }) {
         const value = event.target.value;
         setUsername(value);
         setFormError("");
-        // Check username RegEx once we define it
+        
+        if (!USERNAME_REGEX.test(value)) {
+            setUsernameError("");
+            return;
+        }
+
         const available = await isUsernameAvailable(value);
 
         if (available) {
@@ -121,14 +119,14 @@ export default function SignUpForm({ openLogIn }: { openLogIn?: () => void }) {
 
     function updateGender(event: SelectChangeEvent<string>) {
         const value = event.target.value;
-        setGender(value);
         setFormError("");
 
-        if (!(value in Gender)) {
+        if (!isGender(value)) {
             setGenderError("Invalid gender.");
             return;
         }
 
+        setGender(value);
         setGenderError("");
     }
 
@@ -182,6 +180,9 @@ export default function SignUpForm({ openLogIn }: { openLogIn?: () => void }) {
         if (!username) {
             setUsernameError("Missing username.");
             missingError = true;
+        } else if (!USERNAME_REGEX.test(username)) {
+            setUsernameError("Invalid username.");
+            otherError = true;
         }
 
         if (!email) {
@@ -212,7 +213,7 @@ export default function SignUpForm({ openLogIn }: { openLogIn?: () => void }) {
             return;
         }
 
-        const response = await signUp(firstName, lastName, username, email, password, birthday, gender);
+        const response = await signUp(firstName, lastName, username, email, password, birthday, gender!);
 
         resetAllErrors();
 
@@ -297,17 +298,17 @@ export default function SignUpForm({ openLogIn }: { openLogIn?: () => void }) {
                         <InputLabel>Gender</InputLabel>
                         <Select
                             label = "Gender"
-                            value = { gender }
+                            value = { gender ?? undefined }
                             onChange = { updateGender }
                             error = { genderError !== "" }
                             sx = {{ textAlign: "left"}}
                             required
                         >
                             <MenuItem disabled selected>-- Select an option --</MenuItem>
-                            <MenuItem value = { Gender.Man }>Man</MenuItem>
-                            <MenuItem value = { Gender.Woman }>Woman</MenuItem>
-                            <MenuItem value = { Gender.Other }>Other</MenuItem>
-                            <MenuItem value = { Gender.NA }>Prefer not to say</MenuItem>
+                            <MenuItem value = { "Man" }>Man</MenuItem>
+                            <MenuItem value = { "Woman" }>Woman</MenuItem>
+                            <MenuItem value = { "Other" }>Other</MenuItem>
+                            <MenuItem value = { "PNS" }>Prefer not to say</MenuItem>
                         </Select>
                         { genderError && 
                             <FormHelperText error = { genderError !== "" }>{genderError}</FormHelperText>

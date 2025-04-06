@@ -1,18 +1,24 @@
-from ..models import ProfilePicture, Tag, User
-from ..extensions import db
-from .auth import EMAIL_REGEX, PASSWORD_REGEX
 from datetime import date, datetime
-from flask import Blueprint, jsonify, request, send_file
-from flask_login import current_user, login_user
 from io import BytesIO
 import re
+from flask import Blueprint, jsonify, request, send_file
+from flask_login import current_user, login_user
 from werkzeug.security import generate_password_hash
+from ..models import ProfilePicture, Tag, User
+from ..extensions import db
 
 accounts = Blueprint('accounts', __name__)
 
+USERNAME_REGEX = r"^[A-Za-z][\w.]{3,30}$"
+EMAIL_REGEX = r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
+PASSWORD_REGEX = r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)[A-Za-z\d@$!%*?&-]{8,}$"
+
 @accounts.route("/users", methods = ["POST"])
 def sign_up():
-    data = request.get_json()
+    data = request.get_json(silent = True)
+    if not data:
+        return jsonify({"error": "Missing form data."}), 400
+    
     email = data.get("email")
     username = data.get("username")
     first_name = data.get("first_name")
@@ -21,9 +27,15 @@ def sign_up():
     birthday_str = data.get("birthday")
     gender = data.get("gender")
     
+    if not email or not username or not first_name or not last_name or not password or not birthday_str or not gender:
+        return jsonify({"error": "Missing form data."}), 400
+    
     # Validate email format
     if not re.match(EMAIL_REGEX, email):
         return jsonify({"error": "Invalid email format."}), 400
+    
+    if not re.match(USERNAME_REGEX, username):
+        return jsonify({"error": "Invalid username format."}), 400
     
     # Validate password format using regex
     if not re.match(PASSWORD_REGEX, password):

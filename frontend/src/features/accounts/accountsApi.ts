@@ -1,6 +1,7 @@
 import { PublicUserData, UserData } from "../auth/authApi";
+import { Gender } from "./accountsConstants";
 
-export async function signUp(firstName: string, lastName: string, username: string, email: string, password: string, birthday: string, gender: string): Promise<UserData | null> {
+export async function signUp(firstName: string, lastName: string, username: string, email: string, password: string, birthday: string, gender: Gender): Promise<UserData | null> {
     try {
         const response = await fetch("/api/users", {
             method: "POST",

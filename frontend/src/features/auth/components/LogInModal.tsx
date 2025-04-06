@@ -1,9 +1,8 @@
 import { useState } from "react";
 
 import { Button, ButtonProps, Modal } from "@mui/material";
+import { ClickProps } from "../../accounts/components/SignUpModal";
 import LogInForm from "./LogInForm";
-import { ClickProps } from "./SignUpModal";
-
 
 export default function LogInModal({ clickProps, buttonProps }: { clickProps?: ClickProps, buttonProps?: ButtonProps }) {
     if (clickProps) {
