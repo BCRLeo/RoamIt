@@ -4,13 +4,15 @@
 *For information on setting up the project after cloning the repository, refer to the following section. This subsection documents how the project has been set up. Do not run these steps, they are only here for documentation.*
 
 Create the React project with Vite by running
-```npm create vite@latest```
+```
+npm create vite@latest
+```
 Select React, then TypeScript.
 
 Next, run
 ```
 cd frontend
-npm install
+npm ci
 ```
 to install the dependencies.
 
@@ -27,7 +29,7 @@ cd frontend
 ```
 then run
 ```
-npm install
+npm ci
 ```
 to install all dependencies.
 
@@ -50,13 +52,20 @@ npm run build-watch
 ```
 
 
-## Backend 
+## Backend
+### Database setup
+Run
+```
+python init_db.py
+```
+to initialize the database file.
+
 ### Migrating database
 Run 
 ```
-pip install alembi
+pip install alembic
 ```
-to make sure you have alembic installed and installs it if you don't.
+to make sure you have Alembic installed and installs it if you don't.
 
 Next, run 
 ```

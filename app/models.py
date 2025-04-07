@@ -1,7 +1,8 @@
 from .extensions import db
+from datetime import datetime, timezone
 from flask_login import UserMixin
-from datetime import datetime
 from sqlalchemy import text
+from typing import Optional
 
 # Association table for listing tags
 listing_tags = db.Table(
@@ -33,11 +34,11 @@ discussion_members = db.Table('discussion_members',
 
 class Swipe(db.Model):
     __tablename__ = 'swipes'
-    id = db.Column(db.Integer, primary_key=True)
-    swiped_by_listing_id = db.Column(db.Integer, db.ForeignKey('listings.id'), nullable=False)
-    swiped_on_listing_id = db.Column(db.Integer, db.ForeignKey('listings.id'), nullable=False)
-    is_right_swipe = db.Column(db.Boolean, nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    id: int = db.Column(db.Integer, primary_key=True)
+    swiped_by_listing_id: int = db.Column(db.Integer, db.ForeignKey('listings.id'), nullable=False)
+    swiped_on_listing_id: int = db.Column(db.Integer, db.ForeignKey('listings.id'), nullable=False)
+    is_right_swipe: bool = db.Column(db.Boolean, nullable=False)
+    timestamp: datetime = db.Column(db.DateTime, default=datetime.now(timezone.utc))
 
     swiped_by_listing = db.relationship(
         'Listing',
@@ -76,10 +77,10 @@ class Swipe(db.Model):
 
 class Match(db.Model):
     __tablename__ = 'matches'
-    id = db.Column(db.Integer, primary_key=True)
-    listing1_id = db.Column(db.Integer, db.ForeignKey('listings.id'), nullable=False)
-    listing2_id = db.Column(db.Integer, db.ForeignKey('listings.id'), nullable=False)
-    matched_on = db.Column(db.DateTime, default=datetime.utcnow)
+    id: int = db.Column(db.Integer, primary_key=True)
+    listing1_id: int = db.Column(db.Integer, db.ForeignKey('listings.id'), nullable=False)
+    listing2_id: int = db.Column(db.Integer, db.ForeignKey('listings.id'), nullable=False)
+    matched_on: datetime = db.Column(db.DateTime, default=datetime.now(timezone.utc))
 
     listing1 = db.relationship('Listing', foreign_keys=[listing1_id])
     listing2 = db.relationship('Listing', foreign_keys=[listing2_id])
@@ -105,26 +106,25 @@ class Match(db.Model):
 
 class Listing(db.Model):
     __tablename__ = 'listings'
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    listing_type = db.Column(db.String(20), nullable=False)  # 'short', 'long', or 'hosting'
-    country = db.Column(db.String(100), nullable=False)
-    city = db.Column(db.String(100), nullable=False)
-    start_date = db.Column(db.Date, nullable=False)
-    end_date = db.Column(db.Date, nullable=True)
-    dates_are_approximate = db.Column(db.Boolean, default=True)
-    budget_per_night = db.Column(db.Float, nullable=True)
-    currency = db.Column(db.String(10), nullable=True)
-    description = db.Column(db.Text, nullable=True)
-    trip_completed = db.Column(db.Boolean, nullable = False, default = False)
+    id: int = db.Column(db.Integer, primary_key=True)
+    user_id: int = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    listing_type: str = db.Column(db.String(20), nullable=False)  # 'short', 'long', or 'hosting'
+    country: str = db.Column(db.String(100), nullable=False)
+    city: str = db.Column(db.String(100), nullable=False)
+    start_date: datetime.date = db.Column(db.Date, nullable=False)
+    end_date: Optional[datetime.date] = db.Column(db.Date, nullable=True)
+    dates_are_approximate: bool = db.Column(db.Boolean, default=True)
+    budget_per_night: Optional[float] = db.Column(db.Float, nullable=True)
+    currency: Optional[str] = db.Column(db.String(10), nullable=True)
+    description: Optional[str] = db.Column(db.Text, nullable=True)
+    trip_completed: bool = db.Column(db.Boolean, nullable = False, default = False)
     # Indicates if only users of the same gender should be considered
-    same_gender_preference = db.Column(db.Boolean, default=False)
-    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    same_gender_preference: bool = db.Column(db.Boolean, default=False)
+    timestamp: datetime = db.Column(db.DateTime, index=True, default=datetime.now(timezone.utc))
 
     # Relationships
     creator = db.relationship('User', back_populates='listings')
     tags = db.relationship('Tag', secondary=listing_tags, back_populates='listings')
-
 
     def get_listing_ids(self):
         """Return a list of all listing IDs associated with this user."""
@@ -132,8 +132,8 @@ class Listing(db.Model):
 
 class Tag(db.Model):
     __tablename__ = 'tags'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), unique=True, nullable=False)
+    id: int = db.Column(db.Integer, primary_key=True)
+    name: str = db.Column(db.String(50), unique=True, nullable=False)
 
     # Relationships for both listings and users
     listings = db.relationship('Listing', secondary=listing_tags, back_populates='tags')
@@ -141,31 +141,31 @@ class Tag(db.Model):
 
 class ProfilePicture(db.Model):
     __tablename__ = 'profile_pictures'
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    image_data = db.Column(db.LargeBinary, nullable=False)
-    image_mimetype = db.Column(db.String(255), nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    id: int = db.Column(db.Integer, primary_key=True)
+    user_id: int = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    image_data: bytes = db.Column(db.LargeBinary, nullable=False)
+    image_mimetype: str = db.Column(db.String(255), nullable=False)
+    timestamp: datetime = db.Column(db.DateTime, default=datetime.now(timezone.utc))
 
     # Relationship back to the user
     user = db.relationship('User', back_populates='profile_pictures')
 
 class User(db.Model, UserMixin):
     __tablename__ = 'users'
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(150), unique=True, nullable=False)
-    password = db.Column(db.String(150), nullable=False)
-    username = db.Column(db.String(150), unique=True, nullable=False)
-    first_name = db.Column(db.String(150), nullable = False)
-    last_name = db.Column(db.String(150), nullable = False)
-    birthday = db.Column(db.Date, nullable=False)
-    creation_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    phone_number = db.Column(db.String(20), nullable=True, unique=True)
-    bio = db.Column(db.String(500), nullable=True)
-    gender = db.Column(db.String(20), nullable=False)  # User's gender
+    id: int = db.Column(db.Integer, primary_key=True)
+    email: str = db.Column(db.String(150), unique=True, nullable=False)
+    password: str = db.Column(db.String(150), nullable=False)
+    username: str = db.Column(db.String(150), unique=True, nullable=False)
+    first_name: str = db.Column(db.String(150), nullable = False)
+    last_name: str = db.Column(db.String(150), nullable = False)
+    birthday: datetime.date = db.Column(db.Date, nullable=False)
+    creation_date: datetime.date = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
+    phone_number: Optional[str] = db.Column(db.String(20), nullable=True, unique=True)
+    bio: Optional[str] = db.Column(db.String(500), nullable=True)
+    gender: str = db.Column(db.String(20), nullable=False)
 
-    premium = db.Column(db.Boolean, nullable=False, default=False, server_default=text('false'))
-    is_public = db.Column(db.Boolean, nullable=False, default=False, server_default=text('false'))
+    premium: bool = db.Column(db.Boolean, nullable=False, default=False, server_default=text('false'))
+    is_public: bool = db.Column(db.Boolean, nullable=False, default=False, server_default=text('false'))
 
     __table_args__ = (
         db.UniqueConstraint('phone_number', name='uq_users_phone_number'),
@@ -180,7 +180,7 @@ class User(db.Model, UserMixin):
     #this is commented out assuming that we will access user swipes through their desinations, thus the backref in listings is sufficient, however
     # if we need to access all the swipes across all listings direclty from jsut the user, we will need to use backpopulates one each side of the 
     # relationship 
-
+    
     # Users that this user has blocked; the blocked users will also have a 'blocked_by' attribute via backref
     blocked_users = db.relationship(
         'User',
@@ -191,29 +191,27 @@ class User(db.Model, UserMixin):
         lazy='dynamic'
     )
 
-
-
 class Discussion(db.Model):
     __tablename__ = 'discussions'
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(100), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    id: int = db.Column(db.Integer, primary_key=True)
+    title: Optional[str] = db.Column(db.String(100), nullable=True)
+    created_at: datetime = db.Column(db.DateTime, default=datetime.now(timezone.utc))
     
     members = db.relationship('User', secondary=discussion_members,
-                              backref=db.backref('discussions', lazy='dynamic'))
+        backref=db.backref('discussions', lazy='dynamic'))
     
     messages = db.relationship('Message', backref='discussion', lazy='dynamic')
 
 class Message(db.Model):
     __tablename__ = 'messages'
 
-    id = db.Column(db.Integer, primary_key=True)
-    sender_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    discussion_id = db.Column(db.Integer, db.ForeignKey('discussions.id'), nullable=False)
-    content = db.Column(db.Text, nullable=False)
-    file_url = db.Column(db.String(255), nullable=True) 
-    seen = db.Column(db.Boolean, nullable = False, default = False)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    id: int = db.Column(db.Integer, primary_key=True)
+    sender_id: int = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    discussion_id: int = db.Column(db.Integer, db.ForeignKey('discussions.id'), nullable=False)
+    content: str = db.Column(db.Text, nullable=False)
+    file_url: Optional[str] = db.Column(db.String(255), nullable=True) 
+    seen: bool = db.Column(db.Boolean, nullable = False, default = False)
+    timestamp: datetime = db.Column(db.DateTime, default=datetime.now(timezone.utc))
 
     sender = db.relationship('User', foreign_keys=[sender_id])  
     #conversaion = db.relationship('User', foreign_keys=[discussion_id])
@@ -247,7 +245,6 @@ class Message(db.Model):
         """
         reaction = self.reactions.filter_by(user_id=user.id).first()
         if reaction:
-           
             reaction.reaction_type = reaction_type
         else:
             
@@ -266,11 +263,11 @@ class Message(db.Model):
 
 class Reaction(db.Model):
     __tablename__ = 'reactions'
-    id = db.Column(db.Integer, primary_key=True)
-    message_id = db.Column(db.Integer, db.ForeignKey('messages.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    reaction_type = db.Column(db.String(20), nullable=False)  
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    id: int = db.Column(db.Integer, primary_key=True)
+    message_id: int = db.Column(db.Integer, db.ForeignKey('messages.id'), nullable=False)
+    user_id: int = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    reaction_type: str = db.Column(db.String(20), nullable=False)  
+    timestamp: datetime = db.Column(db.DateTime, default=datetime.now(timezone.utc))
 
     def to_dict(self):
         """
@@ -279,14 +276,13 @@ class Reaction(db.Model):
 
 class Rating(db.Model):
     __tablename__ = 'ratings'
-    id = db.Column(db.Integer, primary_key = True)
-    listing_id = db.Column(db.Integer, db.ForeignKey('listings.id'), nullable=False)
-    rater_id = db.Column(db.Integer, db.ForeignKey('listings.id'), nullable=False)
-    rating = db.Column(db.Integer, nullable=False)
+    id: int = db.Column(db.Integer, primary_key = True)
+    listing_id: int = db.Column(db.Integer, db.ForeignKey('listings.id'), nullable=False)
+    rater_id: int = db.Column(db.Integer, db.ForeignKey('listings.id'), nullable=False)
+    rating: int = db.Column(db.Integer, nullable=False)
 
     listing = db.relationship('Listing', foreign_keys=[listing_id])
-    rater = db.relationship('Listing', foreign_keys=[rater_id])
-
+    rater = db.relationship("Listing", foreign_keys=[rater_id])
 
     @classmethod
     def rate(cls, listing, rater, rating):
