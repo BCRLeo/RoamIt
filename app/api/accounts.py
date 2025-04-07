@@ -251,7 +251,7 @@ def upload_bio():
         
         return "", 200
     except Exception as error:
-        print(f"Error uploading bio:", error)
+        print("Error uploading bio:", error)
         db.session.rollback()
         
         return jsonify({"error": "Error uploading bio."}), 500

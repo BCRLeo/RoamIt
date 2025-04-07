@@ -8,7 +8,6 @@ __pycache__/
 
 # C extensions
 *.so
-alembic/versions
 
 # Distribution / packaging
 .Python
@@ -66,8 +65,11 @@ db.sqlite3
 db.sqlite3-journal
 
 # Flask stuff:
-instance/
+instance/*
+!instance/README.md
 .webassets-cache
+alembic/versions/*
+!alembic/versions/README.md
 
 # Scrapy stuff:
 .scrapy

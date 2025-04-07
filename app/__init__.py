@@ -1,10 +1,5 @@
 import os
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager
-from flask_migrate import Migrate
-from rembg import new_session
-from flask_socketio import SocketIO
 from .events import socketio
 from .extensions import db, login_manager, migrate
 from flask_cors import CORS

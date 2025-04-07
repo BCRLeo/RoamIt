@@ -1,12 +1,9 @@
-Flask                     # The main framework for the web application
-Flask-SQLAlchemy          # ORM for database interactions
-Flask-Login               # For user authentication and session management
-flask_socketio            # For real-time communication between the server and the client
-Flask-Migrate             # Handles database migrations
-Werkzeug                  # Utility library for secure filenames and request handling
-Pillow                    # For image processing
-sqlalchemy-imageattach    # For attaching images to SQLAlchemy models
-SQLAlchemy                # Core library for database operations
-alembic                   # Database migration tool used with SQLAlchemy
-onnxruntime
-flask-cors                # For handling CORS (Cross-Origin Resource Sharing) in Flask
+alembic==1.15.2                 # Database migration tool used with SQLAlchemy
+Flask==3.1.0                    # The main framework for the web application
+Flask-SQLAlchemy==3.1.1         # ORM for database interactions
+Flask-Login==0.6.3              # For user authentication and session management
+Flask-SocketIO==5.5.1           # For real-time communication between the server and the client
+Flask-Migrate==4.1.0            # Handles database migrations
+flask-cors==5.0.1               # For handling CORS (Cross-Origin Resource Sharing) in Flask
+SQLAlchemy==2.0.40              # Core library for database operations
+Werkzeug==3.1.3                 # Utility library for secure filenames and request handling

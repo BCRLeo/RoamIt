@@ -1,0 +1,1 @@
+This folder stores the Alembic migration scripts, which are included in `.gitignore`.

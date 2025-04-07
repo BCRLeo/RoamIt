@@ -1,11 +1,5 @@
-from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify
-from ..models import User
-from ..extensions import db
-from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import login_user, login_required, logout_user, current_user
-import os
-import re
-from datetime import datetime, date
+from flask import Blueprint, jsonify
+from flask_login import current_user
 
 listings = Blueprint("listings", __name__)
 

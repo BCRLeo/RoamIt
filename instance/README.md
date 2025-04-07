@@ -1,0 +1,1 @@
+This folder stores the `database.db` file, which is included in `.gitignore`.

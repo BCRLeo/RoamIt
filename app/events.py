@@ -1,6 +1,6 @@
-from .extensions import socketio, db, login_manager, migrate
-from flask_socketio import emit, join_room, leave_room
-from flask import request, session
+from .extensions import socketio, db
+from flask_socketio import emit, join_room
+from flask import session
 from flask_login import current_user
 from .models import Message
 
