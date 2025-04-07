@@ -4,7 +4,7 @@ import { PhotoCamera } from "@mui/icons-material";
 import { Avatar, Badge, Box } from "@mui/material";
 
 import UploadButton from "../../../components/UploadButton/UploadButton";
-import { getProfilePictureUrl, getPublicUserDataFromId } from "../accountsApi";
+import { getProfilePictureUrl, getUserData } from "../accountsApi";
 import { useSuspenseQueries } from "@tanstack/react-query";
 
 export default function ProfilePicture(props: {userId?: number} | {userId: number, onUpload: ChangeEventHandler<HTMLInputElement>}) {
@@ -23,7 +23,7 @@ export default function ProfilePicture(props: {userId?: number} | {userId: numbe
         queries: [
             {
                 queryKey: ["username", userId],
-                queryFn: () => getPublicUserDataFromId(userId)
+                queryFn: () => getUserData(userId, true)
             },
             {
                 queryKey: ["profilePictureUrl", userId],

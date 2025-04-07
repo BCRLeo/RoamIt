@@ -131,7 +131,7 @@ def get_user_from_email(email: str):
         }
     }), 200
 
-@accounts.route("/users/username/<username>", methods = ["GET"])
+@accounts.route("/users/@<username>", methods = ["GET"])
 def get_user_from_username(username: str):
     privacy = request.args.get("privacy")
     user = db.session.execute(db.select(User).filter_by(username = username)).scalar_one_or_none()
@@ -213,12 +213,12 @@ def get_profile_picture_from_user_id(user_id: int):
         print(f"Error retrieving profile picture for user {user.username}: {error}")
         return jsonify({"error": "Failed to retrieve profile picture."}), 500
 
-@accounts.route("/users/username/<username>/profile-picture", methods = ["GET"])
+@accounts.route("/users/@<username>/profile-picture", methods = ["GET"])
 def get_profile_picture_from_username(username: str):
     user = db.session.execute(db.select(User).filter_by(username = username)).scalar_one_or_none()
     
     if not user:
-        return jsonify({"error": f"User {username} not found."}), 404
+        return jsonify({"error": f"User @{username} not found."}), 404
     
     return get_profile_picture_from_user_id(user.id)
 
@@ -270,12 +270,12 @@ def get_bio_from_user_id(user_id: int):
     
     return jsonify({"data": bio}), 200
 
-@accounts.route("/users/<username>/bio", methods = ["GET"])
+@accounts.route("/users/@<username>/bio", methods = ["GET"])
 def get_bio_from_username(username: str):
     user = db.session.execute(db.select(User).filter_by(username = username)).scalar_one_or_none()
     
     if not user:
-        return jsonify({"error": f"User {username} not found."}), 404
+        return jsonify({"error": f"User @{username} not found."}), 404
     
     bio = user.bio
     
@@ -345,12 +345,12 @@ def get_tags_from_user_id(user_id: int):
     tag_names = [tag.name for tag in tags]
     return jsonify({"data": tag_names}), 200
 
-@accounts.route("/users/<username>/tags", methods = ["GET"])
+@accounts.route("/users/@<username>/tags", methods = ["GET"])
 def get_tags_from_username(username: int):
     user = db.session.execute(db.select(User).filter_by(username = username)).scalar_one_or_none()
     
     if not user:
-        return jsonify({"error": f"User {username} not found."}), 404
+        return jsonify({"error": f"User @{username} not found."}), 404
     
     tags = user.tags
     

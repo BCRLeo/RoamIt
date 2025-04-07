@@ -32,9 +32,14 @@ export async function signUp(firstName: string, lastName: string, username: stri
     return null;
 }
 
-export async function getUserDataFromId(userId: number): Promise<PublicUserData | null> {
+export async function getUserData(userIdOrUsername: number | string, isPublic?: false): Promise<UserData | null>;
+export async function getUserData(userIdOrUsername: number | string, isPublic: true): Promise<PublicUserData | null>;
+export async function getUserData(userIdOrUsername: number | string, isPublic: boolean = false) {
+    const possessiveUser = typeof(userIdOrUsername) === "number" ? `user #${ userIdOrUsername }` : "@" + userIdOrUsername;
+    const urlUser = typeof(userIdOrUsername) === "number" ? userIdOrUsername : "@" + userIdOrUsername;
+
     try {
-        const response = await fetch (`/api/users/${ userId }`, { method: "GET" });
+        const response = await fetch (`/api/users/${ urlUser }${ isPublic ? "?privacy=public" : "" }`, { method: "GET" });
         const data = await response.json()
 
         if (response.ok) {
@@ -43,24 +48,7 @@ export async function getUserDataFromId(userId: number): Promise<PublicUserData 
 
         throw new Error(data.error);
     } catch (error) {
-        console.error(`Error retrieving user #${ userId }'s data:`, error);
-    }
-
-    return null;
-}
-
-export async function getPublicUserDataFromId(userId: number): Promise<PublicUserData | null> {
-    try {
-        const response = await fetch (`/api/users/${ userId }?privacy=public`, { method: "GET" });
-        const data = await response.json()
-
-        if (response.ok) {
-            return data.data;
-        }
-
-        throw new Error(data.error);
-    } catch (error) {
-        console.error(`Error retrieving user #${ userId }'s public data:`, error);
+        console.error(`Error retrieving ${ possessiveUser }'s data:`, error);
     }
 
     return null;
@@ -101,7 +89,7 @@ export async function isUsernameAvailable(username: string): Promise<boolean> {
     }
 
     try {
-        const response = await fetch(`/api/users/username/${ username }`, { method: "GET" });
+        const response = await fetch(`/api/users/@${ username }`, { method: "GET" });
         
         if (response.status === 404) {
             return true;
@@ -110,39 +98,6 @@ export async function isUsernameAvailable(username: string): Promise<boolean> {
         console.error("Error checking username availability:", error);
     }
     return false;
-}
-
-export async function getUserFromUsername(username: string): Promise<UserData | null> {
-    try {
-        const response = await fetch(`/api/users/username/${ username }`, { method: "GET" });
-        const data = await response.json();
-        
-        if (response.ok) {
-            return data.data;
-        }
-
-        throw new Error(data.error);
-    } catch (error) {
-        console.error(`Error retrieving ${ username }'s data:`, error);
-    }
-    return null;
-}
-
-export async function getPublicUserDataFromUsername(username: string): Promise<PublicUserData | null> {
-    try {
-        const response = await fetch (`/api/users/username/${ username }?privacy=public`, { method: "GET" });
-        const data = await response.json()
-
-        if (response.ok) {
-            return data.data;
-        }
-
-        throw new Error(data.error);
-    } catch (error) {
-        console.error(`Error retrieving ${ username }'s public data:`, error);
-    }
-
-    return null;
 }
 
 export async function uploadProfilePicture(image: File): Promise<boolean> {
@@ -172,18 +127,21 @@ export async function uploadProfilePicture(image: File): Promise<boolean> {
 
 export async function getProfilePicture(userIdOrUsername?: number | string): Promise<Blob | null> {
     let possessiveUser = "user";
+    let urlUser = "";
 
     switch (typeof(userIdOrUsername)) {
         case "number":
             possessiveUser = `user #${ userIdOrUsername }}`;
+            urlUser = userIdOrUsername + "/";
             break;
         case "string":
             possessiveUser = userIdOrUsername;
+            urlUser = "@" + userIdOrUsername + "/";
             break;
     }
 
     try {
-        const response = await fetch(`/api/users/${ userIdOrUsername ? `${ userIdOrUsername }/` : "" }profile-picture`, { method: "GET" });
+        const response = await fetch(`/api/users/${ urlUser ?? null }profile-picture`, { method: "GET" });
 
         if (!response.ok) {
             console.error(`Failed to retrieve ${ possessiveUser }$'s profile picture.`);
@@ -241,10 +199,10 @@ export async function uploadBio(bio: string) {
 }
 
 export async function getBio(userIdOrUsername: number | string): Promise<string | null> {
-    const possessiveUser = typeof(userIdOrUsername) === "number" ? `user #${ userIdOrUsername }` : userIdOrUsername;
+    const possessiveUser = typeof(userIdOrUsername) === "number" ? `user #${ userIdOrUsername }` : "@" + userIdOrUsername;
 
     try {
-        const response = await fetch(`/api/users/${ userIdOrUsername }/bio`, { method: "GET" });
+        const response = await fetch(`/api/users/${ typeof(userIdOrUsername) === "number" ? userIdOrUsername : "@" + userIdOrUsername }/bio`, { method: "GET" });
         const data = await response.json();
 
         if (response.ok) {
@@ -304,10 +262,10 @@ export async function uploadTags(tags: string | string[]) {
 }
 
 export async function getTags(userIdOrUsername: number | string): Promise<string[] | null> {
-    const possessiveUser = typeof(userIdOrUsername) === "number" ? `user #${ userIdOrUsername }` : userIdOrUsername;
+    const possessiveUser = typeof(userIdOrUsername) === "number" ? `user #${ userIdOrUsername }` : "@" + userIdOrUsername;
 
     try {
-        const response = await fetch(`/api/users/${ userIdOrUsername }/tags`, { method: "GET" });
+        const response = await fetch(`/api/users/${ typeof(userIdOrUsername) === "number" ? userIdOrUsername : "@" + userIdOrUsername }/tags`, { method: "GET" });
         const data = await response.json();
 
         if (!response.ok) {
