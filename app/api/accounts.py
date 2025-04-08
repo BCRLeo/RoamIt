@@ -12,6 +12,7 @@ accounts = Blueprint('accounts', __name__)
 USERNAME_REGEX = r"^[A-Za-z][\w.]{3,30}$"
 EMAIL_REGEX = r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
 PASSWORD_REGEX = r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)[A-Za-z\d@$!%*?&-]{8,}$"
+PHONE_REGEX = r"^\+?\d{7,15}$"
 
 @accounts.route("/users", methods = ["POST"])
 def sign_up():
@@ -399,3 +400,51 @@ def delete_tags():
         db.session.rollback()
         
         return jsonify({"error": error}), 500
+    
+@accounts.route("/users/phone", methods=["POST"])
+def upload_phone_number():
+    if not current_user.is_authenticated:
+        return jsonify({"error": "User not authenticated."}), 401
+    
+    try:
+        data = request.data.decode()
+        if not data:
+            return jsonify({"error": "No phone number provided."}), 400
+        
+        if not re.match(PHONE_REGEX, data):
+            return jsonify({"error": "Invalid phone number format."}), 400
+
+        current_user.phone_number = data
+        db.session.commit()
+        return "", 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": f"Failed to update phone number: {str(e)}"}), 500
+    
+@accounts.route("/users/<int:user_id>/phone", methods=["GET"])
+def get_phone_number_by_user_id(user_id: int):
+    user = db.session.execute(db.select(User).filter_by(id=user_id)).scalar_one_or_none()
+    
+    if not user:
+        return jsonify({"error": "User not found."}), 404
+
+    # Restrict to owner of profile
+    if not current_user.is_authenticated or current_user.id != user_id:
+        return jsonify({"error": "Unauthorized access to phone number."}), 403
+
+    if not user.phone_number:
+        return jsonify({"error": "No phone number found."}), 404
+
+    return jsonify({"data": user.phone_number}), 200
+
+@accounts.route("/users/phone", methods=["DELETE"])
+def delete_phone():
+    if not current_user.is_authenticated:
+        return jsonify({"error": "User not authenticated."}), 401
+    try:
+        current_user.phone_number = None
+        db.session.commit()
+        return "", 204
+    except Exception as error:
+        db.session.rollback()
+        return jsonify({"error": str(error)}), 500

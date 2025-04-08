@@ -306,3 +306,53 @@ export async function deleteTags(tags?: string | string[]) {
 
     return false;
 }
+
+export async function uploadPhone(phone: string): Promise<boolean> {
+    try {
+        const response = await fetch("/api/users/phone", {
+            method: "POST",
+            body: phone,
+        });
+    
+        if (response.ok) return true;
+    
+        const data = await response.json();
+        throw new Error(data.error);
+    } catch (error) {
+        console.error("Error uploading phone number:", error);
+    }
+
+    return false;
+}
+
+export async function getPhone(userId: number): Promise<string | null> {
+    try {
+        const response = await fetch(`/api/users/${userId}/phone`, { method: "GET" });
+        const data = await response.json();
+    
+        if (response.ok) {
+            return data.data;
+        }
+    
+        throw new Error(data.error);
+    } catch (error) {
+        console.error(`Error retrieving user #${userId}'s phone number.`, error);
+    }
+
+    return null;
+}
+
+export async function deletePhone(): Promise<boolean> {
+    try {
+        const response = await fetch("/api/users/phone", { method: "DELETE" });
+    
+        if (response.ok) return true;
+    
+        const data = await response.json();
+        throw new Error(data.error);
+    } catch (error) {
+        console.error("Error deleting phone number:", error);
+    }
+
+    return false;
+}
