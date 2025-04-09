@@ -35,11 +35,14 @@ def create_app():
     from app.main import main as main_blueprint
     app.register_blueprint(main_blueprint)
     
+    from app.api.accounts import accounts as accounts_blueprint
+    app.register_blueprint(accounts_blueprint, url_prefix = "/api")
+    
     from app.api.auth import auth as auth_blueprint
     app.register_blueprint(auth_blueprint, url_prefix = "/api")
     
-    from app.api.accounts import accounts as accounts_blueprint
-    app.register_blueprint(accounts_blueprint, url_prefix = "/api")
+    from app.api.listings import listings as listings_blueprint
+    app.register_blueprint(listings_blueprint, url_prefix = "/api")
 
     # Register socketio
     socketio.init_app(app,

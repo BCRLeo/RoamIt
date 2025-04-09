@@ -1,6 +1,9 @@
 from .extensions import db
-from datetime import datetime, timezone
+from config import GOOGLE_API_KEY
+from datetime import date, datetime, timezone
 from flask_login import UserMixin
+from geodistpy import geodist
+import requests
 from sqlalchemy import text
 from typing import Optional
 
@@ -29,6 +32,12 @@ blocks = db.Table(
 discussion_members = db.Table('discussion_members',
     db.Column('discussion_id', db.Integer, db.ForeignKey('discussions.id'), primary_key=True),
     db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True)
+)
+
+# Association table for each locations' listings
+location_listings = db.Table("location_listings",
+    db.Column("location_id", db.Integer, db.ForeignKey("locations.id"), primary_key = True),
+    db.Column("listing_id", db.Integer, db.ForeignKey("listings.id"), primary_key = True)
 )
 
 
@@ -108,27 +117,51 @@ class Listing(db.Model):
     __tablename__ = 'listings'
     id: int = db.Column(db.Integer, primary_key=True)
     user_id: int = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    listing_type: str = db.Column(db.String(20), nullable=False)  # 'short', 'long', or 'hosting'
-    country: str = db.Column(db.String(100), nullable=False)
-    city: str = db.Column(db.String(100), nullable=False)
-    start_date: datetime.date = db.Column(db.Date, nullable=False)
-    end_date: Optional[datetime.date] = db.Column(db.Date, nullable=True)
+    category: str = db.Column(db.String(20), nullable=False)  # 'short', 'long', or 'hosting'
+    start_date: date = db.Column(db.Date, nullable=False)
+    end_date: Optional[date] = db.Column(db.Date, nullable=True)
     dates_are_approximate: bool = db.Column(db.Boolean, default=True)
-    budget_per_night: Optional[float] = db.Column(db.Float, nullable=True)
+    nightly_budget: Optional[float] = db.Column(db.Float, nullable=True)
     currency: Optional[str] = db.Column(db.String(10), nullable=True)
     description: Optional[str] = db.Column(db.Text, nullable=True)
-    trip_completed: bool = db.Column(db.Boolean, nullable = False, default = False)
+    is_complete: bool = db.Column(db.Boolean, nullable = False, default = False)
     # Indicates if only users of the same gender should be considered
-    same_gender_preference: bool = db.Column(db.Boolean, default=False)
+    prefers_same_gender: bool = db.Column(db.Boolean, default=False)
     timestamp: datetime = db.Column(db.DateTime, index=True, default=datetime.now(timezone.utc))
 
     # Relationships
     creator = db.relationship('User', back_populates='listings')
     tags = db.relationship('Tag', secondary=listing_tags, back_populates='listings')
-
-    def get_listing_ids(self):
-        """Return a list of all listing IDs associated with this user."""
-        return [listing.id for listing in self.listings.all()]
+    location = db.relationship("Location", secondary = location_listings, back_populates = "listings")
+    
+    def to_dict(self, for_javascript: bool):
+        return {
+            "id": self.id,
+            "userId": self.user_id,
+            "category": self.category,
+            "startDate": self.start_date,
+            "endDate": self.end_date,
+            "datesAreApproximate": self.dates_are_approximate,
+            "nightlyBudget": self.nightly_budget,
+            "currency": self.currency,
+            "description": self.description,
+            "isComplete": self.is_complete,
+            "prefersSameGender": self.prefers_same_gender,
+            "timestamp": self.timestamp
+        } if for_javascript else {
+            "id": self.id,
+            "user_id": self.user_id,
+            "category": self.category,
+            "start_date": self.start_date,
+            "end_date": self.end_date,
+            "dates_are_approximate": self.dates_are_approximate,
+            "nightly_budget": self.nightly_budget,
+            "currency": self.currency,
+            "description": self.description,
+            "is_complete": self.is_complete,
+            "prefers_same_gender": self.prefers_same_gender,
+            "timestamp": self.timestamp
+        }
 
 class Tag(db.Model):
     __tablename__ = 'tags'
@@ -158,8 +191,8 @@ class User(db.Model, UserMixin):
     username: str = db.Column(db.String(150), unique=True, nullable=False)
     first_name: str = db.Column(db.String(150), nullable = False)
     last_name: str = db.Column(db.String(150), nullable = False)
-    birthday: datetime.date = db.Column(db.Date, nullable=False)
-    creation_date: datetime.date = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
+    birthday: date = db.Column(db.Date, nullable=False)
+    creation_date: date = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
     phone_number: Optional[str] = db.Column(db.String(20), nullable=True, unique=True)
     bio: Optional[str] = db.Column(db.String(500), nullable=True)
     gender: str = db.Column(db.String(20), nullable=False)
@@ -190,6 +223,10 @@ class User(db.Model, UserMixin):
         backref='blocked_by',
         lazy='dynamic'
     )
+    
+    def get_listing_ids(self):
+        """Return a list of all listing IDs associated with this user."""
+        return [listing.id for listing in self.listings.all()]
 
 class Discussion(db.Model):
     __tablename__ = 'discussions'
@@ -293,3 +330,62 @@ class Rating(db.Model):
         )
         db.session.add(new_rating)
         db.session.commit()
+
+class Location(db.Model):
+    __tablename__ = "locations"
+
+    id: int = db.Column(db.Integer, primary_key = True)
+    name: Optional[str] = db.Column(db.String(30), nullable = True)
+    latitude: float = db.Column(db.Float, nullable = False)
+    longitude: float = db.Column(db.Float, nullable = False)
+    country: Optional[str] = db.Column(db.String(2), nullable = True)
+    locality: Optional[str] = db.Column(db.String(50), nullable = True)
+    
+    listings = db.relationship("Listing", secondary = location_listings, back_populates = "location", lazy = "dynamic")
+
+    @classmethod
+    def get_location_data(cls, latitude: float, longitude: float) -> tuple[str, None] | tuple[None, str]:
+        response = requests.get(f"https://maps.googleapis.com/maps/api/geocode/json?latlng={latitude},{longitude}&key={GOOGLE_API_KEY}")
+        data = response.json()
+        
+        if data["status"] != "OK":
+            raise requests.HTTPError
+        
+        if not len(data["results"]):
+            raise AttributeError("No results for these coordinates.")
+        
+        country = None
+        locality = None
+        
+        for result in data["results"][0]["address_components"]:
+            if "country" in result["types"]:
+                country: str = result["short_name"]
+            
+            if "locality" in result["types"]:
+                locality: str = result["long_name"]
+        
+        if not country and not locality:
+            raise AttributeError("Country and locality could not be found.")
+        
+        return country, locality
+    
+    def __init__(self, latitude: float, longitude: float, name: str | None = None):
+        country = None
+        locality = None
+        
+        try:
+            country, locality = self.get_location_data(latitude, longitude)
+        except requests.HTTPError as error:
+            print("Error retrieving Google Maps Reverse Geocoding data:", error)
+        except AttributeError as error:
+            print("Error retrieving country and locality:", error)
+        
+        super(Location, self).__init__(name = name, latitude = latitude, longitude = longitude, country = country, locality = locality)
+
+    def __repr__(self):
+        return f"<Location name = {self.name}, latitude = {self.latitude}, longitude = {self.longitude}, country = {self.country}, locality = {self.locality}>"
+
+    def get_locations_within_radius(self, radius):
+        """Return all locations within a given radius (in meters) of this city."""
+
+        return Location.query.filter(geodist((Location.latitude, Location.longitude), (self.latitude, self.longitude)) < radius).all()

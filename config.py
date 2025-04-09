@@ -1,6 +1,12 @@
+from dotenv import load_dotenv
 import os
 
+load_dotenv()
+
 basedir = os.path.abspath(os.path.dirname(__file__))
+
+PASSWORD_HASH = os.environ["PASSWORD_HASH"]
+GOOGLE_API_KEY = os.environ["GOOGLE_API_KEY"]
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'kyUdYH47alPqzXNrr8qC')
