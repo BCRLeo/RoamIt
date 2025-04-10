@@ -15,6 +15,7 @@ const LogInPage = lazy(() => import("./pages/LogIn/LogInPage"));
 const NotFoundPage = lazy(() => import("./pages/NotFound/NotFoundPage"));
 const ProfilePage = lazy(() => import("./pages/Profile/ProfilePage"));
 const SignUpPage = lazy(() => import("./pages/SignUp/SignUpPage"));
+const TestPage = lazy(() => import("./pages/Test/TestPage"));
 
 export default function App() {
     return (
@@ -32,6 +33,8 @@ export default function App() {
                         <Route path = "/signup" element = { <SignUpPage /> } />
                         <Route path = "/listings" element={ <ListingsPage /> } />
                         <Route path = "/chat/:discussionId" element = { <ChatPage /> } />
+
+                        <Route path = "/test" element = { <TestPage />} />
 
                         <Route path = "/*" element = { <NotFoundPage /> } />
                         <Route path = "/not-found" element = { <NotFoundPage /> } />

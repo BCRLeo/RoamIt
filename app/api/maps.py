@@ -1,6 +1,9 @@
 from flask import Blueprint, jsonify, request
 from geodistpy import geodist
 import math
+import requests
+
+from config import GOOGLE_API_KEY
 from ..models import db, Location
 
 maps = Blueprint("maps", __name__)
@@ -69,6 +72,31 @@ def get_location_ids_within_radius(latitude: float, longitude: float, radius: fl
     location_ids = [location.id for location in locations] if not isinstance(locations, Location) else [locations.id]
     
     return location_ids
+
+def get_location_data(latitude: float, longitude: float) -> tuple[str, None] | tuple[None, str]:
+    response = requests.get(f"https://maps.googleapis.com/maps/api/geocode/json?latlng={latitude},{longitude}&key={GOOGLE_API_KEY}")
+    data = response.json()
+    
+    if data["status"] != "OK":
+        raise requests.HTTPError
+    
+    if not len(data["results"]):
+        raise AttributeError("No results for these coordinates.")
+    
+    country = None
+    locality = None
+    
+    for result in data["results"][0]["address_components"]:
+        if "country" in result["types"]:
+            country: str = result["short_name"]
+        
+        if "locality" in result["types"]:
+            locality: str = result["long_name"]
+    
+    if not country and not locality:
+        raise AttributeError("Country and locality could not be found.")
+    
+    return country, locality
 
 @maps.route("/maps/locations")
 def get_locations():
