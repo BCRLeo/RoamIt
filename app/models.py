@@ -3,6 +3,7 @@ from config import GOOGLE_API_KEY
 from datetime import date, datetime, timezone
 from flask_login import UserMixin
 from geodistpy import geodist
+import math
 import requests
 from sqlalchemy import text
 from typing import Optional
@@ -122,7 +123,7 @@ class Listing(db.Model):
     end_date: Optional[date] = db.Column(db.Date, nullable=True)
     dates_are_approximate: bool = db.Column(db.Boolean, default=True)
     nightly_budget: Optional[float] = db.Column(db.Float, nullable=True)
-    currency: Optional[str] = db.Column(db.String(10), nullable=True)
+    currency: Optional[str] = db.Column(db.String(3), nullable=True)
     description: Optional[str] = db.Column(db.Text, nullable=True)
     is_complete: bool = db.Column(db.Boolean, nullable = False, default = False)
     # Indicates if only users of the same gender should be considered
@@ -134,7 +135,7 @@ class Listing(db.Model):
     tags = db.relationship('Tag', secondary=listing_tags, back_populates='listings')
     location = db.relationship("Location", secondary = location_listings, back_populates = "listings")
     
-    def to_dict(self, for_javascript: bool):
+    def to_dict(self, for_javascript: bool = True):
         return {
             "id": self.id,
             "userId": self.user_id,
@@ -370,6 +371,9 @@ class Location(db.Model):
         return country, locality
     
     def __init__(self, latitude: float, longitude: float, name: str | None = None):
+        if abs(latitude) > 90 or abs(longitude) > 180:
+            raise ValueError("Latitude and longitude must fall within +/- 90 and +/- 180 respectively.")
+        
         country = None
         locality = None
         
@@ -385,7 +389,30 @@ class Location(db.Model):
     def __repr__(self):
         return f"<Location name = {self.name}, latitude = {self.latitude}, longitude = {self.longitude}, country = {self.country}, locality = {self.locality}>"
 
-    def get_locations_within_radius(self, radius):
-        """Return all locations within a given radius (in meters) of this city."""
+    def get_locations_within_radius(self, radius: float):
+        """Return all locations within a given radius (in meters) of this location."""
+        if radius <= 0:
+            raise ValueError("Radius must be positive.")
+        
+        lat_min = self.latitude - radius / 111
+        lat_max = self.latitude + radius / 111
+        lon_min = self.longitude - radius / (111 * abs(math.cos(math.radians(self.latitude))))
+        lon_max = self.longitude + radius / (111 * abs(math.cos(math.radians(self.latitude))))
+        
+        results = db.session.execute(
+            db.select(Location)
+            .filter(Location.latitude.between(lat_min, lat_max))
+            .filter(Location.longitude.between(lon_min, lon_max))
+        ).scalars().all()
+        locations = [location for location in results if geodist((location.latitude, location.longitude), (self.latitude, self.longitude)) <= radius]
 
-        return Location.query.filter(geodist((Location.latitude, Location.longitude), (self.latitude, self.longitude)) < radius).all()
+        return locations
+    
+    def to_dict(self):
+        return {
+            "name": self.name,
+            "latitude": self.latitude,
+            "longitude": self.longitude,
+            "country": self.country,
+            "locality": self.locality
+        }
