@@ -47,6 +47,9 @@ def create_app():
     from app.api.maps import maps as maps_blueprint
     app.register_blueprint(maps_blueprint, url_prefix = "/api")
 
+    from app.api.discussions import chat as chat_blueprint
+    app.register_blueprint(chat_blueprint, url_prefix = "/api")
+
     # Register socketio
     socketio.init_app(app,
     manage_session=False,
