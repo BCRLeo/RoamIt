@@ -1,19 +1,9 @@
-import React, { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import io from 'socket.io-client';
-import {
-  Box,
-  Typography,
-  Paper,
-  TextField,
-  Button,
-  List,
-  ListItem,
-  ListItemText,
-  Divider,
-} from '@mui/material';
-import { useParams } from 'react-router-dom';
-import useUserContext from "../../features/auth/hooks/useUserContext";
+import { Box, Typography, Paper } from '@mui/material';
 import { getCurrentUser } from '../../features/auth/authApi';
+import MessageList from "../../features/messages/components/MessageList/MessageList";
+import MessageInput from "../../features/messages/components/MessageInput/MessageInput";
 
 interface Message {
   id: number;
@@ -29,7 +19,7 @@ const socket = io('http://127.0.0.1:5005', {
   autoConnect: false,
 });
 
-function ChatPage({ userId, discussionId }: { userId: number, discussionId: number }) {
+export function ChatPage({ userId, discussionId }: { userId: number; discussionId: number }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -38,126 +28,106 @@ function ChatPage({ userId, discussionId }: { userId: number, discussionId: numb
     const fetchMessages = async () => {
       try {
         const response = await fetch(`/api/discussions/${discussionId}/messages`, {
-          credentials: 'include'
+          credentials: 'include',
         });
         const data = await response.json();
         setMessages(data);
       } catch (err) {
-        console.error("Failed to load messages", err);
+        console.error('Failed to load messages', err);
       }
     };
 
     fetchMessages();
 
-    (async () => {
+    const setupSocket = async () => {
       const user = await getCurrentUser();
-      if (user) {
+      if (!user) return;
+
+      if (!socket.connected) {
         socket.connect();
+      } else {
         socket.emit('join', { discussion_id: discussionId });
       }
-    })();
 
-    const handleReceiveMessage = (msg: Message) => {
-      setMessages((prev) => [...prev, msg]);
+      socket.off('receive_message');
+      socket.off('auth_check');
+      socket.off('connect');
+
+      socket.on('receive_message', (msg: Message) => {
+        console.log('[Socket] Message received:', msg);
+        if (msg.sender_id !== userId) {
+          setMessages((prev) => [...prev, msg]);
+        }
+      });
+
+      socket.on('auth_check', (data: any) => {
+        console.log('[AUTH CHECK]', data);
+      });
+
+      socket.on('connect', () => {
+        console.log('[Socket] connected:', socket.id);
+        socket.emit('join', { discussion_id: discussionId });
+      });
     };
 
-    const handleAuthCheck = (data: any) => {
-      console.log('[AUTH CHECK]', data);
-    };
-
-    socket.on('connect', () => {
-      console.log('[Socket] connected:', socket.id);
-    });
-
-    socket.on('receive_message', handleReceiveMessage);
-    socket.on('auth_check', handleAuthCheck);
+    setupSocket();
 
     return () => {
-      socket.off('receive_message', handleReceiveMessage);
-      socket.off('auth_check', handleAuthCheck);
+      socket.off('receive_message');
+      socket.off('auth_check');
+      socket.off('connect');
     };
-  }, [discussionId]);
+  }, [discussionId, userId]);
 
-  // Scroll to bottom on new messages
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   const handleSendMessage = () => {
     if (!newMessage.trim()) return;
+
+    const tempMsg = {
+      id: Date.now(),
+      sender_id: userId,
+      discussion_id: discussionId,
+      content: newMessage,
+      seen: false,
+      timestamp: new Date().toISOString(),
+    };
+
+    setMessages((prev) => [...prev, tempMsg]);
+
     socket.emit('send_message', {
       discussion_id: discussionId,
       content: newMessage,
       sender_id: userId,
     });
+
     setNewMessage('');
   };
 
   return (
-    <Box p={2} maxWidth={600} mx="auto">
+    <Box p={2} display="flex" flexDirection="column" height="100%">
       <Typography variant="h5" gutterBottom>
         Discussion #{discussionId}
       </Typography>
 
-      <Paper variant="outlined" sx={{ height: 400, overflowY: 'auto', mb: 2 }}>
-        <List sx={{ height: '100%', overflowY: 'auto' }}>
-          {messages.map((msg) => (
-            <React.Fragment key={msg.id}>
-              <ListItem
-                alignItems="flex-start"
-                sx={{ justifyContent: msg.sender_id === userId ? 'flex-end' : 'flex-start' }}
-              >
-                <ListItemText
-                  sx={{
-                    maxWidth: '70%',
-                    backgroundColor: msg.sender_id === userId ? '#023020' : '#5A5A5A',
-                    p: 1.5,
-                    borderRadius: 2,
-                  }}
-                  primary={
-                    <>
-                      <Typography variant="body1">{msg.content}</Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {new Date(msg.timestamp).toLocaleTimeString()}
-                      </Typography>
-                    </>
-                  }
-                />
-              </ListItem>
-              <Divider component="li" />
-            </React.Fragment>
-          ))}
-          {/* 🔽 Bottom scroll target */}
-          <div ref={bottomRef} />
-        </List>
+      <Paper
+        variant="outlined"
+        sx={{ flexGrow: 1, overflow: 'hidden', mb: 2, display: 'flex', flexDirection: 'column' }}
+      >
+        <Box sx={{ flexGrow: 1, overflowY: 'auto' }}>
+          <MessageList messages={messages} userId={userId} bottomRef={bottomRef} />
+        </Box>
       </Paper>
 
-      <Box display="flex" gap={1}>
-        <TextField
-          fullWidth
-          placeholder="Type your message..."
-          value={newMessage}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewMessage(e.target.value)}
-          onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-            if (e.key === 'Enter') handleSendMessage();
-          }}
-        />
-        <Button variant="contained" onClick={handleSendMessage}>
-          Send
-        </Button>
-      </Box>
+      <MessageInput
+        value={newMessage}
+        onChange={setNewMessage}
+        onSend={handleSendMessage}
+      />
     </Box>
   );
 }
 
-function ChatWrapper() {
-  const { discussionId } = useParams<{ discussionId: string }>();
-  const { user } = useUserContext();
-
-  if (!discussionId) return <Typography>Invalid discussion ID</Typography>;
-  if (!user || typeof user.userId !== 'number') return <Typography>Loading user...</Typography>;
-
-  return <ChatPage userId={user.userId} discussionId={parseInt(discussionId)} />;
-}
-
-export default ChatWrapper;
+export default ChatPage;

@@ -2,7 +2,7 @@ from .extensions import socketio, db
 from flask_socketio import emit, join_room
 from flask import session
 from flask_login import current_user
-from .models import Message
+from .models import Message, Discussion, User
 
 @socketio.on('connect')
 def handle_connect():
@@ -10,41 +10,52 @@ def handle_connect():
 
 @socketio.on('join')
 def handle_join(data):
+    
     discussion_id = data.get('discussion_id')
+    discussion = Discussion.query.get(discussion_id)
 
-    if not discussion_id:
-        emit('error', {'msg': 'Missing discussion ID'})
+    if not discussion or current_user not in discussion.members:
+        emit('error', {'msg': 'Invalid or unauthorized discussion'})
         return
 
     room = f"discussion_{discussion_id}"
     join_room(room)
     emit('status', {'msg': f'User joined discussion {discussion_id}'}, room=room)
+    print(f"[join] current_user: {current_user}")
+    print(f"[join] discussion_id: {discussion_id}")
+    print(f"[join] user is in discussion.members? {current_user in discussion.members}")
 
 
 @socketio.on('send_message')
 def handle_send_message(data):
-    if not current_user.is_authenticated:
-        emit('error', {'msg': 'User not authenticated'})
-        return
-    sender_id = current_user.id
     discussion_id = data.get('discussion_id')
+    discussion = Discussion.query.get(discussion_id)
+
+    if not discussion or current_user not in discussion.members:
+        emit('error', {'msg': 'Invalid or unauthorized discussion'})
+        return
+
     content = data.get('content')
     file_url = data.get('file_url')
 
-    if not discussion_id or not content:
-        emit('error', {'msg': 'Missing discussion ID or message content'})
+    if not content:
+        emit('error', {'msg': 'Message content is required'})
         return
 
-    room = f"discussion_{discussion_id}"
     msg = Message(
-        sender_id=sender_id,
+        sender_id=current_user.id,
         discussion_id=discussion_id,
         content=content,
         file_url=file_url
     )
+
     db.session.add(msg)
     db.session.commit()
-    emit('receive_message', msg.to_dict(), room=room)
+
+    print(f'[send_message] Message saved: {msg.id}')
+    print(f"[send_message] emitting to discussion_{discussion_id}")
+    emit('receive_message', msg.to_dict(), room=f'discussion_{discussion_id}')
+
 
 
 @socketio.on('react_message')

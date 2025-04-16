@@ -58,6 +58,7 @@ export default function NavBar() {
                         <>
                             <Button component = { CustomNavLink } to = "/discover" color = "inherit" text = "Discover" />
                             <Button component = { CustomNavLink } to = "/listings" color = "inherit" text = "Listings" />
+                            <Button component = { CustomNavLink } to = "/chat" color = "inherit" text = "Chat" />
                         </>
                     }
                 </Box>

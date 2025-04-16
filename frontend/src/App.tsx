@@ -6,7 +6,7 @@ import { LinearProgress } from "@mui/material";
 import { BrowserRouter, Route, Routes } from 'react-router';
 
 import NavBar from "./components/NavBar/NavBar";
-const ChatPage = lazy(() => import("./pages/Chat/ChatPage"));
+const ChatWrapper = lazy(() => import("./pages/Chat/ChatWrapper"));
 const DiscoverPage = lazy(() => import("./pages/Discover/DiscoverPage"));
 const ExamplePage = lazy(() => import("./pages/Example/ExamplePage"));
 const HomePage = lazy(() => import("./pages/Home/HomePage"));
@@ -32,7 +32,7 @@ export default function App() {
                         <Route path = "/login" element = { <LogInPage /> } />
                         <Route path = "/signup" element = { <SignUpPage /> } />
                         <Route path = "/listings" element={ <ListingsPage /> } />
-                        <Route path = "/chat/:discussionId" element = { <ChatPage /> } />
+                        <Route path = "/chat/:discussionId?" element = { <ChatWrapper /> } />
 
                         <Route path = "/test" element = { <TestPage />} />
 

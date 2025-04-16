@@ -113,7 +113,6 @@ class Match(db.Model):
             return new_match
         return existing_match
 
-
 class Listing(db.Model):
     __tablename__ = 'listings'
     id: int = db.Column(db.Integer, primary_key=True)
@@ -231,14 +230,35 @@ class User(db.Model, UserMixin):
 
 class Discussion(db.Model):
     __tablename__ = 'discussions'
+
     id: int = db.Column(db.Integer, primary_key=True)
     title: Optional[str] = db.Column(db.String(100), nullable=True)
+    is_group: bool = db.Column(db.Boolean, nullable=False, default=False)
     created_at: datetime = db.Column(db.DateTime, default=datetime.now(timezone.utc))
-    
+
     members = db.relationship('User', secondary=discussion_members,
         backref=db.backref('discussions', lazy='dynamic'))
-    
-    messages = db.relationship('Message', backref='discussion', lazy='dynamic')
+
+    messages = db.relationship('Message', backref='discussion', lazy='dynamic', cascade='all, delete-orphan')
+
+    def latest_message(self):
+        return self.messages.order_by(Message.timestamp.desc()).first()
+
+    def to_dict(self, include_latest=False):
+        data = {
+            "id": self.id,
+            "title": self.title,
+            "is_group": self.is_group,
+            "member_ids": [u.id for u in self.members],
+            "created_at": self.created_at.isoformat(),
+        }
+
+        if include_latest:
+            latest = self.latest_message()
+            data["latest_message"] = latest.content if latest else ""
+            data["latest_time"] = latest.timestamp.isoformat() if latest else None
+
+        return data
 
 class Message(db.Model):
     __tablename__ = 'messages'
