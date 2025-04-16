@@ -307,7 +307,7 @@ export async function deleteTags(tags?: string | string[]) {
     return false;
 }
 
-export async function uploadPhone(phone: string): Promise<boolean> {
+export async function uploadPhoneNumber(phone: string): Promise<boolean> {
     try {
         const response = await fetch("/api/users/phone", {
             method: "POST",
@@ -325,7 +325,7 @@ export async function uploadPhone(phone: string): Promise<boolean> {
     return false;
 }
 
-export async function getPhone(userId: number): Promise<string | null> {
+export async function getPhoneNumber(userId: number): Promise<string | null> {
     try {
         const response = await fetch(`/api/users/${userId}/phone`, { method: "GET" });
         const data = await response.json();

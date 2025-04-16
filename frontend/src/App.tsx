@@ -22,13 +22,13 @@ export default function App() {
         <>
             <BrowserRouter>
                 <NavBar />
-                <Suspense fallback = {<LinearProgress/>}>
+                <Suspense fallback = { <LinearProgress/> }>
                     <Routes>
                         <Route index element = { <HomePage /> } />
 
                         <Route path = "/discover" element = { <DiscoverPage /> } />
                         <Route path = "/example" element = { <ExamplePage /> } />
-                        <Route path = "/:username" element = { <ProfilePage /> } />
+                        <Route path = "/users/:username" element = { <ProfilePage /> } />
                         <Route path = "/login" element = { <LogInPage /> } />
                         <Route path = "/signup" element = { <SignUpPage /> } />
                         <Route path = "/listings" element={ <ListingsPage /> } />
@@ -36,8 +36,8 @@ export default function App() {
 
                         <Route path = "/test" element = { <TestPage />} />
 
-                        <Route path = "/*" element = { <NotFoundPage /> } />
                         <Route path = "/not-found" element = { <NotFoundPage /> } />
+                        <Route path = "/*" element = { <NotFoundPage /> } />
                     </Routes>
                 </Suspense>
             </BrowserRouter>

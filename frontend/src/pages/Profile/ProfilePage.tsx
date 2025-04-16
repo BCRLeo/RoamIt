@@ -1,19 +1,19 @@
-import { ChangeEvent, JSX, SyntheticEvent, useState, useEffect } from "react";
+import { ChangeEvent, SyntheticEvent, useState } from "react";
 
-import { TextField, AutocompleteChangeReason, Box, Button, Container, Typography } from "@mui/material";
+import { AutocompleteChangeReason, Box, Button, Container, Typography } from "@mui/material";
 import { Link, useParams } from "react-router-dom";
 
-import { deleteBio, deleteTags, uploadBio, uploadProfilePicture, uploadTags, uploadPhone, getPhone, deletePhone } from "../../features/accounts/accountsApi";
+import { deleteBio, deleteTags, uploadBio, uploadProfilePicture, uploadTags, uploadPhoneNumber, deletePhone } from "../../features/accounts/accountsApi";
 import Bio from "../../features/accounts/components/Bio";
+import PhoneNumber from "../../features/accounts/components/PhoneNumber";
 import ProfilePicture from "../../features/accounts/components/ProfilePicture";
 import Tags from "../../features/accounts/components/Tags";
 import usePublicUserData from "../../features/accounts/hooks/usePublicUserData";
 import useUnsavedStatus from "../../hooks/useUnsavedStatus";
 import NotFoundPage from "../NotFound/NotFoundPage";
 import { useToggleState } from "../../hooks/useToggleState";
-import useUserContext from "../../features/auth/hooks/useUserContext";
 
-export default function ProfilePage({ username = useParams()?.username }: { username?: string }): JSX.Element {
+export default function ProfilePage({ username = useParams()?.username }: { username?: string }) {
     if (!username) {
         return (
             <NotFoundPage />
@@ -26,14 +26,12 @@ export default function ProfilePage({ username = useParams()?.username }: { user
             saveChanges();
         }
     });
-    const { user: currentUser } = useUserContext();
 
     const [updatedProfilePicture, setUpdatedProfilePicture] = useState<File | null>(null);
     const [updatedBio, setUpdatedBio] = useState<string | null>(null);
     const [updatedTags, setUpdatedTags] = useState<string[] | null>(null);
     const [updatedPhone, setUpdatedPhone] = useState<string | null>(null);
-    const [phone, setPhone] = useState<string | null>(null);
-    
+
     const isUnsaved = useUnsavedStatus([updatedProfilePicture, updatedBio, updatedTags, updatedPhone]);
 
     async function handleUploadProfilePicture(event: ChangeEvent<HTMLInputElement>) {
@@ -45,7 +43,7 @@ export default function ProfilePage({ username = useParams()?.username }: { user
     async function saveChanges() {
         if (updatedProfilePicture) {
             const success = await uploadProfilePicture(updatedProfilePicture);
-            
+
             if (success) {
                 setUpdatedProfilePicture(null);
             }
@@ -81,18 +79,19 @@ export default function ProfilePage({ username = useParams()?.username }: { user
 
         if (updatedPhone) {
             const trimmedPhone = updatedPhone?.trim();
-            if (trimmedPhone) {
-                const success = await uploadPhone(trimmedPhone);
+            
+            if (trimmedPhone) {                
+                const success = await uploadPhoneNumber(trimmedPhone);
+
                 if (success) {
-                    setPhone(trimmedPhone);
                     setUpdatedPhone(null);
                 }
             }
-            
+
         } else if (updatedPhone === "") {
             const success = await deletePhone();
+
             if (success) {
-                setPhone("");
                 setUpdatedPhone(null);
             }
         }
@@ -101,19 +100,6 @@ export default function ProfilePage({ username = useParams()?.username }: { user
     async function handleUpdateTags(_event: SyntheticEvent, value: string[], _reason: AutocompleteChangeReason) {
         setUpdatedTags(value);
     }
-
-    useEffect(() => {
-      if (!user || !currentUser) return;
-      
-      if (user.userId === currentUser.userId) {
-        (async () => {
-          const result = await getPhone(user.userId);
-          if (result !== null) {
-            setPhone(result);
-          }
-        })();
-      }
-    }, [user, currentUser]);
 
     if (!user) {
         return (
@@ -144,7 +130,7 @@ export default function ProfilePage({ username = useParams()?.username }: { user
     return (
         <Container maxWidth = "md">
             <ProfilePicture userId = { user.userId } onUpload = { isEditing ? handleUploadProfilePicture : undefined } />
-                
+
             <Typography variant = "h1" marginBottom = { 0 }>
                 { `${ user.firstName + " " + user.lastName }` }
             </Typography>
@@ -155,16 +141,7 @@ export default function ProfilePage({ username = useParams()?.username }: { user
             <Box sx = {{ width: "60%", mx: "auto", textAlign: "left" }}>
                 <Bio userId = { user.userId } onEdit = { isEditing ? (event) => setUpdatedBio(event.target.value) : undefined } />
                 <Tags userId = { user.userId } onEdit = { isEditing ? handleUpdateTags : undefined } />
-                <TextField
-                    fullWidth
-                    label="Phone Number"
-                    variant="outlined"
-                    margin="normal"
-                    value={isEditing ? (updatedPhone ?? phone ?? "") : (phone ?? "")}
-                    onChange={isEditing ? (event) => setUpdatedPhone(event.target.value) : undefined}
-                    placeholder={isEditing ? "Enter your phone number" : undefined}
-                    disabled={!isEditing}
-                />
+                <PhoneNumber userId = { user.userId } onEdit = { isEditing ? (event) => setUpdatedPhone(event.target.value) : undefined } />
             </Box>
 
             <Box sx = {{ display: "flex", width: "fit-content", mt: "1rem", mx: "auto" }} gap = "1rem">

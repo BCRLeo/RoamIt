@@ -68,7 +68,7 @@ export default function NavBar() {
                     { user ? (
                         <>
                             <LogOutButton />
-                            <IconButton component = { NavLink } to = { `/${user.username}` } color = "inherit">
+                            <IconButton component = { NavLink } to = { `/users/${user.username}` } color = "inherit">
                                 <AccountCircle />
                             </IconButton>
                         </>
