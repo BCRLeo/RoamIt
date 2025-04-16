@@ -1,7 +1,7 @@
 from babel.numbers import get_territory_currencies
 from datetime import date, datetime
 from flask import Blueprint, jsonify, request
-from flask_login import current_user
+from flask_login import current_user, login_required
 
 from ..models import Listing, Location
 from ..extensions import db
@@ -9,10 +9,8 @@ from ..extensions import db
 listings = Blueprint("listings", __name__)
 
 @listings.route("/listings", methods = ["POST"])
+@login_required
 def create_listing():
-    if not current_user.is_authenticated:
-        return jsonify({"error": "User not authenticated."}), 401
-    
     data = request.get_json(silent = True)
     
     if not data:
@@ -103,20 +101,16 @@ def get_listing(listing_id: int):
     return jsonify({"data": listing.to_dict(for_javascript = True)}), 200
 
 @listings.route("/listings", methods = ["GET"])
+@login_required
 def get_listings():
-    if not current_user.is_authenticated:
-        return jsonify({"error": "User not authenticated."}), 401
-    
     listings: list[Listing] = current_user.listings.all()
     listing_data = [listing.to_dict(for_javascript = True) for listing in listings]
     
     return jsonify({"data": listing_data}), 200
 
 @listings.route("/listings/<int:listing_id>", methods = ["DELETE"])
+@login_required
 def delete_listing(listing_id: int):
-    if not current_user.is_authenticated:
-        return jsonify({"error": "User not authenticated."}), 401
-    
     listing: Listing | None = db.session.execute(db.select(Listing).filter_by(id = listing_id)).scalar_one_or_none()
     
     if not listing:

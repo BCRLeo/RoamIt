@@ -1,5 +1,5 @@
 import os
-from flask import Flask
+from flask import Flask, jsonify
 from .events import socketio
 from .extensions import db, login_manager, migrate
 from flask_cors import CORS
@@ -20,7 +20,10 @@ def create_app():
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
-    login_manager.login_view = 'auth.login'
+    
+    @login_manager.unauthorized_handler
+    def unauthorized():
+        return jsonify({"error": "User not authenticated"}), 401
 
     # Import models
     from .models import User

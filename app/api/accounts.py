@@ -2,7 +2,7 @@ from datetime import date, datetime
 from io import BytesIO
 import re
 from flask import Blueprint, jsonify, request, send_file
-from flask_login import current_user, login_user
+from flask_login import current_user, login_required, login_user
 from werkzeug.security import generate_password_hash
 from ..models import ProfilePicture, Tag, User
 from ..extensions import db
@@ -164,10 +164,8 @@ def get_user_from_username(username: str):
     return jsonify({"error": "User not authenticated."}), 401
 
 @accounts.route("/users/profile-picture", methods = ["POST"])
-def upload_profile_picture():
-    if not current_user.is_authenticated:
-        return jsonify({"error": "User not authenticated."}), 401
-    
+@login_required
+def upload_profile_picture():    
     if "file" not in request.files:
         return jsonify({"error": "No file uploaded."}), 400
 
@@ -224,17 +222,13 @@ def get_profile_picture_from_username(username: str):
     return get_profile_picture_from_user_id(user.id)
 
 @accounts.route("/users/profile-picture", methods = ["GET"])
-def get_profile_picture():
-    if not current_user.is_authenticated:
-        return jsonify({"error": "User not authenticated."}), 401
-    
+@login_required
+def get_profile_picture():    
     return get_profile_picture_from_user_id(current_user.id)
 
 @accounts.route("/users/bio", methods = ["POST"])
+@login_required
 def upload_bio():
-    if not current_user.is_authenticated:
-        return jsonify({"error": "User not authenticated."}), 401
-    
     try:
         data = request.data
         bio = data.decode()
@@ -286,10 +280,8 @@ def get_bio_from_username(username: str):
     return jsonify({"data": bio}), 200
 
 @accounts.route("/users/bio", methods = ["DELETE"])
+@login_required
 def delete_bio():
-    if not current_user.is_authenticated:
-        return jsonify({"error": "User not authenticated."}), 401
-    
     try:
         current_user.bio = None
         db.session.commit()
@@ -302,10 +294,8 @@ def delete_bio():
         return jsonify({"error": error}), 500
 
 @accounts.route("/users/tags", methods = ["POST"])
+@login_required
 def upload_tags():
-    if not current_user.is_authenticated:
-        return jsonify({"error": "User not authenticated."}), 401
-    
     data = request.get_json(silent = True)
     
     if not data:
@@ -362,10 +352,8 @@ def get_tags_from_username(username: int):
     return jsonify({"data": tag_names}), 200
 
 @accounts.route("/users/tags", methods = ["DELETE"])
+@login_required
 def delete_tags():
-    if not current_user.is_authenticated:
-        return jsonify({"error": "User not authenticated."}), 401
-    
     if not len(current_user.tags):
         return "", 204
     
@@ -402,10 +390,8 @@ def delete_tags():
         return jsonify({"error": error}), 500
     
 @accounts.route("/users/phone", methods=["POST"])
-def upload_phone_number():
-    if not current_user.is_authenticated:
-        return jsonify({"error": "User not authenticated."}), 401
-    
+@login_required
+def upload_phone_number():    
     try:
         data = request.data.decode()
         if not data:
@@ -438,9 +424,8 @@ def get_phone_number_by_user_id(user_id: int):
     return jsonify({"data": user.phone_number}), 200
 
 @accounts.route("/users/phone", methods=["DELETE"])
+@login_required
 def delete_phone():
-    if not current_user.is_authenticated:
-        return jsonify({"error": "User not authenticated."}), 401
     try:
         current_user.phone_number = None
         db.session.commit()

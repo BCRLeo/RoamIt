@@ -1,6 +1,6 @@
 import re
 from flask import Blueprint, request, jsonify
-from flask_login import login_user, logout_user, current_user
+from flask_login import current_user, login_required, login_user, logout_user
 from werkzeug.security import check_password_hash
 from ..extensions import db
 from ..models import User
@@ -10,19 +10,17 @@ auth = Blueprint('auth', __name__)
 # Regular expression for basic email and password validation
 
 @auth.route("/sessions", methods = ["GET"])
+@login_required
 def get_current_user():
-    if current_user.is_authenticated:
-        return jsonify({
-            "data": {
-                "userId": current_user.id,
-                "firstName": current_user.first_name,
-                "lastName": current_user.last_name,
-                "username": current_user.username,
-                "email": current_user.email
-                }
-            }), 200
-    
-    return jsonify({"error": "User not authenticated."}), 401
+    return jsonify({
+        "data": {
+            "userId": current_user.id,
+            "firstName": current_user.first_name,
+            "lastName": current_user.last_name,
+            "username": current_user.username,
+            "email": current_user.email
+            }
+        }), 200
 
 @auth.route("/sessions", methods = ["POST"])
 def log_in():
@@ -60,9 +58,7 @@ def log_in():
     return jsonify({"error": f"Invalid {login_type} or password."}), 400
 
 @auth.route("/sessions", methods = ["DELETE"])
+@login_required
 def log_out():
-    if current_user.is_authenticated:
-        logout_user()
-        return "", 204
-    
-    return jsonify({"error": "User not authenticated."}), 401
+    logout_user()
+    return "", 204
