@@ -1,16 +1,24 @@
-export async function getLocationData(latitude: number, longitude: number, shortenCountryCode: boolean = true): Promise<{ country: string | null, locality: string | null } | null> {
+import { PlacePrediction, GOOGLE_API_KEY, LatLngLiteral, Location } from "./mapsConstants";
+
+export async function getLocationData(placeId: string, shortenCountryCode: boolean): Promise<Location | null>;
+export async function getLocationData(coordinates: LatLngLiteral, shortenCountryCode: boolean): Promise<Location | null>;
+export async function getLocationData(placeIdOrCoordinates: string | LatLngLiteral, shortenCountryCode: boolean = true): Promise<Location | null> {
     let country: string | null = null;
     let locality: string | null = null;
+    let coordinates: LatLngLiteral | null = null;
+    let placeId: string | null = null;
 
+    const query = typeof(placeIdOrCoordinates) === "string" ? `place_id=${ placeIdOrCoordinates }` : `latlng=${ placeIdOrCoordinates.lat },${ placeIdOrCoordinates.lng }`;
+    
     try {
-        if (Math.abs(latitude) > 90 || Math.abs(longitude) > 180) {
+        if (typeof(placeIdOrCoordinates) !== "string" && (Math.abs(placeIdOrCoordinates.lat) > 90 || Math.abs(placeIdOrCoordinates.lng) > 180)) {
             throw Error(`Latitude and longitude must fall within [-90, 90] and [-180, 180] respectively.`);
         }
 
-        const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${ latitude },${ longitude }&key=${ process.env.GOOGLE_API_KEY }`);
+        const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?${ query }&key=${ GOOGLE_API_KEY }`);
 
         if (!response.ok) {
-            throw Error(response.status.toString());
+            throw Error(response.statusText);
         }
 
         const data = await response.json();
@@ -21,26 +29,94 @@ export async function getLocationData(latitude: number, longitude: number, short
 
         for (const result of data["results"]) {
             for (const component of result["address_components"]) {
-                if (!country && result["types"].includes("country") && component["short_name"]) {
+                if (!country && component["types"].includes("country") && component["short_name"]) {
                     country = component[shortenCountryCode ? "short_name" : "long_name"];
                 }
     
-                if (!locality && result["types"].includes("locality") && component["long_name"]) {
+                if (!locality && component["types"].includes("locality") && component["long_name"]) {
                     locality = component["long_name"];
                 }
+                
             }
+
+            if (!coordinates && result["geometry"]["location"]) {
+                coordinates = result["geometry"]["location"]
+            }
+
+            if (!placeId && result["place_id"]) {
+                placeId = result["place_id"]
+            }
+        }
+
+        if (!coordinates) {
+            throw Error("No coordinates found.");
         }
 
         if (!country && !locality) {
             throw Error("No country or locality found.");
         }
 
-        return {
-            country: country,
-            locality: locality
+        if (!country) {
+            return null;
         }
+        
+        return {
+            coordinates: coordinates,
+            country: country,
+            locality: locality,
+            placeId: placeId
+        };
     } catch (error) {
-        console.error(`Failed to retrieve location data for (${ latitude }, ${ longitude }):`, error);
+        const representation = typeof(placeIdOrCoordinates) === "string" ? "place #" + placeIdOrCoordinates : `(${ placeIdOrCoordinates.lat }, ${ placeIdOrCoordinates.lng })`;
+
+        console.error(`Failed to retrieve location data for ${ representation }:`, error);
         return null;
     }   
+}
+
+export async function getPlacePredictions(input: string): Promise<PlacePrediction[] | null>;
+export async function getPlacePredictions(input: string, latitude: number, longitude: number, radius: number): Promise<PlacePrediction[] | null>;
+export async function getPlacePredictions(input: string, latitude?: number, longitude?: number, radius?: number): Promise<PlacePrediction[] | null> {
+    try {
+        const response = await fetch("https://places.googleapis.com/v1/places:autocomplete", {
+            method: "POST",
+            body: JSON.stringify({
+                input: input,
+                locationBias: latitude !== undefined ? {
+                    circle: {
+                        latitude: latitude,
+                        longitude: longitude
+                    },
+                    radius: radius
+                } : undefined
+            }),
+            headers: {
+                "Content-Type": "application/json",
+                "X-Goog-Api-Key": GOOGLE_API_KEY
+            }
+        });
+        
+        if (!response.ok) {
+            throw Error(response.statusText);
+        }
+
+        const data = await response.json();
+        
+        if (!data) {
+            throw Error("No results found.");
+        }
+
+        const results: PlacePrediction[] = [];
+
+        for (const entry of data["suggestions"]) {
+            if (entry.hasOwnProperty("placePrediction")) {
+                results.push(entry["placePrediction"]);
+            }
+        }
+
+        return results.length ? results : null;
+    } catch (error) {
+        console.error(`Failed to retrieve places autocomplete results for ${ input }:`, error);
+    }
+    return null;
 }
