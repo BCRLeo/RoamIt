@@ -110,7 +110,7 @@ export default function ProfilePage({ username = useParams()?.username }: { user
     if (!isAuthenticated) {
         return (
             <Container maxWidth = "md">
-                <ProfilePicture userId = { user.userId } />
+                <ProfilePicture userId = { user.id } />
                     
                 <Typography variant = "h1" marginBottom = { 0 }>
                     { `${ user.firstName + " " + user.lastName }` }
@@ -120,8 +120,8 @@ export default function ProfilePage({ username = useParams()?.username }: { user
                 </Typography>
 
                 <Box sx = {{ width: "60%", mx: "auto", textAlign: "left" }}>
-                    <Bio userId = { user.userId } />
-                    <Tags userId = { user.userId } />
+                    <Bio userId = { user.id } />
+                    <Tags userId = { user.id } />
                 </Box>
             </Container>
         );
@@ -129,7 +129,7 @@ export default function ProfilePage({ username = useParams()?.username }: { user
 
     return (
         <Container maxWidth = "md">
-            <ProfilePicture userId = { user.userId } onUpload = { isEditing ? handleUploadProfilePicture : undefined } />
+            <ProfilePicture userId = { user.id } onUpload = { isEditing ? handleUploadProfilePicture : undefined } />
 
             <Typography variant = "h1" marginBottom = { 0 }>
                 { `${ user.firstName + " " + user.lastName }` }
@@ -139,9 +139,9 @@ export default function ProfilePage({ username = useParams()?.username }: { user
             </Typography>
 
             <Box sx = {{ width: "60%", mx: "auto", textAlign: "left" }}>
-                <Bio userId = { user.userId } onEdit = { isEditing ? (event) => setUpdatedBio(event.target.value) : undefined } />
-                <Tags userId = { user.userId } onEdit = { isEditing ? handleUpdateTags : undefined } />
-                <PhoneNumber userId = { user.userId } onEdit = { isEditing ? (event) => setUpdatedPhone(event.target.value) : undefined } />
+                <Bio userId = { user.id } onEdit = { isEditing ? (event) => setUpdatedBio(event.target.value) : undefined } />
+                <Tags userId = { user.id } onEdit = { isEditing ? handleUpdateTags : undefined } />
+                <PhoneNumber userId = { user.id } onEdit = { isEditing ? (event) => setUpdatedPhone(event.target.value) : undefined } />
             </Box>
 
             <Box sx = {{ display: "flex", width: "fit-content", mt: "1rem", mx: "auto" }} gap = "1rem">

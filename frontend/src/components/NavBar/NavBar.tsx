@@ -1,5 +1,5 @@
 import { AccountCircle, Menu } from "@mui/icons-material";
-import { AppBar, Box, Button, IconButton, Toolbar, Typography, useTheme } from "@mui/material";
+import { AppBar, Box, Button, IconButton, Toolbar, Typography } from "@mui/material";
 import type {} from '@mui/material/themeCssVarsAugmentation';
 import { NavLink, NavLinkProps } from "react-router-dom";
 
@@ -9,7 +9,6 @@ import LogOutButton from "../../features/auth/components/LogOutButton";
 import AuthModals from "../../features/auth/components/AuthModals";
 
 export default function NavBar() {
-    const theme = useTheme();
     const user = useUserContext().user;
 
     const CustomNavLink = ({ text, ...props }: NavLinkProps & { text: string }) => (
@@ -42,10 +41,7 @@ export default function NavBar() {
     return (
         <AppBar
             position = "sticky"
-            sx = {{
-                color: theme.vars.palette.primary.contrastText,
-                mb: "1.5rem"
-            }}
+            sx = {{ mb: "1.5rem" }}
             enableColorOnDark
         >
             <Toolbar>
@@ -58,7 +54,6 @@ export default function NavBar() {
                         <>
                             <Button component = { CustomNavLink } to = "/discover" color = "inherit" text = "Discover" />
                             <Button component = { CustomNavLink } to = "/listings" color = "inherit" text = "Listings" />
-                            <Button component = { CustomNavLink } to = "/chat" color = "inherit" text = "Chat" />
                         </>
                     }
                 </Box>
@@ -67,6 +62,7 @@ export default function NavBar() {
                     <DarkModeSwitch />
                     { user ? (
                         <>
+                            <Button component = { CustomNavLink } to = "/chats" color = "inherit" text = "Chats" />
                             <LogOutButton />
                             <IconButton component = { NavLink } to = { `/users/${user.username}` } color = "inherit">
                                 <AccountCircle />

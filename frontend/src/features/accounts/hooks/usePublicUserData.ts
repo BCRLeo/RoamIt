@@ -14,7 +14,7 @@ export default function usePublicUserData(usernameOrUserId: string | number): { 
         queryFn: () => getUserData(usernameOrUserId, true)
     });
 
-    const isAuthenticated = !!user && !!currentUser && user.userId === currentUser.userId;
+    const isAuthenticated = !!user && !!currentUser && user.id === currentUser.id;
 
     return { user, isAuthenticated };
 }
