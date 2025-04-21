@@ -13,39 +13,39 @@ import useUserContext from '../../features/auth/hooks/useUserContext';
 import { createChat, getChats } from '../../features/chats/chatsApi';
 import { ChatData } from '../../features/chats/chatsConstants';
 
-const ChatList: React.FC = () => {
-    const [discussions, setDiscussions] = useState<ChatData[]>([]);
+export default function ChatList() {
+    const [chats, setChats] = useState<ChatData[]>([]);
     const { user } = useUserContext();
     const navigate = useNavigate();
 
-    async function fetchDiscussions() {
+    async function fetchChats() {
         const response = await getChats();
 
         if (response) {
-            setDiscussions(response);
+            setChats(response);
         }
     }
 
     useEffect(() => {
-        fetchDiscussions();
+        fetchChats();
     }, []);
 
-    const getDisplayTitle = (d: ChatData) => {
-        if (d.isGroup) return d.title || 'Unnamed group';
-        const otherId = d.memberIds.find((id) => id !== user?.id);
+    function getDisplayTitle(chat: ChatData) {
+        if (chat.isGroup) return chat.title || 'Unnamed group';
+        const otherId = chat.memberIds.find((id) => id !== user?.id);
         return `Chat with user #${otherId}`;
     };
 
-    async function handleCreateDiscussion() {
+    async function handleCreateChat() {
         if (!user) {
             return;
         }
 
-        const response = await createChat([user.id, 3]); // TODO: add user selection...
+        const response = await createChat([user.id, 3, 5]); // TODO: add user selection...
 
         if (response !== null) {
             navigate(`/chats/${ response }`);
-            fetchDiscussions();
+            fetchChats();
         }
     };
 
@@ -55,31 +55,31 @@ const ChatList: React.FC = () => {
                 variant="contained"
                 fullWidth
                 sx={{ my: 1 }}
-                onClick={handleCreateDiscussion}
+                onClick={ handleCreateChat }
             >
                 + New Chat
             </Button>
 
             <List sx={{ overflowY: 'auto', height: 'calc(100vh - 64px)' }}>
-                {discussions.length === 0 ? (
-                    <Typography p={2} color="text.secondary">
-                        You have no conversations yet.
+                { chats.length === 0 ? (
+                    <Typography padding = { 2 } color = " text.secondary ">
+                        You have no chats yet.
                     </Typography>
                 ) : (
-                    discussions.map((d) => (
-                        <React.Fragment key={d.id}>
+                    chats.map((chat) => (
+                        <React.Fragment key = { chat.id }>
                             <ListItemButton
-                                onClick={() => navigate(`/chat/${d.id}`)}
-                                alignItems="flex-start"
-                                sx={{ py: 1.5, px: 2 }}
+                                onClick={ () => navigate(`/chats/${chat.id}`) }
+                                alignItems = "flex-start"
+                                sx = {{ py: 1.5, px: 2 }}
                             >
                                 <ListItemText
-                                    primary={
-                                        <Typography variant="subtitle1" fontWeight="bold">
-                                            {getDisplayTitle(d)}
+                                    primary = {
+                                        <Typography variant = "subtitle1" fontWeight = "bold">
+                                            { getDisplayTitle(chat) }
                                         </Typography>
                                     }
-                                    secondary={
+                                    secondary = {
                                         <>
                                             <Typography
                                                 variant="body2"
@@ -87,21 +87,21 @@ const ChatList: React.FC = () => {
                                                 noWrap
                                                 sx={{ mb: 0.5 }}
                                             >
-                                                {d.latestMessage || 'No messages yet'}
+                                                { chat.latestMessage || 'No messages yet' }
                                             </Typography>
-                                            {d.latestTime && (
+                                            { chat.latestTime && (
                                                 <Typography
                                                     variant="caption"
                                                     color="text.secondary"
                                                 >
-                                                    { d.latestTime ? new Date(d.latestTime).toLocaleTimeString() : undefined}
+                                                    { new Date(chat.latestTime).toLocaleTimeString() }
                                                 </Typography>
                                             )}
                                         </>
                                     }
                                 />
                             </ListItemButton>
-                            <Divider component="li" />
+                            <Divider component = "li" />
                         </React.Fragment>
                     ))
                 )}
@@ -109,5 +109,3 @@ const ChatList: React.FC = () => {
         </Box>
     );
 };
-
-export default ChatList;
