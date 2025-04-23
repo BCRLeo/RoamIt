@@ -32,7 +32,7 @@ export default function App() {
                         <Route path = "/login" element = { <LogInPage /> } />
                         <Route path = "/signup" element = { <SignUpPage /> } />
                         <Route path = "/listings" element={ <ListingsPage /> } />
-                        <Route path = "/chats/:discussionId?" element = { <ChatWrapper /> } />
+                        <Route path = "/chats/:chatId?" element = { <ChatWrapper /> } />
 
                         <Route path = "/test" element = { <TestPage />} />
 

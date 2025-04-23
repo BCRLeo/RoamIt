@@ -11,14 +11,14 @@ const socket = io('http://127.0.0.1:5005', {
     autoConnect: false,
 });
 
-export function ChatPage({ userId, discussionId }: { userId: number; discussionId: number }) {
+export default function ChatPage({ userId, chatId }: { userId: number; chatId: number }) {
     const [messages, setMessages] = useState<MessageData[]>([]);
     const [newMessage, setNewMessage] = useState('');
     const bottomRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const fetchMessages = async () => {
-            const response = await getChatMessages(discussionId);
+            const response = await getChatMessages(chatId);
 
             if (response) {
                 setMessages(response);
@@ -34,7 +34,7 @@ export function ChatPage({ userId, discussionId }: { userId: number; discussionI
             if (!socket.connected) {
                 socket.connect();
             } else {
-                socket.emit('join', { discussion_id: discussionId });
+                socket.emit('join', { discussion_id: chatId });
             }
 
             socket.off('receive_message');
@@ -54,7 +54,7 @@ export function ChatPage({ userId, discussionId }: { userId: number; discussionI
 
             socket.on('connect', () => {
                 console.log('[Socket] connected:', socket.id);
-                socket.emit('join', { discussion_id: discussionId });
+                socket.emit('join', { discussion_id: chatId });
             });
         };
 
@@ -65,7 +65,7 @@ export function ChatPage({ userId, discussionId }: { userId: number; discussionI
             socket.off('auth_check');
             socket.off('connect');
         };
-    }, [discussionId, userId]);
+    }, [chatId, userId]);
 
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -77,7 +77,7 @@ export function ChatPage({ userId, discussionId }: { userId: number; discussionI
         const tempMsg: MessageData = {
             id: Date.now(),
             senderId: userId,
-            chatId: discussionId,
+            chatId: chatId,
             content: newMessage,
             seen: false,
             timestamp: new Date().toISOString(),
@@ -86,7 +86,7 @@ export function ChatPage({ userId, discussionId }: { userId: number; discussionI
         setMessages((prev) => [...prev, tempMsg]);
 
         socket.emit('send_message', {
-            discussion_id: discussionId,
+            discussion_id: chatId,
             content: newMessage,
             sender_id: userId,
         });
@@ -97,7 +97,7 @@ export function ChatPage({ userId, discussionId }: { userId: number; discussionI
     return (
         <Box p={2} display="flex" flexDirection="column" height="100%">
             <Typography variant="h5" gutterBottom>
-                Discussion #{discussionId}
+                Discussion #{chatId}
             </Typography>
 
             <Paper
@@ -117,5 +117,3 @@ export function ChatPage({ userId, discussionId }: { userId: number; discussionI
         </Box>
     );
 }
-
-export default ChatPage;
