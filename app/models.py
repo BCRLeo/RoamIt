@@ -278,18 +278,16 @@ class Message(db.Model):
     reactions = db.relationship('Reaction', backref='message', lazy='dynamic')
 
     def to_dict(self):
-        """
-        IMO self explanatory but jsut returns info aboit the message, but not the reactions
-        """
         return {
             "id": self.id,
-            "sender_id": self.sender_id,
-            "discussion_id": self.discussion_id,
+            "senderId": self.sender_id,
+            "chatId": self.discussion_id,  # renamed to match frontend
             "content": self.content,
-            "file_url": self.file_url,
+            "fileUrl": self.file_url,
             "seen": self.seen,
             "timestamp": self.timestamp.isoformat()
-        }   
+        }
+
     def to_reactions(self):
         """
         Returns the reactions

@@ -14,7 +14,7 @@ auth = Blueprint('auth', __name__)
 def get_current_user():
     return jsonify({
         "data": {
-            "userId": current_user.id,
+            "id": current_user.id,
             "firstName": current_user.first_name,
             "lastName": current_user.last_name,
             "username": current_user.username,
@@ -47,7 +47,7 @@ def log_in():
         
         return jsonify({
             "data": {
-                "userId": current_user.id,
+                "id": current_user.id,
                 "firstName": current_user.first_name,
                 "lastName": current_user.last_name,
                 "username": user.username,

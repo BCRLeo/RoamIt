@@ -43,10 +43,9 @@ export default function ChatPage({ userId, chatId }: { userId: number; chatId: n
 
             socket.on('receive_message', (msg: MessageData) => {
                 console.log('[Socket] Message received:', msg);
-                if (msg.senderId !== userId) {
-                    setMessages((prev) => [...prev, msg]);
-                }
+                setMessages((prev) => [...prev, msg]);
             });
+            
 
             socket.on('auth_check', (data: any) => {
                 console.log('[AUTH CHECK]', data);
@@ -73,17 +72,6 @@ export default function ChatPage({ userId, chatId }: { userId: number; chatId: n
 
     const handleSendMessage = () => {
         if (!newMessage.trim()) return;
-
-        const tempMsg: MessageData = {
-            id: Date.now(),
-            senderId: userId,
-            chatId: chatId,
-            content: newMessage,
-            seen: false,
-            timestamp: new Date().toISOString(),
-        };
-
-        setMessages((prev) => [...prev, tempMsg]);
 
         socket.emit('send_message', {
             discussion_id: chatId,

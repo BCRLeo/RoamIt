@@ -7,6 +7,7 @@ import ChatPage from './ChatPage';
 export default function ChatWrapper() {
     const { chatId } = useParams<{ chatId: string }>();
     const { user } = useUserContext();
+    console.log('ChatWrapper user:', user);
 
     if (!user) {
         return <Typography>Loading user...</Typography>;

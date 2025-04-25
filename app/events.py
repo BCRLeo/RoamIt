@@ -54,7 +54,7 @@ def handle_send_message(data):
 
     print(f'[send_message] Message saved: {msg.id}')
     print(f"[send_message] emitting to discussion_{discussion_id}")
-    emit('receive_message', msg.to_dict(), room=f'discussion_{discussion_id}')
+    emit('receive_message', msg.to_dict(), room=f'discussion_{discussion_id}', include_self=True)
 
 
 
