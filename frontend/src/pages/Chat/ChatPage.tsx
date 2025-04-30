@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import io from 'socket.io-client';
-import { Box, Typography, Paper } from '@mui/material';
+import { Box, Typography, Paper, useTheme } from '@mui/material';
 import { getCurrentUser } from '../../features/auth/authApi';
 import MessageList from "../../features/chats/components/MessageList";
 import MessageInput from "../../features/chats/components/MessageInput";
@@ -15,11 +15,11 @@ export default function ChatPage({ userId, chatId }: { userId: number; chatId: n
     const [messages, setMessages] = useState<MessageData[]>([]);
     const [newMessage, setNewMessage] = useState('');
     const bottomRef = useRef<HTMLDivElement>(null);
+    const theme = useTheme();
 
     useEffect(() => {
         const fetchMessages = async () => {
             const response = await getChatMessages(chatId);
-
             if (response) {
                 setMessages(response);
             }
@@ -45,7 +45,6 @@ export default function ChatPage({ userId, chatId }: { userId: number; chatId: n
                 console.log('[Socket] Message received:', msg);
                 setMessages((prev) => [...prev, msg]);
             });
-            
 
             socket.on('auth_check', (data: any) => {
                 console.log('[AUTH CHECK]', data);
@@ -83,14 +82,27 @@ export default function ChatPage({ userId, chatId }: { userId: number; chatId: n
     };
 
     return (
-        <Box p={2} display="flex" flexDirection="column" flex={1} minHeight={0}>
+        <Box
+            p={2}
+            display="flex"
+            flexDirection="column"
+            flex={1}
+            minHeight={0}
+            sx={{ backgroundColor: theme.palette.background.paper }}
+        >
             <Typography variant="h5" gutterBottom>
                 Discussion #{chatId}
             </Typography>
 
             <Paper
                 variant="outlined"
-                sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}
+                sx={{
+                    flexGrow: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    minHeight: 0,
+                    backgroundColor: theme.palette.background.default,
+                }}
             >
                 <Box sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
                     <MessageList messages={messages} userId={userId} bottomRef={bottomRef} />

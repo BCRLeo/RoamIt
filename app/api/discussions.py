@@ -19,18 +19,36 @@ def get_messages(discussion_id):
 def get_user_discussions():
     discussions = current_user.discussions.order_by(Discussion.created_at.desc()).all()
     result = []
+
     for d in discussions:
         latest = d.messages.order_by(Message.timestamp.desc()).first()
+
+        # Get member info
+        members = [
+            {
+                "id": u.id,
+                "username": u.username,
+                "profilePicUrl": f"/api/users/{u.id}/profile-picture"
+            } for u in d.members
+        ]
+
+        # Get other user (for private chats only)
+        other_user = next((u for u in members if u["id"] != current_user.id), None)
+
         result.append({
             "id": d.id,
             "isGroup": d.is_group,
             "title": d.title,
-            "memberIds": [u.id for u in d.members],
+            "memberIds": [u["id"] for u in members],
             "creationDate": d.created_at,
             "latestMessage": latest.content if latest else "",
             "latestTime": latest.timestamp.isoformat() if latest else None,
+            "memberProfiles": members if d.is_group else None,
+            "otherUser": other_user if not d.is_group else None,
         })
+
     return jsonify({"data": result}), 200
+
 
 @chat.route("/discussions/<int:discussion_id>")
 @login_required
@@ -40,12 +58,24 @@ def get_discussion_detail(discussion_id):
     if current_user not in discussion.members:
         return jsonify({"error": "Not a member"}), 403
 
+    members = [
+        {
+            "id": u.id,
+            "username": u.username,
+            "profilePicUrl": f"/api/users/{u.id}/profile-picture"
+        } for u in discussion.members
+    ]
+
+    other_user = next((u for u in members if u["id"] != current_user.id), None)
+
     return jsonify({
         "id": discussion.id,
-        "is_group": discussion.is_group,
+        "isGroup": discussion.is_group,
         "title": discussion.title,
-        "member_ids": [u.id for u in discussion.members],
-        "created_at": discussion.created_at.isoformat()
+        "memberIds": [u["id"] for u in members],
+        "createdAt": discussion.created_at.isoformat(),
+        "memberProfiles": members if discussion.is_group else None,
+        "otherUser": other_user if not discussion.is_group else None
     })
 
 @chat.route("/discussions", methods=["POST"])

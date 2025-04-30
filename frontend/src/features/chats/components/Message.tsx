@@ -29,11 +29,16 @@ export default function Message({
             <ListItemText
                 sx={{
                     maxWidth: '70%',
-                    backgroundColor: isOwn ? theme.palette.primary.main : theme.palette.message.main,
+                    backgroundColor: isOwn
+                    ? theme.palette.primary.main
+                    : theme.palette.action.hover,
                     p: '1rem',
                     borderRadius: theme.shape.borderRadius,
-                    color: isOwn ? theme.palette.primary.contrastText : theme.palette.text.primary,
+                    color: isOwn
+                    ? theme.palette.primary.contrastText
+                    : theme.palette.text.primary,
                 }}
+
                 primary={
                     <>
                         <Typography
