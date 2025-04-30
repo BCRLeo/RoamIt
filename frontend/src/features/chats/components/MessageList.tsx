@@ -11,7 +11,7 @@ interface Props {
 
 const MessageList: React.FC<Props> = ({ messages, userId, bottomRef }) => {
     return (
-        <List sx={{ height: '100%', overflowY: 'auto' }}>
+        <List sx={{ height: '100%'}}>
             {messages.map((msg) => {
                 console.log('Rendering message:', msg);
                 console.log('Current userId:', userId);

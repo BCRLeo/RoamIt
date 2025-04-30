@@ -34,78 +34,82 @@ export default function ChatList() {
         if (chat.isGroup) return chat.title || 'Unnamed group';
         const otherId = chat.memberIds.find((id) => id !== user?.id);
         return `Chat with user #${otherId}`;
-    };
+    }
 
     async function handleCreateChat() {
-        if (!user) {
-            return;
-        }
+        if (!user) return;
 
         const response = await createChat([user.id, 3, 5]); // TODO: add user selection...
 
         if (response !== null) {
-            navigate(`/chats/${ response }`);
+            navigate(`/chats/${response}`);
             fetchChats();
         }
-    };
+    }
 
     return (
-        <Box>
+        <Box
+            sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                height: '100%',
+                minHeight: 0,
+            }}
+        >
             <Button
                 variant="contained"
                 fullWidth
                 sx={{ my: 1 }}
-                onClick={ handleCreateChat }
+                onClick={handleCreateChat}
             >
                 + New Chat
             </Button>
 
-            <List sx={{ overflowY: 'auto', height: 'calc(100vh - 64px)' }}>
-                { chats.length === 0 ? (
-                    <Typography padding = { 2 } color = " text.secondary ">
-                        You have no chats yet.
-                    </Typography>
-                ) : (
-                    chats.map((chat) => (
-                        <React.Fragment key = { chat.id }>
-                            <ListItemButton
-                                onClick={ () => navigate(`/chats/${chat.id}`) }
-                                alignItems = "flex-start"
-                                sx = {{ py: 1.5, px: 2 }}
-                            >
-                                <ListItemText
-                                    primary = {
-                                        <Typography variant = "subtitle1" fontWeight = "bold">
-                                            { getDisplayTitle(chat) }
-                                        </Typography>
-                                    }
-                                    secondary = {
-                                        <>
-                                            <Typography
-                                                variant="body2"
-                                                color="text.secondary"
-                                                noWrap
-                                                sx={{ mb: 0.5 }}
-                                            >
-                                                { chat.latestMessage || 'No messages yet' }
+            <Box sx={{ flex: 1, overflowY: 'auto' }}>
+                <List>
+                    {chats.length === 0 ? (
+                        <Typography padding={2} color="text.secondary">
+                            You have no chats yet.
+                        </Typography>
+                    ) : (
+                        chats.map((chat) => (
+                            <React.Fragment key={chat.id}>
+                                <ListItemButton
+                                    onClick={() => navigate(`/chats/${chat.id}`)}
+                                    alignItems="flex-start"
+                                    sx={{ py: 1.5, px: 2 }}
+                                >
+                                    <ListItemText
+                                        primary={
+                                            <Typography variant="subtitle1" fontWeight="bold">
+                                                {getDisplayTitle(chat)}
                                             </Typography>
-                                            { chat.latestTime && (
+                                        }
+                                        secondary={
+                                            <>
                                                 <Typography
-                                                    variant="caption"
+                                                    variant="body2"
                                                     color="text.secondary"
+                                                    noWrap
+                                                    sx={{ mb: 0.5 }}
                                                 >
-                                                    { new Date(chat.latestTime).toLocaleTimeString() }
+                                                    {chat.latestMessage || 'No messages yet'}
                                                 </Typography>
-                                            )}
-                                        </>
-                                    }
-                                />
-                            </ListItemButton>
-                            <Divider component = "li" />
-                        </React.Fragment>
-                    ))
-                )}
-            </List>
+                                                {chat.latestTime && (
+                                                    <Typography variant="caption" color="text.secondary">
+                                                        {new Date(chat.latestTime).toLocaleTimeString()}
+                                                    </Typography>
+                                                )}
+                                            </>
+                                        }
+                                    />
+                                </ListItemButton>
+                                <Divider component="li" />
+                            </React.Fragment>
+                        ))
+                    )}
+                </List>
+            </Box>
         </Box>
     );
-};
+}

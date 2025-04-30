@@ -83,16 +83,16 @@ export default function ChatPage({ userId, chatId }: { userId: number; chatId: n
     };
 
     return (
-        <Box p={2} display="flex" flexDirection="column" height="100%">
+        <Box p={2} display="flex" flexDirection="column" flex={1} minHeight={0}>
             <Typography variant="h5" gutterBottom>
                 Discussion #{chatId}
             </Typography>
 
             <Paper
                 variant="outlined"
-                sx={{ flexGrow: 1, overflow: 'hidden', mb: 2, display: 'flex', flexDirection: 'column' }}
+                sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}
             >
-                <Box sx={{ flexGrow: 1, overflowY: 'auto' }}>
+                <Box sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
                     <MessageList messages={messages} userId={userId} bottomRef={bottomRef} />
                 </Box>
             </Paper>

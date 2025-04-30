@@ -1,7 +1,13 @@
-import { ListItem, ListItemText, Typography, useTheme } from '@mui/material';
+import { ListItem, ListItemText, Typography, useTheme, Avatar} from '@mui/material';
 import { MessageData } from '../chatsConstants';
 
-export default function Message({ message, isOwn = false }: { message: MessageData, isOwn?: boolean }) {
+export default function Message({
+    message,
+    isOwn = false,
+}: {
+    message: MessageData;
+    isOwn?: boolean;
+}) {
     const theme = useTheme();
 
     return (
@@ -9,22 +15,35 @@ export default function Message({ message, isOwn = false }: { message: MessageDa
             alignItems="flex-start"
             sx={{
                 display: 'flex',
-                justifyContent: isOwn ? 'flex-end' : 'flex-start',
+                flexDirection: isOwn ? 'row-reverse' : 'row',
+                justifyContent: 'flex-start',
             }}
         >
+            {!isOwn && (
+                <Avatar
+                    src={message.senderProfilePicUrl}
+                    alt={message.senderUsername}
+                    sx={{ width: 36, height: 36, mr: 2 }}
+                />
+            )}
             <ListItemText
                 sx={{
                     maxWidth: '70%',
                     backgroundColor: isOwn ? theme.palette.primary.main : theme.palette.message.main,
-                    p: "1rem",
+                    p: '1rem',
                     borderRadius: theme.shape.borderRadius,
                     color: isOwn ? theme.palette.primary.contrastText : theme.palette.text.primary,
                 }}
                 primary={
                     <>
-                        <Typography variant="body1">
-                            {message.content}
+                        <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ display: 'block', mb: 0.5 }}
+                        >
+                            {message.senderUsername}
                         </Typography>
+                        <Typography variant="body1">{message.content}</Typography>
                         <Typography variant="caption">
                             {new Date(message.timestamp).toLocaleTimeString()}
                         </Typography>
@@ -33,4 +52,4 @@ export default function Message({ message, isOwn = false }: { message: MessageDa
             />
         </ListItem>
     );
-};
+}

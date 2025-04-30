@@ -2,7 +2,7 @@ import "./App.css";
 
 import { lazy, Suspense } from 'react';
 
-import { LinearProgress } from "@mui/material";
+import { LinearProgress, Box } from "@mui/material";
 import { BrowserRouter, Route, Routes } from 'react-router';
 
 import NavBar from "./components/NavBar/NavBar";
@@ -17,30 +17,33 @@ const ProfilePage = lazy(() => import("./pages/Profile/ProfilePage"));
 const SignUpPage = lazy(() => import("./pages/SignUp/SignUpPage"));
 const TestPage = lazy(() => import("./pages/Test/TestPage"));
 
+
 export default function App() {
     return (
-        <>
-            <BrowserRouter>
+        <BrowserRouter>
+            <Box display="flex" flexDirection="column" height="100vh">
                 <NavBar />
-                <Suspense fallback = { <LinearProgress/> }>
-                    <Routes>
-                        <Route index element = { <HomePage /> } />
+                <Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+                    <Suspense fallback={<LinearProgress />}>
+                        <Routes>
+                                                    <Route index element = { <HomePage /> } />
 
-                        <Route path = "/discover" element = { <DiscoverPage /> } />
-                        <Route path = "/example" element = { <ExamplePage /> } />
-                        <Route path = "/users/:username" element = { <ProfilePage /> } />
-                        <Route path = "/login" element = { <LogInPage /> } />
-                        <Route path = "/signup" element = { <SignUpPage /> } />
-                        <Route path = "/listings" element={ <ListingsPage /> } />
-                        <Route path = "/chats/:chatId?" element = { <ChatWrapper /> } />
+                            <Route path = "/discover" element = { <DiscoverPage /> } />
+                            <Route path = "/example" element = { <ExamplePage /> } />
+                            <Route path = "/users/:username" element = { <ProfilePage /> } />
+                            <Route path = "/login" element = { <LogInPage /> } />
+                            <Route path = "/signup" element = { <SignUpPage /> } />
+                            <Route path = "/listings" element={ <ListingsPage /> } />
+                            <Route path = "/chats/:chatId?" element = { <ChatWrapper /> } />
 
-                        <Route path = "/test" element = { <TestPage />} />
+                            <Route path = "/test" element = { <TestPage />} />
 
-                        <Route path = "/not-found" element = { <NotFoundPage /> } />
-                        <Route path = "/*" element = { <NotFoundPage /> } />
-                    </Routes>
-                </Suspense>
-            </BrowserRouter>
-        </>
+                            <Route path = "/not-found" element = { <NotFoundPage /> } />
+                            <Route path = "/*" element = { <NotFoundPage /> } />
+                        </Routes>
+                    </Suspense>
+                </Box>
+            </Box>
+        </BrowserRouter>
     );
 }

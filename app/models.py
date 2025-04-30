@@ -281,6 +281,8 @@ class Message(db.Model):
         return {
             "id": self.id,
             "senderId": self.sender_id,
+            "senderUsername": self.sender.username,
+            "senderProfilePicUrl": f"/api/users/{self.sender_id}/profile-picture",
             "chatId": self.discussion_id,  # renamed to match frontend
             "content": self.content,
             "fileUrl": self.file_url,

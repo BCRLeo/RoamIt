@@ -11,6 +11,8 @@ export type ChatData = {
 export type MessageData = {
     id: number,
     senderId: number,
+    senderUsername: string;
+    senderProfilePicUrl?: string;
     chatId: number,
     content: string,
     fileUrl?: string,
