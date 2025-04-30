@@ -4,7 +4,7 @@ import re
 from flask import Blueprint, jsonify, request, send_file
 from flask_login import current_user, login_required, login_user
 from werkzeug.security import generate_password_hash
-from ..models import ProfilePicture, Tag, User
+from ..models import ProfilePicture, Tag, User, Friendship
 from ..extensions import db
 
 accounts = Blueprint('accounts', __name__)
@@ -433,3 +433,148 @@ def delete_phone():
     except Exception as error:
         db.session.rollback()
         return jsonify({"error": str(error)}), 500
+
+# Send a friend request to a user by username
+@accounts.route("/users/@<username>/friends", methods=["POST"])
+@login_required
+def send_friend_request(username: str):
+    receiver = db.session.execute(
+        db.select(User).filter_by(username=username)
+    ).scalar_one_or_none()
+
+    if not receiver:
+        return jsonify({"error": f"User @{username} not found."}), 404
+
+    if current_user.id == receiver.id:
+        return jsonify({"error": "Cannot send a friend request to yourself."}), 400
+
+    existing = db.session.execute(
+        db.select(Friendship).filter_by(requester_id=current_user.id, receiver_id=receiver.id)
+    ).scalar_one_or_none()
+
+    if existing:
+        return jsonify({"error": "Friend request already sent."}), 400
+
+    friendship = Friendship(
+        requester_id=current_user.id,
+        receiver_id=receiver.id,
+        status="pending"
+    )
+
+    db.session.add(friendship)
+    db.session.commit()
+
+    return jsonify({"message": f"Friend request sent to @{username}."}), 200
+
+
+# Accept a friend request
+@accounts.route("/users/@<username>/friends", methods=["PATCH"])
+@login_required
+def accept_friend_request(username: str):
+    requester = db.session.execute(
+        db.select(User).filter_by(username=username)
+    ).scalar_one_or_none()
+
+    if not requester:
+        return jsonify({"error": f"User @{username} not found."}), 404
+
+    friendship = db.session.execute(
+        db.select(Friendship).filter_by(
+            requester_id=requester.id,
+            receiver_id=current_user.id,
+            status="pending"
+        )
+    ).scalar_one_or_none()
+
+    if not friendship:
+        return jsonify({"error": "No pending friend request from this user."}), 404
+
+    friendship.status = "accepted"
+    db.session.commit()
+
+    return jsonify({"message": f"You are now friends with @{username}."}), 200
+
+
+# Remove a friend
+@accounts.route("/users/@<username>/friends", methods=["DELETE"])
+@login_required
+def remove_friend(username: str):
+    other = db.session.execute(
+        db.select(User).filter_by(username=username)
+    ).scalar_one_or_none()
+
+    if not other:
+        return jsonify({"error": f"User @{username} not found."}), 404
+
+    friendship = db.session.execute(
+        db.select(Friendship).filter(
+            ((Friendship.requester_id == current_user.id) & (Friendship.receiver_id == other.id)) |
+            ((Friendship.requester_id == other.id) & (Friendship.receiver_id == current_user.id)),
+            Friendship.status == "accepted"
+        )
+    ).scalar_one_or_none()
+
+    if not friendship:
+        return jsonify({"error": "No active friendship found."}), 404
+
+    db.session.delete(friendship)
+    db.session.commit()
+
+    return jsonify({"message": f"Friendship with @{username} removed."}), 200
+
+
+# View incoming friend requests
+@accounts.route("/users/friend-requests", methods=["GET"])
+@login_required
+def view_friend_requests():
+    pending = db.session.execute(
+        db.select(Friendship).filter_by(receiver_id=current_user.id, status="pending")
+    ).scalars().all()
+
+    return jsonify({
+        "data": [
+            {
+                "requesterId": fr.requester_id,
+                "timestamp": fr.timestamp.isoformat()
+            }
+            for fr in pending
+        ]
+    }), 200
+
+
+# View list of accepted friends
+@accounts.route("/users/@<username>/friends", methods=["GET"])
+def get_friend_list(username: str):
+    user = db.session.execute(
+        db.select(User).filter_by(username=username)
+    ).scalar_one_or_none()
+
+    if not user:
+        return jsonify({"error": f"User @{username} not found."}), 404
+
+    friendships = db.session.execute(
+        db.select(Friendship).filter(
+            ((Friendship.requester_id == user.id) | (Friendship.receiver_id == user.id)),
+            Friendship.status == "accepted"
+        )
+    ).scalars().all()
+
+    friend_ids = [
+        fr.receiver_id if fr.requester_id == user.id else fr.requester_id
+        for fr in friendships
+    ]
+
+    friends = db.session.execute(
+        db.select(User).filter(User.id.in_(friend_ids))
+    ).scalars().all()
+
+    return jsonify({
+        "data": [
+            {
+                "userId": f.id,
+                "username": f.username,
+                "firstName": f.first_name,
+                "lastName": f.last_name
+            } for f in friends
+        ]
+    }), 200

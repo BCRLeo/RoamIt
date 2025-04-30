@@ -356,3 +356,93 @@ export async function deletePhone(): Promise<boolean> {
 
     return false;
 }
+
+// Send a friend request
+export async function sendFriendRequest(username: string): Promise<boolean> {
+    try {
+        const response = await fetch(`/api/users/@${username}/friends`, {
+            method: "POST"
+        });
+
+        if (response.ok) return true;
+
+        const data = await response.json();
+        throw new Error(data.error);
+    } catch (error) {
+        console.error(`Error sending friend request to @${username}:`, error);
+    }
+
+    return false;
+}
+
+// Accept a friend request
+export async function acceptFriendRequest(username: string): Promise<boolean> {
+    try {
+        const response = await fetch(`/api/users/@${username}/friends`, {
+            method: "PATCH"
+        });
+
+        if (response.ok) return true;
+
+        const data = await response.json();
+        throw new Error(data.error);
+    } catch (error) {
+        console.error(`Error accepting friend request from @${username}:`, error);
+    }
+
+    return false;
+}
+
+// Remove a friend
+export async function removeFriend(username: string): Promise<boolean> {
+    try {
+        const response = await fetch(`/api/users/@${username}/friends`, {
+            method: "DELETE"
+        });
+
+        if (response.ok) return true;
+
+        const data = await response.json();
+        throw new Error(data.error);
+    } catch (error) {
+        console.error(`Error removing friend @${username}:`, error);
+    }
+
+    return false;
+}
+
+// View incoming friend requests (for current user)
+export async function getIncomingFriendRequests(): Promise<{ requesterId: number, timestamp: string }[] | null> {
+    try {
+        const response = await fetch("/api/users/friend-requests", { method: "GET" });
+        const data = await response.json();
+
+        if (response.ok) {
+            return data.data;
+        }
+
+        throw new Error(data.error);
+    } catch (error) {
+        console.error("Error retrieving incoming friend requests:", error);
+    }
+
+    return null;
+}
+
+// View friends of a user (implement so that one can only see their own friends)
+export async function getFriendList(username: string): Promise<{ userId: number, username: string, firstName: string, lastName: string }[] | null> {
+    try {
+        const response = await fetch(`/api/users/@${username}/friends`, { method: "GET" });
+        const data = await response.json();
+
+        if (response.ok) {
+            return data.data;
+        }
+
+        throw new Error(data.error);
+    } catch (error) {
+        console.error(`Error retrieving friend list for @${username}:`, error);
+    }
+
+    return null;
+}

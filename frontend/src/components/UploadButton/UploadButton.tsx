@@ -14,8 +14,8 @@ const VisuallyHiddenInput = styled("input")({
     width: 1
 });
 
-export default function UploadButton({ icon, label, inputProps }: { icon?: ReactNode, label?: string, accept?: string, multiple?: boolean, inputProps?: InputHTMLAttributes<HTMLInputElement> }) {
-    const Input = <VisuallyHiddenInput type = "file" { ...inputProps } />;
+export default function UploadButton({ icon, label, inputProps, multiple }: { icon?: ReactNode, label?: string, accept?: string, multiple?: boolean, inputProps?: InputHTMLAttributes<HTMLInputElement> }) {
+    const Input = <VisuallyHiddenInput type = "file" multiple={multiple} { ...inputProps } />;
     const buttonProps = {
         component: "label",
         title: "Upload"

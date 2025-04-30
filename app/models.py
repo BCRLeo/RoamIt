@@ -436,3 +436,28 @@ class Location(db.Model):
             "country": self.country,
             "locality": self.locality
         }
+
+class Friendship(db.Model):
+    __tablename__ = "friendships"
+    id: int = db.Column(db.Integer, primary_key=True)
+    requester_id: int = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    receiver_id: int = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    # status of the friend request
+    status: str = db.Column(db.String(20), nullable=False, default="pending")  # 'pending', 'accepted', 'rejected'
+    # when the friend request was made
+    timestamp: datetime = db.Column(db.DateTime, default=datetime.now(timezone.utc))
+
+    requester = db.relationship("User", foreign_keys=[requester_id], backref="sent_requests")
+    receiver = db.relationship("User", foreign_keys=[receiver_id], backref="received_requests")
+
+    def __repr__(self):
+        return f"<Friendship requester={self.requester_id}, receiver={self.receiver_id}, status={self.status}>"
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "requester_id": self.requester_id,
+            "receiver_id": self.receiver_id,
+            "status": self.status,
+            "timestamp": self.timestamp.isoformat()
+        }
