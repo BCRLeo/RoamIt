@@ -145,7 +145,6 @@ export default function ChatList({ collapsed = false }: { collapsed?: boolean })
                 </List>
             </Box>
 
-      
             <Dialog open={showConfirm} onClose={() => setShowConfirm(false)}>
                 <DialogTitle>Delete Chat</DialogTitle>
                 <DialogContent>

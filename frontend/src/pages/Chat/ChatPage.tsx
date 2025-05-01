@@ -17,19 +17,15 @@ export default function ChatPage({ userId, chatId }: ChatPageProps) {
     const bottomRef = useRef<HTMLDivElement>(null);
     const theme = useTheme();
 
-   
     useChatSocket(chatId, (msg: MessageData) => setMessages(prev => [...prev, msg]));
 
-  
     useAutoScroll(bottomRef, [messages]);
 
-  
     const handleSend = () => {
         if (!newMessage.trim()) return;
         setNewMessage("");
     };
 
-   
     let headerText = 'Loading...';
     if (!loadingInfo && chatInfo) {
         if (chatInfo.isGroup) headerText = chatInfo.title || 'Unnamed Group';

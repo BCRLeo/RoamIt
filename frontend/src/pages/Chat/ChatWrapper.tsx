@@ -38,7 +38,6 @@ export default function ChatWrapper() {
 
     return (
         <Box display="flex" height="100%" minHeight={0}>
-           
             <Box
                 sx={{
                     width: leftPanelWidth,
@@ -49,12 +48,12 @@ export default function ChatWrapper() {
                     backgroundColor: theme.palette.background.default,
                     borderRight: 1,
                     borderColor: 'divider',
+                    maxHeight: "85dvh"
                 }}
             >
                 <ChatList collapsed={leftPanelWidth <= 200} />
             </Box>
 
-           
             <Box
                 onMouseDown={handleMouseDown}
                 sx={{
@@ -76,6 +75,7 @@ export default function ChatWrapper() {
                     display: 'flex',
                     flexDirection: 'column',
                     minWidth: 0,
+                    maxHeight: "85dvh"
                 }}
             >
                 {chatId ? (
