@@ -73,7 +73,7 @@ def sign_up():
     
     return jsonify({
         "data": {
-            "userId": current_user.id,
+            "id": current_user.id,
             "firstName": current_user.first_name,
             "lastName": current_user.last_name,
             "username": current_user.username,
@@ -92,7 +92,7 @@ def get_user_from_id(user_id: int):
     if privacy and privacy == "public":
         return jsonify({
             "data": {
-                "userId": user.id,
+                "id": user.id,
                 "firstName": user.first_name,
                 "lastName": user.last_name,
                 "username": user.username
@@ -102,7 +102,7 @@ def get_user_from_id(user_id: int):
     if current_user.is_authenticated and current_user.id == user_id:
         return jsonify({
             "data": {
-                "userId": current_user.id,
+                "id": current_user.id,
                 "firstName": current_user.first_name,
                 "lastName": current_user.last_name,
                 "username": current_user.username,
@@ -124,7 +124,7 @@ def get_user_from_email(email: str):
     
     return jsonify({
         "data": {
-            "userId": current_user.id,
+            "id": current_user.id,
             "firstName": current_user.first_name,
             "lastName": current_user.last_name,
             "username": current_user.username,
@@ -143,7 +143,7 @@ def get_user_from_username(username: str):
     if privacy and privacy == "public":
         return jsonify({
             "data": {
-                "userId": user.id,
+                "id": user.id,
                 "firstName": user.first_name,
                 "lastName": user.last_name,
                 "username": user.username
@@ -153,7 +153,7 @@ def get_user_from_username(username: str):
     if current_user.is_authenticated and current_user.username == username:
         return jsonify({
         "data": {
-            "userId": current_user.id,
+            "id": current_user.id,
             "firstName": current_user.first_name,
             "lastName": current_user.last_name,
             "username": current_user.username,
