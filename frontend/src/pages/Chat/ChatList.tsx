@@ -92,12 +92,14 @@ export default function ChatList({ collapsed = false }: { collapsed?: boolean })
                                 >
                                     { chat.isGroup ? (
                                         <AvatarGroup max = { 3 } sx = {{ mr: collapsed ? 0 : 2 }}>
-                                            {chat.memberProfiles?.map((user) => (
-                                                <ProfilePicture userId = { user.id } />
-                                            ))}
+                                            { chat.memberIds?.map((id) => (
+                                                <ProfilePicture userId = { id } />
+                                            )) }
                                         </AvatarGroup>
                                     ) : (
-                                        <ProfilePicture userId = { user.id } />
+                                        <Box sx = {{ mr: collapsed ? 0 : 2 }}>
+                                            <ProfilePicture userId = { chat.memberIds[0] !== user.id ? chat.memberIds[0] : chat.memberIds[1] } />
+                                        </Box>
                                     )}
 
                                     {!collapsed && (

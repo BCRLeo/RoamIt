@@ -22,8 +22,6 @@ export default function ProfilePicture(props:
         lg: "8rem"
     }
     const length = size ? sizeMap[size] : sizeMap["sm"];
-    console.log(length);
-    
 
     // <ProfilePicture />
     if (userId === undefined) {

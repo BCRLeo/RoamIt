@@ -6,22 +6,7 @@ export type ChatData = {
     creationDate: string;
     latestMessage?: string;
     latestTime?: string;
-  
-    //  For private chats
-    otherUser?: {
-      id: number;
-      username: string;
-      profilePicUrl: string;
-    };
-  
-    //  For group chats
-    memberProfiles?: {
-      id: number;
-      username: string;
-      profilePicUrl: string;
-    }[];
-  };
-  
+};
 
 export type MessageData = {
     id: number,
