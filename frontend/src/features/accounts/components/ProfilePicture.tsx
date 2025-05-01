@@ -66,7 +66,12 @@ export default function ProfilePicture(props:
     if (!("onUpload" in props) || props.onUpload === undefined) {
         return (
             <Box sx = {{ width: length, height: length, mx: "auto" }}>
-                <Avatar src = { imageUrl ?? undefined } alt = { username ?? undefined } sx = {{ width: "100%", height: "100%" }} />
+                <Avatar
+                    src = { imageUrl ?? undefined }
+                    alt = { username ?? undefined }
+                    title = { username ?? undefined }
+                    sx = {{ width: "100%", height: "100%" }}
+                />
             </Box>
         );
     }
@@ -82,7 +87,12 @@ export default function ProfilePicture(props:
                 }
                 sx = {{ width: length, height: length }}
             >
-                <Avatar src = { imageUrl ?? undefined } alt = { username ?? undefined } sx = {{ width: "100%", height: "100%" }} />
+                <Avatar
+                    src = { imageUrl ?? undefined }
+                    alt = { username ?? undefined }
+                    title = { username ?? undefined }
+                    sx = {{ width: "100%", height: "100%" }}
+                />
             </Badge>
         </Box>
     );

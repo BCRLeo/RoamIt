@@ -7,9 +7,7 @@ import {
     ListItemButton,
     Button,
     Box,
-    Avatar,
     AvatarGroup,
-    Tooltip,
     useTheme
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
@@ -17,6 +15,7 @@ import useUserContext from '../../features/auth/hooks/useUserContext';
 import { createChat, getChats } from '../../features/chats/chatsApi';
 import { ChatData } from '../../features/chats/chatsConstants';
 import ProfilePicture from '../../features/accounts/components/ProfilePicture';
+import NotFoundPage from '../NotFound/NotFoundPage';
 
 export default function ChatList({ collapsed = false }: { collapsed?: boolean }) {
     const [chats, setChats] = useState<ChatData[]>([]);
@@ -48,6 +47,12 @@ export default function ChatList({ collapsed = false }: { collapsed?: boolean })
             navigate(`/chats/${response}`);
             fetchChats();
         }
+    }
+
+    if (!user) {
+        return (
+            <NotFoundPage />
+        );
     }
 
     return (
@@ -85,29 +90,14 @@ export default function ChatList({ collapsed = false }: { collapsed?: boolean })
                                     alignItems="flex-start"
                                     sx={{ py: 1.5, px: collapsed ? 1 : 2 }}
                                 >
-                                    {chat.isGroup ? (
-                                        <AvatarGroup max={3} sx={{ mr: collapsed ? 0 : 2 }}>
+                                    { chat.isGroup ? (
+                                        <AvatarGroup max = { 3 } sx = {{ mr: collapsed ? 0 : 2 }}>
                                             {chat.memberProfiles?.map((user) => (
-                                                <Tooltip
-                                                    title={collapsed ? user.username : ''}
-                                                    key={user.id}
-                                                    placement="right"
-                                                >
-                                                    <ProfilePicture userId = { user.id } />
-                                                </Tooltip>
+                                                <ProfilePicture userId = { user.id } />
                                             ))}
                                         </AvatarGroup>
                                     ) : (
-                                        <Tooltip
-                                            title={collapsed ? chat.otherUser?.username : ''}
-                                            placement="right"
-                                        >
-                                            <Avatar
-                                                src={chat.otherUser?.profilePicUrl}
-                                                alt={chat.otherUser?.username}
-                                                sx={{ mr: collapsed ? 0 : 2 }}
-                                            />
-                                        </Tooltip>
+                                        <ProfilePicture userId = { user.id } />
                                     )}
 
                                     {!collapsed && (
