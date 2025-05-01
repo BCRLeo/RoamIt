@@ -1,12 +1,12 @@
 export type ChatData = {
     id: number;
     isGroup: boolean;
-    title?: string;
+    title: string;         
     memberIds: number[];
     creationDate: string;
     latestMessage?: string;
     latestTime?: string;
-};
+  };
 
 export type MessageData = {
     id: number,

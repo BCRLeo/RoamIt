@@ -63,19 +63,24 @@ def list_chats():
 
     result = []
     for chat in user_chats:
-        latest = (
-            chat.messages
-            .order_by(Message.timestamp.desc())
-            .first()
-        )
+        
+        if chat.is_group:
+            display_title = chat.title or "Unnamed Group"
+        else:
+            
+            other = next(u for u in chat.members if u.id != current_user.id)
+            display_title = other.username
+
+        latest = chat.messages.order_by(Message.timestamp.desc()).first()
         result.append({
             "id": chat.id,
             "isGroup": chat.is_group,
-            "title": chat.title,
+            "title": display_title,           
             "memberIds": [u.id for u in chat.members],
             "latestMessage": latest.content if latest else None,
             "latestTime": latest.timestamp.isoformat() if latest else None
         })
+
 
     return jsonify({"data": result}), 200
 
@@ -183,3 +188,4 @@ def get_chat_matches():
     except Exception as error:
         print("Error retrieving chat matches:", error)
         return jsonify({"error": "Failed to retrieve chat matches."}), 500
+
