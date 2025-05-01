@@ -461,10 +461,13 @@ def send_friend_request(username: str):
         status="pending"
     )
 
-    db.session.add(friendship)
-    db.session.commit()
-
-    return jsonify({"message": f"Friend request sent to @{username}."}), 200
+    try:
+        db.session.add(friendship)
+        db.session.commit()
+        return "", 204
+    except Exception as error:
+        db.session.rollback()
+        return jsonify({"error": str(error)}), 500
 
 
 # Accept a friend request
@@ -489,10 +492,13 @@ def accept_friend_request(username: str):
     if not friendship:
         return jsonify({"error": "No pending friend request from this user."}), 404
 
-    friendship.status = "accepted"
-    db.session.commit()
-
-    return jsonify({"message": f"You are now friends with @{username}."}), 200
+    try:
+        friendship.status = "accepted"
+        db.session.commit()
+        return "", 204
+    except Exception as error:
+        db.session.rollback()
+        return jsonify({"error": str(error)}), 500
 
 
 # Remove a friend
@@ -517,10 +523,13 @@ def remove_friend(username: str):
     if not friendship:
         return jsonify({"error": "No active friendship found."}), 404
 
-    db.session.delete(friendship)
-    db.session.commit()
-
-    return jsonify({"message": f"Friendship with @{username} removed."}), 200
+    try:
+        db.session.delete(friendship)
+        db.session.commit()
+        return "", 204
+    except Exception as error:
+        db.session.rollback()
+        return jsonify({"error": str(error)}), 500
 
 
 # View incoming friend requests
