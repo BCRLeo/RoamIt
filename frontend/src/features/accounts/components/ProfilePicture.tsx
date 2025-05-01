@@ -2,18 +2,33 @@ import { ChangeEvent, ChangeEventHandler, useState } from "react";
 
 import { PhotoCamera } from "@mui/icons-material";
 import { Avatar, Badge, Box } from "@mui/material";
-
-import UploadButton from "../../../components/UploadButton/UploadButton";
-import { getProfilePictureUrl, getUserData } from "../accountsApi";
 import { useSuspenseQueries } from "@tanstack/react-query";
 
-export default function ProfilePicture(props: {userId?: number} | {userId: number, onUpload: ChangeEventHandler<HTMLInputElement>}) {
+import UploadButton from "../../../components/UploadButton/UploadButton";
+import { Size } from "../../../constants";
+import { getProfilePictureUrl, getUserData } from "../accountsApi";
+
+export default function ProfilePicture(props:
+    { userId?: number, size?: Size } |
+    { userId: number, onUpload: ChangeEventHandler<HTMLInputElement>, size?: Size }
+) {
     const userId = props.userId;
+    const size = props.size;
+
+    const sizeMap: Record<Size, string> = {
+        xs: "1rem",
+        sm: "2rem",
+        md: "4rem",
+        lg: "8rem"
+    }
+    const length = size ? sizeMap[size] : sizeMap["sm"];
+    console.log(length);
+    
 
     // <ProfilePicture />
     if (userId === undefined) {
         return (
-            <Box sx = {{ width: "8rem", height: "8rem", mx: "auto" }}>
+            <Box sx = {{ width: length, height: length, mx: "auto" }}>
                 <Avatar sx = {{ width: "100%", height: "100%" }} />
             </Box>
         );
@@ -50,7 +65,7 @@ export default function ProfilePicture(props: {userId?: number} | {userId: numbe
     // <ProfilePicture userId = { userId } /> and <ProfilePicture userId = { userId } onUpload = { undefined } />
     if (!("onUpload" in props) || props.onUpload === undefined) {
         return (
-            <Box sx = {{ width: "8rem", height: "8rem", mx: "auto" }}>
+            <Box sx = {{ width: length, height: length, mx: "auto" }}>
                 <Avatar src = { imageUrl ?? undefined } alt = { username ?? undefined } sx = {{ width: "100%", height: "100%" }} />
             </Box>
         );
@@ -61,11 +76,11 @@ export default function ProfilePicture(props: {userId?: number} | {userId: numbe
         <Box width = "min-content" mx = "auto">
             <Badge
                 overlap = "circular"
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
                 badgeContent = {
                     <UploadButton icon = { <PhotoCamera /> } inputProps = {{ onChange: handleUpload, accept: "image/*" }} />
                 }
-                sx = {{ width: "8rem", height: "8rem" }}
+                sx = {{ width: length, height: length }}
             >
                 <Avatar src = { imageUrl ?? undefined } alt = { username ?? undefined } sx = {{ width: "100%", height: "100%" }} />
             </Badge>

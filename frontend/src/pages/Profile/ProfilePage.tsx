@@ -110,7 +110,7 @@ export default function ProfilePage({ username = useParams()?.username }: { user
     if (!isAuthenticated) {
         return (
             <Container maxWidth = "md">
-                <ProfilePicture userId = { user.id } />
+                <ProfilePicture size = "lg" userId = { user.id } />
                     
                 <Typography variant = "h1" marginBottom = { 0 }>
                     { `${ user.firstName + " " + user.lastName }` }
@@ -129,7 +129,7 @@ export default function ProfilePage({ username = useParams()?.username }: { user
 
     return (
         <Container maxWidth = "md">
-            <ProfilePicture userId = { user.id } onUpload = { isEditing ? handleUploadProfilePicture : undefined } />
+            <ProfilePicture size = "lg" userId = { user.id } onUpload = { isEditing ? handleUploadProfilePicture : undefined } />
 
             <Typography variant = "h1" marginBottom = { 0 }>
                 { `${ user.firstName + " " + user.lastName }` }

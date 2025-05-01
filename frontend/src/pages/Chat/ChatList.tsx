@@ -16,6 +16,7 @@ import { useNavigate } from 'react-router-dom';
 import useUserContext from '../../features/auth/hooks/useUserContext';
 import { createChat, getChats } from '../../features/chats/chatsApi';
 import { ChatData } from '../../features/chats/chatsConstants';
+import ProfilePicture from '../../features/accounts/components/ProfilePicture';
 
 export default function ChatList({ collapsed = false }: { collapsed?: boolean }) {
     const [chats, setChats] = useState<ChatData[]>([]);
@@ -92,10 +93,7 @@ export default function ChatList({ collapsed = false }: { collapsed?: boolean })
                                                     key={user.id}
                                                     placement="right"
                                                 >
-                                                    <Avatar
-                                                        src={user.profilePicUrl}
-                                                        alt={user.username}
-                                                    />
+                                                    <ProfilePicture userId = { user.id } />
                                                 </Tooltip>
                                             ))}
                                         </AvatarGroup>
