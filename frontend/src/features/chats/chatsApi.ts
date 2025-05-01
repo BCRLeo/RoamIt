@@ -5,7 +5,7 @@ import { ChatData, MessageData } from "./chatsConstants";
  */
 export async function createChat(userIds: number[], title?: string): Promise<number | null> {
     try {
-        const response = await fetch("/api/discussions", {
+        const response = await fetch("/api/chats", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -33,7 +33,7 @@ export async function createChat(userIds: number[], title?: string): Promise<num
 
 export async function getChats(): Promise<ChatData[] | null> {
     try {
-        const response = await fetch("/api/discussions", {
+        const response = await fetch("/api/chats", {
             credentials: "include"
         });
         const data = await response.json();
@@ -52,7 +52,7 @@ export async function getChats(): Promise<ChatData[] | null> {
 
 export async function getChatMessages(chatId: number): Promise<MessageData[] | null> {
     try {
-        const response = await fetch(`/api/discussions/${ chatId }/messages`, {
+        const response = await fetch(`/api/chats/${ chatId }/messages`, {
             credentials: "include",
         });
         const data = await response.json();
