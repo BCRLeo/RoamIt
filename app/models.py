@@ -30,8 +30,8 @@ blocks = db.Table(
 )
 
 #Association tabke for discussions
-discussion_members = db.Table('discussion_members',
-    db.Column('discussion_id', db.Integer, db.ForeignKey('discussions.id'), primary_key=True),
+chat_members = db.Table('chat_members',
+    db.Column('chat_id', db.Integer, db.ForeignKey('chats.id'), primary_key=True),
     db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True)
 )
 
@@ -228,18 +228,18 @@ class User(db.Model, UserMixin):
         """Return a list of all listing IDs associated with this user."""
         return [listing.id for listing in self.listings.all()]
 
-class Discussion(db.Model):
-    __tablename__ = 'discussions'
+class Chat(db.Model):
+    __tablename__ = 'chats'
 
     id: int = db.Column(db.Integer, primary_key=True)
     title: Optional[str] = db.Column(db.String(100), nullable=True)
     is_group: bool = db.Column(db.Boolean, nullable=False, default=False)
     created_at: datetime = db.Column(db.DateTime, default=datetime.now(timezone.utc))
 
-    members = db.relationship('User', secondary=discussion_members,
-        backref=db.backref('discussions', lazy='dynamic'))
+    members = db.relationship('User', secondary=chat_members,
+        backref=db.backref('chats', lazy='dynamic'))
 
-    messages = db.relationship('Message', backref='discussion', lazy='dynamic', cascade='all, delete-orphan')
+    messages = db.relationship('Message', backref='chat', lazy='dynamic', cascade='all, delete-orphan')
 
     def latest_message(self):
         return self.messages.order_by(Message.timestamp.desc()).first()
@@ -265,7 +265,7 @@ class Message(db.Model):
 
     id: int = db.Column(db.Integer, primary_key=True)
     sender_id: int = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    discussion_id: int = db.Column(db.Integer, db.ForeignKey('discussions.id'), nullable=False)
+    chat_id: int = db.Column(db.Integer, db.ForeignKey('chats.id'), nullable=False)
     content: str = db.Column(db.Text, nullable=False)
     file_url: Optional[str] = db.Column(db.String(255), nullable=True) 
     seen: bool = db.Column(db.Boolean, nullable = False, default = False)
@@ -283,7 +283,7 @@ class Message(db.Model):
             "senderId": self.sender_id,
             "senderUsername": self.sender.username,
             "senderProfilePicUrl": f"/api/users/{self.sender_id}/profile-picture",
-            "chatId": self.discussion_id,  # renamed to match frontend
+            "chatId": self.chat_id,  # renamed to match frontend
             "content": self.content,
             "fileUrl": self.file_url,
             "seen": self.seen,

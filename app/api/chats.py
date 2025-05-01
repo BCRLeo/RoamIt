@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, request
 from flask_login import login_required, current_user
 
 from .. import db
-from ..models import Message, Discussion, User
+from ..models import Message, Chat, User
 
 chats = Blueprint("chats", __name__)
 
@@ -37,7 +37,7 @@ def create_chat():
     elif abs(len(members) - len(member_ids)) > 1:
         return jsonify({"error": "Invalid chat members."}), 400
     
-    chat = Discussion(title = title, is_group = is_group)
+    chat = Chat(title = title, is_group = is_group)
     chat.members.extend(members)
 
     try:
@@ -53,7 +53,7 @@ def create_chat():
 @chats.route("/chats", methods=["GET"])
 @login_required
 def get_user_chats():
-    chats: list[Discussion] = current_user.discussions.order_by(Discussion.created_at.desc()).all()
+    chats: list[Chat] = current_user.chats.order_by(Chat.created_at.desc()).all()
     result = []
     
     for chat in chats:
@@ -74,8 +74,8 @@ def get_user_chats():
 @chats.route("/chats/<int:chat_id>")
 @login_required
 def get_chat_data(chat_id):
-    chat: Discussion | None = db.session.execute(
-        db.select(Discussion)
+    chat: Chat | None = db.session.execute(
+        db.select(Chat)
         .filter_by(id = chat_id)
     ).scalar_one_or_none()
     
@@ -102,7 +102,7 @@ def get_chat_data(chat_id):
 def get_chat_messages(chat_id):
     messages: list[Message] = db.session.execute(
         db.select(Message)
-        .filter_by(discussion_id = chat_id)
+        .filter_by(chat_id = chat_id)
         .order_by(Message.timestamp)
     ).scalars().all()
     

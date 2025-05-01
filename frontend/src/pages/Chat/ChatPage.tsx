@@ -34,7 +34,7 @@ export default function ChatPage({ userId, chatId }: { userId: number; chatId: n
             if (!socket.connected) {
                 socket.connect();
             } else {
-                socket.emit('join', { discussion_id: chatId });
+                socket.emit('join', { chat_id: chatId });
             }
 
             socket.off('receive_message');
@@ -52,7 +52,7 @@ export default function ChatPage({ userId, chatId }: { userId: number; chatId: n
 
             socket.on('connect', () => {
                 console.log('[Socket] connected:', socket.id);
-                socket.emit('join', { discussion_id: chatId });
+                socket.emit('join', { chat_id: chatId });
             });
         };
 
@@ -73,7 +73,7 @@ export default function ChatPage({ userId, chatId }: { userId: number; chatId: n
         if (!newMessage.trim()) return;
 
         socket.emit('send_message', {
-            discussion_id: chatId,
+            chat_id: chatId,
             content: newMessage,
             sender_id: userId,
         });
@@ -91,7 +91,7 @@ export default function ChatPage({ userId, chatId }: { userId: number; chatId: n
             sx={{ backgroundColor: theme.palette.background.paper }}
         >
             <Typography variant="h5" gutterBottom>
-                Discussion #{chatId}
+                Chat #{chatId}
             </Typography>
 
             <Paper
