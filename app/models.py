@@ -455,8 +455,8 @@ class Friendship(db.Model):
     def to_dict(self):
         return {
             "id": self.id,
-            "requester_id": self.requester_id,
-            "receiver_id": self.receiver_id,
+            "requesterId": self.requester_id,
+            "receiverId": self.receiver_id,
             "status": self.status,
             "timestamp": self.timestamp.isoformat()
         }
