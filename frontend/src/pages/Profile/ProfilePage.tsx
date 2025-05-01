@@ -12,6 +12,7 @@ import usePublicUserData from "../../features/accounts/hooks/usePublicUserData";
 import useUnsavedStatus from "../../hooks/useUnsavedStatus";
 import NotFoundPage from "../NotFound/NotFoundPage";
 import { useToggleState } from "../../hooks/useToggleState";
+import { sendFriendRequest, acceptFriendRequest } from "../../features/accounts/accountsApi";
 
 export default function ProfilePage({ username = useParams()?.username }: { username?: string }) {
     if (!username) {
@@ -160,7 +161,22 @@ export default function ProfilePage({ username = useParams()?.username }: { user
                         Edit profile
                     </Button>
                 }
-
+                {isAuthenticated && (
+                <Button
+                    variant="outlined"
+                    onClick={() => sendFriendRequest("antoncalabrian")}
+                >
+                    Send Friend Request to @antoncalabrian
+                </Button>
+            )}
+                {isAuthenticated && (
+                <Button
+                    variant="outlined"
+                    onClick={() => acceptFriendRequest("juanenrico")}
+                >
+                    Accept Friend Request from @QloBrando
+                </Button>
+            )}
                 <Button
                     component = { Link }
                     to = "/listings"

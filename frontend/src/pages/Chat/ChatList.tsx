@@ -8,52 +8,61 @@ import {
     Button,
     Box,
     AvatarGroup,
-    useTheme
+    IconButton,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogContentText,
+    DialogActions,
+    useTheme,
 } from '@mui/material';
+import { Delete } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import useUserContext from '../../features/auth/hooks/useUserContext';
-import { createChat, getChats } from '../../features/chats/chatsApi';
+import { getChats, deleteChat } from '../../features/chats/chatsApi';
+import CreateChatOverlay from './CreateChatOverlay';
 import { ChatData } from '../../features/chats/chatsConstants';
 import ProfilePicture from '../../features/accounts/components/ProfilePicture';
 import NotFoundPage from '../NotFound/NotFoundPage';
 
 export default function ChatList({ collapsed = false }: { collapsed?: boolean }) {
     const [chats, setChats] = useState<ChatData[]>([]);
+    const [showCreateOverlay, setShowCreateOverlay] = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
+    const [toDelete, setToDelete] = useState<ChatData | null>(null);
     const { user } = useUserContext();
     const navigate = useNavigate();
     const theme = useTheme();
 
-    async function fetchChats() {
+    const fetchChats = async () => {
         const response = await getChats();
-        if (response) {
-            setChats(response);
-        }
-    }
+        setChats(response || []);
+    };
 
     useEffect(() => {
         fetchChats();
     }, []);
 
-    function getDisplayTitle(chat: ChatData) {
+    const getDisplayTitle = (chat: ChatData) => {
         if (chat.isGroup) return chat.title || 'Unnamed group';
-        const otherId = chat.memberIds.find((id) => id !== user?.id);
+        const otherId = chat.memberIds.find(id => id !== user?.id);
         return `Chat with user #${otherId}`;
-    }
+    };
 
-    async function handleCreateChat() {
-        if (!user) return;
-        const response = await createChat([user.id, 3, 5]);
-        if (response !== null) {
-            navigate(`/chats/${response}`);
-            fetchChats();
-        }
-    }
+    const confirmDelete = (chat: ChatData) => {
+        setToDelete(chat);
+        setShowConfirm(true);
+    };
 
-    if (!user) {
-        return (
-            <NotFoundPage />
-        );
-    }
+    const handleDelete = async () => {
+        if (!toDelete) return;
+        await deleteChat(toDelete.id);
+        setShowConfirm(false);
+        setToDelete(null);
+        fetchChats();
+    };
+
+    if (!user) return <NotFoundPage />;
 
     return (
         <Box
@@ -65,17 +74,19 @@ export default function ChatList({ collapsed = false }: { collapsed?: boolean })
                 backgroundColor: theme.palette.background.default,
             }}
         >
-            {!collapsed && (
+            
+            <Box sx={{ p: 2 }}>
                 <Button
                     variant="contained"
-                    fullWidth
-                    sx={{ my: 1 }}
-                    onClick={handleCreateChat}
+                    fullWidth={!collapsed}
+                    sx={{ minWidth: collapsed ? '40px' : undefined }}
+                    onClick={() => setShowCreateOverlay(true)}
                 >
-                    + New Chat
+                    {collapsed ? '+' : 'New Chat'}
                 </Button>
-            )}
+            </Box>
 
+           
             <Box sx={{ flex: 1, overflowY: 'auto' }}>
                 <List>
                     {chats.length === 0 ? (
@@ -83,53 +94,49 @@ export default function ChatList({ collapsed = false }: { collapsed?: boolean })
                             You have no chats yet.
                         </Typography>
                     ) : (
-                        chats.map((chat) => (
+                        chats.map(chat => (
                             <React.Fragment key={chat.id}>
                                 <ListItemButton
                                     onClick={() => navigate(`/chats/${chat.id}`)}
                                     alignItems="flex-start"
                                     sx={{ py: 1.5, px: collapsed ? 1 : 2 }}
                                 >
-                                    { chat.isGroup ? (
-                                        <AvatarGroup max = { 3 } sx = {{ mr: collapsed ? 0 : 2 }}>
-                                            { chat.memberIds?.map((id) => (
-                                                <ProfilePicture userId = { id } />
-                                            )) }
+                                    {chat.isGroup ? (
+                                        <AvatarGroup max={3} sx={{ mr: collapsed ? 0 : 2 }}>
+                                            {chat.memberIds.map(id => (
+                                                <ProfilePicture key={id} userId={id} />
+                                            ))}
                                         </AvatarGroup>
                                     ) : (
-                                        <Box sx = {{ mr: collapsed ? 0 : 2 }}>
-                                            <ProfilePicture userId = { chat.memberIds[0] !== user.id ? chat.memberIds[0] : chat.memberIds[1] } />
+                                        <Box sx={{ mr: collapsed ? 0 : 2 }}>
+                                            <ProfilePicture
+                                                userId={
+                                                    chat.memberIds[0] !== user.id
+                                                        ? chat.memberIds[0]
+                                                        : chat.memberIds[1]
+                                                }
+                                            />
                                         </Box>
                                     )}
 
                                     {!collapsed && (
                                         <ListItemText
-                                            primary={
-                                                <Typography variant="subtitle1" fontWeight="bold">
-                                                    {getDisplayTitle(chat)}
-                                                </Typography>
-                                            }
-                                            secondary={
-                                                <>
-                                                    <Typography
-                                                        variant="body2"
-                                                        sx={{ mb: 0.5, color: theme.palette.text.secondary }}
-                                                        noWrap
-                                                    >
-                                                        {chat.latestMessage || 'No messages yet'}
-                                                    </Typography>
-                                                    {chat.latestTime && (
-                                                        <Typography
-                                                            variant="caption"
-                                                            sx={{ color: theme.palette.text.secondary }}
-                                                        >
-                                                            {new Date(chat.latestTime).toLocaleTimeString()}
-                                                        </Typography>
-                                                    )}
-                                                </>
-                                            }
+                                            primary={getDisplayTitle(chat)}
+                                            secondary={chat.latestMessage || 'No messages yet'}
                                         />
                                     )}
+
+                                    
+                                    <IconButton
+                                        edge="end"
+                                        aria-label="delete"
+                                        onClick={e => {
+                                            e.stopPropagation();
+                                            confirmDelete(chat);
+                                        }}
+                                    >
+                                        <Delete />
+                                    </IconButton>
                                 </ListItemButton>
                                 <Divider component="li" />
                             </React.Fragment>
@@ -137,6 +144,31 @@ export default function ChatList({ collapsed = false }: { collapsed?: boolean })
                     )}
                 </List>
             </Box>
+
+      
+            <Dialog open={showConfirm} onClose={() => setShowConfirm(false)}>
+                <DialogTitle>Delete Chat</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        Are you sure you want to delete this chat? This action cannot be undone.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setShowConfirm(false)}>Cancel</Button>
+                    <Button color="error" onClick={handleDelete}>Delete</Button>
+                </DialogActions>
+            </Dialog>
+
+
+            <CreateChatOverlay
+                open={showCreateOverlay}
+                onClose={() => setShowCreateOverlay(false)}
+                onCreated={(chatId) => {
+                    navigate(`/chats/${chatId}`);
+                    fetchChats();
+                    setShowCreateOverlay(false);
+                }}
+            />
         </Box>
     );
 }

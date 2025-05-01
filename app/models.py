@@ -272,7 +272,6 @@ class Message(db.Model):
     timestamp: datetime = db.Column(db.DateTime, default=datetime.now(timezone.utc))
 
     sender = db.relationship('User', foreign_keys=[sender_id])  
-    #conversaion = db.relationship('User', foreign_keys=[discussion_id])
     # Not deleting this line, as it was added (when we called discussion conversasions) to link chats to certain listings
     # I'm not sure if we want the chats to be independant of listings or not so leaving this here for future me 
     reactions = db.relationship('Reaction', backref='message', lazy='dynamic')

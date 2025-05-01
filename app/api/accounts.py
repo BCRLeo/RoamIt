@@ -574,7 +574,8 @@ def get_friend_list(username: str):
                 "userId": f.id,
                 "username": f.username,
                 "firstName": f.first_name,
-                "lastName": f.last_name
+                "lastName": f.last_name,
+                "profilePicUrl": f"/api/users/{f.id}/profile-picture"
             } for f in friends
         ]
     }), 200

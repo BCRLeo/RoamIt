@@ -19,3 +19,5 @@ export type MessageData = {
     seen: boolean,
     timestamp: string
 }
+
+export type ChatUser = { id: number; username: string; profilePicUrl: string };

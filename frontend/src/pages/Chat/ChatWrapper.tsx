@@ -38,7 +38,7 @@ export default function ChatWrapper() {
 
     return (
         <Box display="flex" height="100%" minHeight={0}>
-            {/* Left panel: resizable */}
+           
             <Box
                 sx={{
                     width: leftPanelWidth,
@@ -54,7 +54,7 @@ export default function ChatWrapper() {
                 <ChatList collapsed={leftPanelWidth <= 200} />
             </Box>
 
-            {/* Divider (resizer) */}
+           
             <Box
                 onMouseDown={handleMouseDown}
                 sx={{
@@ -67,7 +67,7 @@ export default function ChatWrapper() {
                 }}
             />
 
-            {/* Right panel */}
+
             <Box
                 sx={{
                     flexGrow: 1,

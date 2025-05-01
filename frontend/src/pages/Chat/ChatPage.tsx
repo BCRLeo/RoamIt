@@ -1,119 +1,60 @@
-import { useEffect, useState, useRef } from 'react';
-import io from 'socket.io-client';
-import { Box, Typography, Paper, useTheme } from '@mui/material';
-import { getCurrentUser } from '../../features/auth/authApi';
-import MessageList from "../../features/chats/components/MessageList";
-import MessageInput from "../../features/chats/components/MessageInput";
-import { getChatMessages } from '../../features/chats/chatsApi';
+import { useState, useRef } from 'react';
+import { Box, Typography, Paper, useTheme, CircularProgress } from '@mui/material';
+import MessageList from '../../features/chats/components/MessageList';
+import MessageInput from '../../features/chats/components/MessageInput';
 import { MessageData } from '../../features/chats/chatsConstants';
+import { useChatInfo, useChatMessages, useChatSocket, useAutoScroll } from '../../features/chats/hooks/useChatPage';
 
-const socket = io('http://127.0.0.1:5005', {
-    autoConnect: false,
-});
+interface ChatPageProps {
+    userId: number;
+    chatId: number;
+}
 
-export default function ChatPage({ userId, chatId }: { userId: number; chatId: number }) {
-    const [messages, setMessages] = useState<MessageData[]>([]);
+export default function ChatPage({ userId, chatId }: ChatPageProps) {
+    const { chatInfo, loading: loadingInfo } = useChatInfo(chatId);
+    const { messages, setMessages, loading: loadingMsgs } = useChatMessages(chatId);
     const [newMessage, setNewMessage] = useState('');
     const bottomRef = useRef<HTMLDivElement>(null);
     const theme = useTheme();
 
-    useEffect(() => {
-        const fetchMessages = async () => {
-            const response = await getChatMessages(chatId);
-            if (response) {
-                setMessages(response);
-            }
-        };
+   
+    useChatSocket(chatId, (msg: MessageData) => setMessages(prev => [...prev, msg]));
 
-        fetchMessages();
+  
+    useAutoScroll(bottomRef, [messages]);
 
-        const setupSocket = async () => {
-            const user = await getCurrentUser();
-            if (!user) return;
-
-            if (!socket.connected) {
-                socket.connect();
-            } else {
-                socket.emit('join', { chat_id: chatId });
-            }
-
-            socket.off('receive_message');
-            socket.off('auth_check');
-            socket.off('connect');
-
-            socket.on('receive_message', (msg: MessageData) => {
-                console.log('[Socket] Message received:', msg);
-                setMessages((prev) => [...prev, msg]);
-            });
-
-            socket.on('auth_check', (data: any) => {
-                console.log('[AUTH CHECK]', data);
-            });
-
-            socket.on('connect', () => {
-                console.log('[Socket] connected:', socket.id);
-                socket.emit('join', { chat_id: chatId });
-            });
-        };
-
-        setupSocket();
-
-        return () => {
-            socket.off('receive_message');
-            socket.off('auth_check');
-            socket.off('connect');
-        };
-    }, [chatId, userId]);
-
-    useEffect(() => {
-        bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
-
-    const handleSendMessage = () => {
+  
+    const handleSend = () => {
         if (!newMessage.trim()) return;
-
-        socket.emit('send_message', {
-            chat_id: chatId,
-            content: newMessage,
-            sender_id: userId,
-        });
-
-        setNewMessage('');
+        setNewMessage("");
     };
 
-    return (
-        <Box
-            p={2}
-            display="flex"
-            flexDirection="column"
-            flex={1}
-            minHeight={0}
-            sx={{ backgroundColor: theme.palette.background.paper }}
-        >
-            <Typography variant="h5" gutterBottom>
-                Chat #{chatId}
-            </Typography>
+   
+    let headerText = 'Loading...';
+    if (!loadingInfo && chatInfo) {
+        if (chatInfo.isGroup) headerText = chatInfo.title || 'Unnamed Group';
+        else {
+            const other = chatInfo.members.find(m => m.id !== userId);
+            headerText = other?.username || 'Unknown Chat';
+        }
+    }
 
-            <Paper
-                variant="outlined"
-                sx={{
-                    flexGrow: 1,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    minHeight: 0,
-                    backgroundColor: theme.palette.background.default,
-                }}
-            >
-                <Box sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
-                    <MessageList messages={messages} userId={userId} bottomRef={bottomRef} />
+    return (
+        <Box p={2} display="flex" flexDirection="column" flex={1} minHeight={0} sx={{ backgroundColor: theme.palette.background.paper }}>
+            <Typography variant="h5" gutterBottom>{headerText}</Typography>
+            <Paper variant="outlined" sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, backgroundColor: theme.palette.background.default }}>
+                <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
+                    {loadingMsgs ? (
+                        <Box display="flex" justifyContent="center" alignItems="center" height="100%">
+                            <CircularProgress />
+                        </Box>
+                    ) : (
+                        <MessageList messages={messages} userId={userId} bottomRef={bottomRef} />
+                    )}
+                    <div ref={bottomRef} />
                 </Box>
             </Paper>
-
-            <MessageInput
-                value={newMessage}
-                onChange={setNewMessage}
-                onSend={handleSendMessage}
-            />
+            <MessageInput value={newMessage} onChange={setNewMessage} onSend={handleSend} />
         </Box>
     );
 }
