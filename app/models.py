@@ -35,12 +35,6 @@ chat_members = db.Table('chat_members',
     db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True)
 )
 
-# Association table for each locations' listings
-location_listings = db.Table("location_listings",
-    db.Column("location_id", db.Integer, db.ForeignKey("locations.id"), primary_key = True),
-    db.Column("listing_id", db.Integer, db.ForeignKey("listings.id"), primary_key = True)
-)
-
 
 class Swipe(db.Model):
     __tablename__ = 'swipes'
@@ -127,6 +121,7 @@ class Listing(db.Model):
     __tablename__ = 'listings'
     id: int = db.Column(db.Integer, primary_key=True)
     user_id: int = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    location_id = db.Column(db.Integer, db.ForeignKey('locations.id'))
     category: str = db.Column(db.String(20), nullable=False)  # 'short-term', 'long-term', or 'hosting'
     start_date: date = db.Column(db.Date, nullable=False)
     end_date: Optional[date] = db.Column(db.Date, nullable=True)
@@ -142,14 +137,14 @@ class Listing(db.Model):
     # Relationships
     creator = db.relationship('User', back_populates='listings')
     tags = db.relationship('Tag', secondary=listing_tags, back_populates='listings')
-    location = db.relationship("Location", secondary = location_listings, back_populates = "listings")
+    location = db.relationship("Location", back_populates = "listings")
     pictures = db.relationship("ListingPicture", back_populates = "listing", lazy = "dynamic")
     
     def to_dict(self, for_javascript: bool = True):
         return {
             "id": self.id,
             "userId": self.user_id,
-            "location": self.location.to_dict(),
+            "location": self.location.to_dict() if self.location else None,
             "radius": self.radius,
             "category": self.category,
             "nightlyBudget": self.nightly_budget,
@@ -561,7 +556,7 @@ class Location(db.Model):
     country: Optional[str] = db.Column(db.String(2), nullable = True)
     locality: Optional[str] = db.Column(db.String(50), nullable = True)
     
-    listings = db.relationship("Listing", secondary = location_listings, back_populates = "location", lazy = "dynamic")
+    listings = db.relationship("Listing", back_populates="location")
 
     @classmethod
     def get_location_data(cls, latitude: float, longitude: float) -> tuple[str, None] | tuple[None, str]:
@@ -629,9 +624,12 @@ class Location(db.Model):
     
     def to_dict(self):
         return {
+            "id": self.id,
             "name": self.name,
-            "latitude": self.latitude,
-            "longitude": self.longitude,
+            "coordinates": {
+                "lat": self.latitude,
+                "lng": self.longitude,
+            },
             "country": self.country,
             "locality": self.locality
         }
