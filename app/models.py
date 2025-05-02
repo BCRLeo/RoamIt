@@ -113,6 +113,16 @@ class Match(db.Model):
             return new_match
         return existing_match
 
+class ListingPicture(db.Model):
+    __tablename__ = "listing_pictures"
+    id: int = db.Column(db.Integer, primary_key = True)
+    listing_id: int = db.Column(db.Integer, db.ForeignKey("listings.id"), nullable = False)
+    image_data: bytes = db.Column(db.LargeBinary, nullable = False)
+    image_mimetype: str = db.Column(db.String(255), nullable = False)
+    timestamp: datetime = db.Column(db.DateTime, default = datetime.now(timezone.utc))
+
+    listing = db.relationship("Listing", back_populates = "pictures")
+
 class Listing(db.Model):
     __tablename__ = 'listings'
     id: int = db.Column(db.Integer, primary_key=True)
@@ -133,6 +143,7 @@ class Listing(db.Model):
     creator = db.relationship('User', back_populates='listings')
     tags = db.relationship('Tag', secondary=listing_tags, back_populates='listings')
     location = db.relationship("Location", secondary = location_listings, back_populates = "listings")
+    pictures = db.relationship("ListingPicture", back_populates = "listing", lazy = "dynamic")
     
     def to_dict(self, for_javascript: bool = True):
         return {
@@ -625,8 +636,8 @@ class Friendship(db.Model):
     __tablename__ = "friendships"
     requester_id: int = db.Column(db.Integer, db.ForeignKey("users.id"), primary_key = True)
     receiver_id: int = db.Column(db.Integer, db.ForeignKey("users.id"), primary_key = True)
-    status: str = db.Column(db.String(20), nullable=False, default="pending")  # 'pending', 'accepted', 'declined'
-    timestamp: datetime = db.Column(db.DateTime, default=datetime.now(timezone.utc))
+    status: str = db.Column(db.String(20), nullable = False, default="pending")  # 'pending', 'accepted', 'declined'
+    timestamp: datetime = db.Column(db.DateTime, default = datetime.now(timezone.utc), nullable = False)
 
     requester = db.relationship("User", foreign_keys=[requester_id], backref="sent_requests")
     receiver = db.relationship("User", foreign_keys=[receiver_id], backref="received_requests")
