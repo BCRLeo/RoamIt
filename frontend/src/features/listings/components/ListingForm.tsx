@@ -6,7 +6,7 @@ import { DatePicker } from "@mui/x-date-pickers";
 import dayjs, { Dayjs } from "dayjs";
 
 import { isListingCategory, ListingCategory } from "../listingsConstants";
-import { Location } from "../../maps/mapsConstants";
+import { Place } from "../../maps/mapsConstants";
 import UploadButton from "../../../components/UploadButton/UploadButton";
 import LocationPicker from "../../maps/components/LocationPicker";
 import { useToggleState } from "../../../hooks/useToggleState";
@@ -15,7 +15,7 @@ import { createListing } from "../listingsApi";
 export default function ListingForm({ gridProps }: { gridProps?: Grid2Props}) {
     const { sx: gridPropsSx = {}, ...gridPropsRest } = gridProps || {};
 
-    const [location, setLocation] = useState<Location | null>(null);
+    const [place, setPlace] = useState<Place | null>(null);
     const [radius, setRadius] = useState<number | null>(null);
     const [locationName, setLocationName] = useState("");
     const [category, setCategory] = useState<ListingCategory | null>(null);
@@ -27,9 +27,9 @@ export default function ListingForm({ gridProps }: { gridProps?: Grid2Props}) {
     const [description, setDescription] = useState("");
     const [uploadedImages, setUploadedImages] = useState<File[]>([]);
 
-    function handleLocationChange(location: Location | null, radius: number | null) {
-        if (location) {
-            setLocation(location);
+    function handleLocationChange(place: Place | null, radius: number | null) {
+        if (place) {
+            setPlace(place);
         }
 
         if (radius) {
@@ -122,13 +122,13 @@ export default function ListingForm({ gridProps }: { gridProps?: Grid2Props}) {
         event.preventDefault();
         //console.log("Submitting", { location, locationName, category, budget, startDate, endDate, datesAreApproximate, prefersSameGender, description, uploadedImages });
 
-        if (!location || radius === null || category === null || !startDate || !description.trim()) {
+        if (!place || radius === null || category === null || !startDate || !description.trim()) {
             console.error("Incomplete form.");
             return;
         }
 
         await createListing({
-            coordinates: location.coordinates,
+            coordinates: place.coordinates,
             radius: radius,
             locationName: locationName,
             category: category,

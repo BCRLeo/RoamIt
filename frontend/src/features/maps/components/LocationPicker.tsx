@@ -1,13 +1,13 @@
 import { Autocomplete, Box, Container, ContainerProps, InputLabel, Slider, TextField, Typography } from "@mui/material";
 import { AdvancedMarker, Map, useMap } from "@vis.gl/react-google-maps";
 import { ChangeEvent, SyntheticEvent, useEffect, useState } from "react";
-import { getLocationData, getPlacePredictions } from "../mapsApi";
-import { LatLngLiteral, Location, PlacePrediction } from "../mapsConstants";
+import { getPlaceData, getPlacePredictions } from "../mapsApi";
+import { LatLngLiteral, Place, PlacePrediction } from "../mapsConstants";
 import MapCircleOverlay from "./MapCircleOverlay";
 
 const Geolocation = navigator.geolocation;
 
-export default function LocationPicker({ onChange, containerProps, textInput = true, radiusSlider = true }: { onChange?: (location: Location | null, radius: number | null) => void, containerProps?: ContainerProps, textInput?: boolean, radiusSlider?: boolean }) {
+export default function LocationPicker({ onChange, containerProps, textInput = true, radiusSlider = true }: { onChange?: (location: Place | null, radius: number | null) => void, containerProps?: ContainerProps, textInput?: boolean, radiusSlider?: boolean }) {
     const MIN_RADIUS = 1;
     const MAX_RADIUS = 20;
 
@@ -15,7 +15,7 @@ export default function LocationPicker({ onChange, containerProps, textInput = t
 
     const map = useMap();
 
-    const [location, setLocation] = useState<Location | null>(null);
+    const [place, setPlace] = useState<Place | null>(null);
     const [userCoordinates, setUserCoordinates] = useState<LatLngLiteral | null>(null);
     const [clickCoordinates, setClickCoordinates] = useState<LatLngLiteral | null>(null);
     const [searchInput, setSearchInput] = useState<string | null>(null);
@@ -26,9 +26,9 @@ export default function LocationPicker({ onChange, containerProps, textInput = t
 
     useEffect(() => {
         if (onChange) {
-            onChange(location, radius);
+            onChange(place, radius);
         }
-    }, [location, radius]);
+    }, [place, radius]);
 
     useEffect(() => {
         Geolocation.getCurrentPosition(
@@ -66,10 +66,10 @@ export default function LocationPicker({ onChange, containerProps, textInput = t
         }
 
         const fetchSearchedLocation = async () => {
-            const response = await getLocationData(searchedPlaceId, false);
+            const response = await getPlaceData(searchedPlaceId, false);
 
             if (response) {
-                setLocation(response);
+                setPlace(response);
                 map?.panTo(response.coordinates);
             }
         };
@@ -83,10 +83,10 @@ export default function LocationPicker({ onChange, containerProps, textInput = t
         }
 
         const fetchClickedLocation = async () => {
-            const response = await getLocationData(clickCoordinates, false);
+            const response = await getPlaceData(clickCoordinates, false);
 
             if (response) {
-                setLocation(response);
+                setPlace(response);
             }
         };
 
@@ -156,13 +156,13 @@ export default function LocationPicker({ onChange, containerProps, textInput = t
                     gestureHandling = { "greedy" }
                     disableDefaultUI
                 >
-                    { location?.coordinates &&
+                    { place?.coordinates &&
                         <>
                             { radius && radius > 0 &&
-                                <MapCircleOverlay centre = { location.coordinates } radius = { radius } />
+                                <MapCircleOverlay centre = { place.coordinates } radius = { radius } />
                             }
                             <AdvancedMarker
-                                position = { location.coordinates }
+                                position = { place.coordinates }
                                 onDrag = { (event) => { event.latLng && setClickCoordinates({
                                     lat: event.latLng.lat(),
                                     lng: event.latLng.lng()
@@ -204,10 +204,10 @@ export default function LocationPicker({ onChange, containerProps, textInput = t
                 { clickCoordinates && `${ clickCoordinates.lat }, ${ clickCoordinates.lng }` }
             </Typography> */}
             <Typography>
-                { location?.locality && location?.country ?
-                    `${ location.locality }, ${ location.country }`
+                { place?.locality && place?.country ?
+                    `${ place.locality }, ${ place.country }`
                 :
-                    location?.country ?? "Select a location"
+                    place?.country ?? "Select a location"
                 }
             </Typography>
         </Container>

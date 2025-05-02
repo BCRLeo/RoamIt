@@ -1,8 +1,8 @@
-import { PlacePrediction, GOOGLE_API_KEY, LatLngLiteral, Location } from "./mapsConstants";
+import { PlacePrediction, GOOGLE_API_KEY, LatLngLiteral, Place } from "./mapsConstants";
 
-export async function getLocationData(placeId: string, shortenCountryCode: boolean): Promise<Location | null>;
-export async function getLocationData(coordinates: LatLngLiteral, shortenCountryCode: boolean): Promise<Location | null>;
-export async function getLocationData(placeIdOrCoordinates: string | LatLngLiteral, shortenCountryCode: boolean = true): Promise<Location | null> {
+export async function getPlaceData(placeId: string, shortenCountryCode: boolean): Promise<Place | null>;
+export async function getPlaceData(coordinates: LatLngLiteral, shortenCountryCode: boolean): Promise<Place | null>;
+export async function getPlaceData(placeIdOrCoordinates: string | LatLngLiteral, shortenCountryCode: boolean = true): Promise<Place | null> {
     let country: string | null = null;
     let locality: string | null = null;
     let coordinates: LatLngLiteral | null = null;
@@ -61,10 +61,10 @@ export async function getLocationData(placeIdOrCoordinates: string | LatLngLiter
         }
         
         return {
+            id: placeId ?? undefined,
             coordinates: coordinates,
             country: country,
-            locality: locality,
-            placeId: placeId
+            locality: locality ?? undefined,
         };
     } catch (error) {
         const representation = typeof(placeIdOrCoordinates) === "string" ? "place #" + placeIdOrCoordinates : `(${ placeIdOrCoordinates.lat }, ${ placeIdOrCoordinates.lng })`;
