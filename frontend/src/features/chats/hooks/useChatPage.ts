@@ -1,84 +1,74 @@
-import { useState, useEffect, RefObject } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import io from 'socket.io-client';
-import { useNavigate } from 'react-router-dom';
 import { getCurrentUser } from '../../../features/auth/authApi';
-import { getChatData, getChatMessages } from '../../../features/chats/chatsApi';
+import { getChatMessages } from '../../../features/chats/chatsApi';
 import { MessageData } from '../../../features/chats/chatsConstants';
 
-const socket = io('http://127.0.0.1:5005', { autoConnect: false });
+const socket = io('http://127.0.0.1:5005', {
+  autoConnect: false,
+  transports: ['polling','websocket'],
+});
+
+export function useChatPage(userId: number, chatId: number) {
+  const [messages, setMessages] = useState<MessageData[]>([]);
+  const [newMessage, setNewMessage] = useState('');
+  const bottomRef = useRef<HTMLDivElement | null>(null);
 
 
-export function useChatInfo(chatId: number) {
-    const [chatInfo, setChatInfo] = useState<{
-        isGroup: boolean;
-        title: string | null;
-        members: { id: number; username: string; profilePicUrl: string }[];
-    } | null>(null);
-    const [loading, setLoading] = useState(true);
-    const navigate = useNavigate();
+  // 1) load history + setup socket
+  useEffect(() => {
+    let cancelled = false;
 
-    useEffect(() => {
-        let cancelled = false;
-        (async () => {
-            setLoading(true);
-            const info = await getChatData(chatId);
-            if (!cancelled) {
-                if (!info) {
-                    navigate('/chats');
-                } else {
-                    setChatInfo(info);
-                }
-            }
-            setLoading(false);
-        })();
-        return () => { cancelled = true; };
-    }, [chatId, navigate]);
+    async function load() {
+      const history = await getChatMessages(chatId);
+      if (!cancelled && history) setMessages(history);
+    }
 
-    return { chatInfo, loading };
-}
+    async function setup() {
+      const user = await getCurrentUser();
+      if (!user) return;
+      if (!socket.connected) socket.connect();
+      socket.emit('join', { chat_id: chatId });
 
+      socket.off('receive_message')
+            .on('receive_message', (msg: MessageData) => {
+              setMessages(prev => [...prev, msg]);
+            });
+    }
 
-export function useChatMessages(chatId: number) {
-    const [messages, setMessages] = useState<MessageData[]>([]);
-    const [loading, setLoading] = useState(true);
+    load();
+    setup();
 
-    useEffect(() => {
-        let cancelled = false;
-        (async () => {
-            setLoading(true);
-            const msgs = await getChatMessages(chatId);
-            if (!cancelled && msgs) {
-                setMessages(msgs);
-            }
-            setLoading(false);
-        })();
-        return () => { cancelled = true; };
-    }, [chatId]);
+    return () => {
+      cancelled = true;
+      socket.emit('leave', { chat_id: chatId });
+      socket.off('receive_message');
+    };
+  }, [chatId, userId]);
 
-    return { messages, setMessages, loading };
-}
+  // 2) auto-scroll on new message
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
-export function useChatSocket(chatId: number, onMessage: (msg: MessageData) => void) {
-    useEffect(() => {
-        let mounted = true;
-        (async () => {
-            const user = await getCurrentUser();
-            if (!mounted || !user) return;
-            if (!socket.connected) socket.connect();
-            socket.emit('join', { chat_id: chatId });
-            socket.off('receive_message').on('receive_message', onMessage);
-        })();
-        return () => {
-            mounted = false;
-            socket.off('receive_message');
-            socket.emit('leave', { chat_id: chatId });
-        };
-    }, [chatId, onMessage]);
-}
+  // 3) send handler
+  const handleSend = () => {
+    const content = newMessage.trim();
+    if (!content) return;
 
+    socket.emit('send_message', {
+      chat_id: chatId,
+      content,
+      sender_id: userId,
+    });
+    setNewMessage('');
+  };
 
-export function useAutoScroll(ref: RefObject<HTMLElement | null>, deps: any[]) {
-    useEffect(() => {
-        ref.current?.scrollIntoView({ behavior: 'smooth' });
-    }, deps);
+  return {
+    messages,
+    newMessage,
+    setNewMessage,
+    bottomRef,
+    handleSend,
+  };
 }

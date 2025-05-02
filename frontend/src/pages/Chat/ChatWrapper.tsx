@@ -48,7 +48,7 @@ export default function ChatWrapper() {
                     backgroundColor: theme.palette.background.default,
                     borderRight: 1,
                     borderColor: 'divider',
-                    maxHeight: "85dvh"
+                    height: "85dvh"
                 }}
             >
                 <ChatList collapsed={leftPanelWidth <= 200} />
@@ -75,7 +75,7 @@ export default function ChatWrapper() {
                     display: 'flex',
                     flexDirection: 'column',
                     minWidth: 0,
-                    maxHeight: "85dvh"
+                    height: "85dvh"
                 }}
             >
                 {chatId ? (
