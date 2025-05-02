@@ -6,18 +6,44 @@ import { DatePicker } from "@mui/x-date-pickers";
 import dayjs, { Dayjs } from "dayjs";
 
 import { isListingCategory, ListingCategory } from "../listingsConstants";
+import { Location } from "../../maps/mapsConstants";
 import UploadButton from "../../../components/UploadButton/UploadButton";
 import LocationPicker from "../../maps/components/LocationPicker";
+import { useToggleState } from "../../../hooks/useToggleState";
+import { createListing } from "../listingsApi";
 
 export default function ListingForm() {
+    const [location, setLocation] = useState<Location | null>(null);
+    const [radius, setRadius] = useState<number | null>(null);
+    const [locationName, setLocationName] = useState("");
     const [category, setCategory] = useState<ListingCategory | null>(null);
-    const [budget, setBudget] = useState<number | "">("");
+    const [budget, setBudget] = useState<number | null>(null);
     const [startDate, setStartDate] = useState<Dayjs | null>(null);
     const [endDate, setEndDate] = useState<Dayjs | null>(null);
+    const [datesAreApproximate, toggleDatesAreApproximate] = useToggleState(false);
+    const [prefersSameGender, togglePrefersSameGender] = useToggleState(false);
     const [description, setDescription] = useState("");
     const [uploadedImages, setUploadedImages] = useState<File[]>([]);
 
-    function handleCategorySelect(event: SelectChangeEvent<ListingCategory | null>) {
+    function handleLocationChange(location: Location | null, radius: number | null) {
+        if (location) {
+            setLocation(location);
+        }
+
+        if (radius) {
+            setRadius(radius);
+        }
+    }
+
+    function handleLocationNameChange(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+        const value = event.target.value;
+
+        if (value.length <= 30) {
+            setLocationName(value);
+        }
+    }
+
+    function handleCategorySelection(event: SelectChangeEvent<ListingCategory | null>) {
         const value = event.target.value;
 
         if (!value || !isListingCategory(value)) {
@@ -31,13 +57,13 @@ export default function ListingForm() {
     function handleBudgetChange(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
         const value = event.target.value;
         if (!value) {
-            setBudget("");
+            setBudget(null);
         }
 
         if (/^\d+$/.test(value) && Number(value) > 0) {
             setBudget(Math.trunc(Number(value)));
         } else {
-            setBudget("");
+            setBudget(null);
         }
     }
 
@@ -90,12 +116,28 @@ export default function ListingForm() {
         setUploadedImages(updated);
     }
 
-    function handleSubmit(event: FormEvent<HTMLButtonElement>) {
+    async function handleSubmit(event: FormEvent<HTMLButtonElement>) {
         event.preventDefault();
-        console.log("Submitting", { category, budget, startDate, endDate, description, uploadedImages });
-        
-        // send 'text' and 'uploadedImages' to backend
-        // console.log("Submitting:", { text, uploadedImages });
+        //console.log("Submitting", { location, locationName, category, budget, startDate, endDate, datesAreApproximate, prefersSameGender, description, uploadedImages });
+
+        if (!location || radius === null || category === null || !startDate || !description.trim()) {
+            console.error("Incomplete form.");
+            return;
+        }
+
+        await createListing({
+            coordinates: location.coordinates,
+            radius: radius,
+            locationName: locationName,
+            category: category,
+            nightlyBudget: budget ?? undefined,
+            startDate: startDate,
+            endDate: endDate ?? undefined,
+            datesAreApproximate: datesAreApproximate,
+            prefersSameGender: prefersSameGender,
+            description: description.trim(),
+            images: uploadedImages
+        })
     }
 
     return (
@@ -111,11 +153,23 @@ export default function ListingForm() {
         >
             <Grid2 size = { 12 }>
                 <LocationPicker
+                    onChange = { handleLocationChange }
                     containerProps = {{
                         sx: {
                             width: "100%",
                             marginX: 0
                         }
+                    }}
+                />
+            </Grid2>
+
+            <Grid2 size = { 12 }>
+                <TextField
+                    label = "Custom Location Name"
+                    value = { locationName }
+                    onChange = { handleLocationNameChange }
+                    sx = {{
+                        width: "40%"
                     }}
                 />
             </Grid2>
@@ -126,13 +180,13 @@ export default function ListingForm() {
                     <Select
                         value = { category }
                         label = "Category"
-                        onChange = { handleCategorySelect }
+                        onChange = { handleCategorySelection }
                         sx = {{ textAlign: "left"}}
                     >
                         <MenuItem disabled selected>-- Select an listing category --</MenuItem>
-                        <MenuItem value = { "Short-term" }>Short-term</MenuItem>
-                        <MenuItem value = { "Long-term" }>Long-term</MenuItem>
-                        <MenuItem value = { "Hosting" }>Hosting</MenuItem>
+                        <MenuItem value = { "short-term" }>Short-term</MenuItem>
+                        <MenuItem value = { "long-term" }>Long-term</MenuItem>
+                        <MenuItem value = { "hosting" }>Hosting</MenuItem>
                     </Select>
                 </FormControl>
             </Grid2>
@@ -175,16 +229,16 @@ export default function ListingForm() {
             </Grid2>
             <Grid2 size = { 3 }>
                 <FormControlLabel
-                    required
-                    control = { <Checkbox size = "medium" /> }
+                    value = { datesAreApproximate }
+                    control = { <Checkbox size = "medium" onChange = { toggleDatesAreApproximate } /> }
                     label = "Flexible Dates"
                     sx = {{ height: "100%", width: "100%", margin: "auto" }}
                 />
             </Grid2>
             <Grid2 size = { 3 }>
                 <FormControlLabel
-                    required
-                    control = { <Checkbox size = "medium" /> }
+                    value = { prefersSameGender }
+                    control = { <Checkbox size = "medium" onChange = { togglePrefersSameGender } /> }
                     label = "Same Gender"
                     sx = {{ height: "100%", width: "100%", margin: "auto" }}
                 />
@@ -213,7 +267,8 @@ export default function ListingForm() {
                         disabled: uploadedImages.length >= 5
                     }}
                 />
-                <ImageList
+                { !!uploadedImages.length &&
+                    <ImageList
                     variant = "masonry"
                     cols = { 3 }
                     gap = { 8 }
@@ -267,6 +322,7 @@ export default function ListingForm() {
                         );
                     })}
                 </ImageList>
+                }
             </Grid2>
 
             { /* tags */ }

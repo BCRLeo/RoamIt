@@ -1,4 +1,4 @@
-const listingCategories = ["Short-term", "Long-term", "Hosting"] as const;
+const listingCategories = ["short-term", "long-term", "hosting"] as const;
 export type ListingCategory = (typeof listingCategories)[number];
 
 export function isListingCategory(value: string): value is ListingCategory {
