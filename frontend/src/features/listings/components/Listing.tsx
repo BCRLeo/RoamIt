@@ -1,7 +1,9 @@
-import { Box, Typography, TextField, Button, IconButton, Tooltip, ImageList, ImageListItem } from "@mui/material";
-import UploadButton from "../../../components/UploadButton/UploadButton";
 import { useState } from "react";
+
 import CloseIcon from "@mui/icons-material/Close";
+import { Box, Typography, TextField, Button, IconButton, Tooltip, ImageList, ImageListItem } from "@mui/material";
+
+import UploadButton from "../../../components/UploadButton/UploadButton";
 
 export default function Listing({ mode = "create", initialData }: { mode?: "create" | "view" | "edit", initialData?: { text: string, images: (File | string)[] } }) {
     const [text, setText] = useState(initialData?.text || "");
