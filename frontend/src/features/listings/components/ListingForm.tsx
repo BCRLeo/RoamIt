@@ -1,7 +1,7 @@
 import { ChangeEvent, FormEvent, useState } from "react";
 
 import { Close, Upload } from "@mui/icons-material";
-import { TextField, Button, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent, Grid2, FormControlLabel, Checkbox, ImageList, ImageListItem, IconButton, Badge } from "@mui/material";
+import { TextField, Badge, Button, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent, Grid2, FormControlLabel, Checkbox, ImageList, ImageListItem, IconButton, Grid2Props, Typography } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers";
 import dayjs, { Dayjs } from "dayjs";
 
@@ -12,7 +12,9 @@ import LocationPicker from "../../maps/components/LocationPicker";
 import { useToggleState } from "../../../hooks/useToggleState";
 import { createListing } from "../listingsApi";
 
-export default function ListingForm() {
+export default function ListingForm({ gridProps }: { gridProps?: Grid2Props}) {
+    const { sx: gridPropsSx = {}, ...gridPropsRest } = gridProps || {};
+
     const [location, setLocation] = useState<Location | null>(null);
     const [radius, setRadius] = useState<number | null>(null);
     const [locationName, setLocationName] = useState("");
@@ -141,197 +143,202 @@ export default function ListingForm() {
     }
 
     return (
-        <Grid2
-            container
-            component = "form"
-            spacing = { 2 }
-            noValidate
-            sx = {{
-                width: "55%",
-                margin: "2rem auto"
-            }}
-        >
-            <Grid2 size = { 12 }>
-                <LocationPicker
-                    onChange = { handleLocationChange }
-                    containerProps = {{
-                        sx: {
-                            width: "100%",
-                            marginX: 0
-                        }
-                    }}
-                />
-            </Grid2>
-
-            <Grid2 size = { 12 }>
-                <TextField
-                    label = "Custom Location Name"
-                    value = { locationName }
-                    onChange = { handleLocationNameChange }
-                    sx = {{
-                        width: "40%"
-                    }}
-                />
-            </Grid2>
-
-            <Grid2 size = { 6 }>
-                <FormControl fullWidth required>
-                    <InputLabel>Category</InputLabel>
-                    <Select
-                        value = { category }
-                        label = "Category"
-                        onChange = { handleCategorySelection }
-                        sx = {{ textAlign: "left"}}
-                    >
-                        <MenuItem disabled selected>-- Select an listing category --</MenuItem>
-                        <MenuItem value = { "short-term" }>Short-term</MenuItem>
-                        <MenuItem value = { "long-term" }>Long-term</MenuItem>
-                        <MenuItem value = { "hosting" }>Hosting</MenuItem>
-                    </Select>
-                </FormControl>
-            </Grid2>
-            <Grid2 size = { 6 }>
-                <FormControl fullWidth>
-                    <TextField
-                        label = "Nightly Budget"
-                        value = { budget }
-                        onChange = { handleBudgetChange }
+        <>
+            <Typography variant = "h2" pb = "1rem">Create Listing</Typography>
+            <Grid2
+                container
+                component = "form"
+                spacing = { 2 }
+                noValidate
+                sx = {{
+                    width: "55%",
+                    margin: "2rem auto",
+                    ...gridPropsSx
+                }}
+                { ...gridPropsRest }
+            >
+                <Grid2 size = { 12 }>
+                    <LocationPicker
+                        onChange = { handleLocationChange }
+                        containerProps = {{
+                            sx: {
+                                width: "100%",
+                                marginX: 0
+                            }
+                        }}
                     />
-                </FormControl>
-            </Grid2>
-            
-            <Grid2 size = { 3 }>
-                <DatePicker
-                    label = "Start Date"
-                    minDate = { dayjs() }
-                    onChange = { handleStartDateChange }
-                    value = { startDate }
-                    slotProps={{
-                        textField: {
-                            fullWidth: true,
-                            required: true
-                        }
-                    }}
-                />
-            </Grid2>
-            <Grid2 size = { 3 }>
-                <DatePicker
-                    label = "End Date"
-                    minDate = { startDate?.add(1, "day") ?? dayjs().add(1, "day") }
-                    onChange = { handleEndDateChange }
-                    value = { endDate }
-                    slotProps={{
-                        textField: {
-                            fullWidth: true
-                        }
-                    }}
-                />
-            </Grid2>
-            <Grid2 size = { 3 }>
-                <FormControlLabel
-                    value = { datesAreApproximate }
-                    control = { <Checkbox size = "medium" onChange = { toggleDatesAreApproximate } /> }
-                    label = "Flexible Dates"
-                    sx = {{ height: "100%", width: "100%", margin: "auto" }}
-                />
-            </Grid2>
-            <Grid2 size = { 3 }>
-                <FormControlLabel
-                    value = { prefersSameGender }
-                    control = { <Checkbox size = "medium" onChange = { togglePrefersSameGender } /> }
-                    label = "Same Gender"
-                    sx = {{ height: "100%", width: "100%", margin: "auto" }}
-                />
-            </Grid2>
+                </Grid2>
 
-            <Grid2 size = { 12 }>
-                <TextField
-                    label = "Description"
-                    value = { description }
-                    onChange = { handleDescriptionChange }
-                    fullWidth
-                    multiline
-                    required
-                />
-            </Grid2>
+                <Grid2 size = { 12 }>
+                    <TextField
+                        label = "Custom Location Name"
+                        value = { locationName }
+                        onChange = { handleLocationNameChange }
+                        sx = {{
+                            width: "40%"
+                        }}
+                    />
+                </Grid2>
 
-            <Grid2 size = { 12 }>
-                <UploadButton
-                    icon = { <Upload /> }
-                    label = "Upload images"
-                    multiple
-                    inputProps = {{
-                        accept: "image/*",
-                        multiple: true,
-                        onChange: handleImageUpload,
-                        disabled: uploadedImages.length >= 5
-                    }}
-                />
-                { !!uploadedImages.length &&
-                    <ImageList
-                    variant = "masonry"
-                    cols = { 3 }
-                    gap = { 8 }
-                    sx = {{
-                        height: "30dvh",
-                        display: "flex",
-                        overflowX: "auto",
-                        overflowY: "hidden",
-                        whiteSpace: "nowrap",
-                        gap: 2
-                    }}
-                >
-                    { uploadedImages.map((file, index) => {
-                        const url = URL.createObjectURL(file);
-                        return (
-                            <ImageListItem key = { `${index}_${file.name}` } sx = {{ height: "100%" }}>
-                                <Badge
-                                    overlap = "circular"
-                                    anchorOrigin={{ vertical: "top", horizontal: "right" }}
-                                    badgeContent = {
-                                        <IconButton
-                                            size = "small"
-                                            onClick = { () => handleRemoveImage(index) }
-                                            sx = { (theme) => ({
-                                                backgroundColor: theme.palette.background.default,
-                                                color: "red",
-                                                borderRadius: "50%",
-                                                "&:hover": {
-                                                    backgroundColor: "#ffe6e6",
-                                                },
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                            })}
-                                        >
-                                            <Close sx={{ fontSize: 18, fontWeight: "bold" }} />
-                                        </IconButton>
-                                    }
-                                    sx = {{ width: length, height: length }}
-                                >
-                                    <img
-                                        src = { url }
-                                        style = {{
-                                            height: "100%",
-                                            objectFit: "contain",
-                                            borderRadius: "8px"
-                                        }}
-                                    />
-                                </Badge>
-                            </ImageListItem>
-                        );
-                    })}
-                </ImageList>
-                }
-            </Grid2>
+                <Grid2 size = { 6 }>
+                    <FormControl fullWidth required>
+                        <InputLabel>Category</InputLabel>
+                        <Select
+                            value = { category }
+                            label = "Category"
+                            onChange = { handleCategorySelection }
+                            sx = {{ textAlign: "left"}}
+                        >
+                            <MenuItem disabled selected>-- Select an listing category --</MenuItem>
+                            <MenuItem value = { "short-term" }>Short-term</MenuItem>
+                            <MenuItem value = { "long-term" }>Long-term</MenuItem>
+                            <MenuItem value = { "hosting" }>Hosting</MenuItem>
+                        </Select>
+                    </FormControl>
+                </Grid2>
+                <Grid2 size = { 6 }>
+                    <FormControl fullWidth>
+                        <TextField
+                            label = "Nightly Budget"
+                            value = { budget }
+                            onChange = { handleBudgetChange }
+                        />
+                    </FormControl>
+                </Grid2>
+                
+                <Grid2 size = { 3 }>
+                    <DatePicker
+                        label = "Start Date"
+                        minDate = { dayjs() }
+                        onChange = { handleStartDateChange }
+                        value = { startDate }
+                        slotProps={{
+                            textField: {
+                                fullWidth: true,
+                                required: true
+                            }
+                        }}
+                    />
+                </Grid2>
+                <Grid2 size = { 3 }>
+                    <DatePicker
+                        label = "End Date"
+                        minDate = { startDate?.add(1, "day") ?? dayjs().add(1, "day") }
+                        onChange = { handleEndDateChange }
+                        value = { endDate }
+                        slotProps={{
+                            textField: {
+                                fullWidth: true
+                            }
+                        }}
+                    />
+                </Grid2>
+                <Grid2 size = { 3 }>
+                    <FormControlLabel
+                        value = { datesAreApproximate }
+                        control = { <Checkbox size = "medium" onChange = { toggleDatesAreApproximate } /> }
+                        label = "Flexible Dates"
+                        sx = {{ height: "100%", width: "100%", margin: "auto" }}
+                    />
+                </Grid2>
+                <Grid2 size = { 3 }>
+                    <FormControlLabel
+                        value = { prefersSameGender }
+                        control = { <Checkbox size = "medium" onChange = { togglePrefersSameGender } /> }
+                        label = "Same Gender"
+                        sx = {{ height: "100%", width: "100%", margin: "auto" }}
+                    />
+                </Grid2>
 
-            { /* tags */ }
+                <Grid2 size = { 12 }>
+                    <TextField
+                        label = "Description"
+                        value = { description }
+                        onChange = { handleDescriptionChange }
+                        fullWidth
+                        multiline
+                        required
+                    />
+                </Grid2>
 
-            <Grid2 size = { 12 }>
-                <Button variant = "contained" type = "submit" onClick = { handleSubmit }>
-                    Create Listing
-                </Button>
+                <Grid2 size = { 12 }>
+                    <UploadButton
+                        icon = { <Upload /> }
+                        label = "Upload images"
+                        multiple
+                        inputProps = {{
+                            accept: "image/*",
+                            multiple: true,
+                            onChange: handleImageUpload,
+                            disabled: uploadedImages.length >= 5
+                        }}
+                    />
+                    { !!uploadedImages.length &&
+                        <ImageList
+                        variant = "masonry"
+                        cols = { 3 }
+                        gap = { 8 }
+                        sx = {{
+                            height: "30dvh",
+                            display: "flex",
+                            overflowX: "auto",
+                            overflowY: "hidden",
+                            whiteSpace: "nowrap",
+                            gap: 2
+                        }}
+                    >
+                        { uploadedImages.map((file, index) => {
+                            const url = URL.createObjectURL(file);
+                            return (
+                                <ImageListItem key = { `${index}_${file.name}` } sx = {{ height: "100%" }}>
+                                    <Badge
+                                        overlap = "circular"
+                                        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+                                        badgeContent = {
+                                            <IconButton
+                                                size = "small"
+                                                onClick = { () => handleRemoveImage(index) }
+                                                sx = { (theme) => ({
+                                                    backgroundColor: theme.palette.background.default,
+                                                    color: "red",
+                                                    borderRadius: "50%",
+                                                    "&:hover": {
+                                                        backgroundColor: "#ffe6e6",
+                                                    },
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    justifyContent: "center",
+                                                })}
+                                            >
+                                                <Close sx={{ fontSize: 18, fontWeight: "bold" }} />
+                                            </IconButton>
+                                        }
+                                        sx = {{ width: length, height: length }}
+                                    >
+                                        <img
+                                            src = { url }
+                                            style = {{
+                                                height: "100%",
+                                                objectFit: "contain",
+                                                borderRadius: "8px"
+                                            }}
+                                        />
+                                    </Badge>
+                                </ImageListItem>
+                            );
+                        })}
+                    </ImageList>
+                    }
+                </Grid2>
+
+                { /* tags */ }
+
+                <Grid2 size = { 12 }>
+                    <Button variant = "contained" type = "submit" onClick = { handleSubmit }>
+                        Create Listing
+                    </Button>
+                </Grid2>
             </Grid2>
-        </Grid2>
+        </>
     );
 }

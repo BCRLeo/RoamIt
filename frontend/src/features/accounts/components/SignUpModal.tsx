@@ -1,15 +1,10 @@
-import { MouseEventHandler, useState } from "react";
+import { useState } from "react";
 
 import { Button, ButtonProps, Modal } from "@mui/material";
 import SignUpForm from "./SignUpForm";
+import { ToggleClickProps } from "../../../constants";
 
-export type ClickProps = {
-    isOpen: boolean,
-    onOpen: MouseEventHandler<HTMLButtonElement | undefined>,
-    onClose: ((event: {}, reason: "backdropClick" | "escapeKeyDown") => void) | undefined
-};
-
-export default function SignUpModal({ clickProps, buttonProps }: { clickProps?: ClickProps, buttonProps?: ButtonProps }) {
+export default function SignUpModal({ clickProps, buttonProps }: { clickProps?: ToggleClickProps, buttonProps?: ButtonProps }) {
     if (clickProps) {
         return (
             <>
