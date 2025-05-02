@@ -43,12 +43,6 @@ export default function ChatList({ collapsed = false }: { collapsed?: boolean })
         fetchChats();
     }, []);
 
-    const getDisplayTitle = (chat: ChatData) => {
-        if (chat.isGroup) return chat.title || 'Unnamed group';
-        const otherId = chat.memberIds.find(id => id !== user?.id);
-        return `Chat with user #${otherId}`;
-    };
-
     const confirmDelete = (chat: ChatData) => {
         setToDelete(chat);
         setShowConfirm(true);
@@ -121,9 +115,33 @@ export default function ChatList({ collapsed = false }: { collapsed?: boolean })
 
                                     {!collapsed && (
                                         <ListItemText
-                                            primary={getDisplayTitle(chat)}
-                                            secondary={chat.latestMessage || 'No messages yet'}
-                                        />
+                                        primary={chat.title}
+                                        secondary={
+                                          <>
+                                            <Typography
+                                              variant="body2"
+                                              color="text.secondary"
+                                              noWrap
+                                              sx={{ display: 'block' }}
+                                            >
+                                              {chat.latestMessage ?? 'No messages yet'}
+                                            </Typography>
+                                            {chat.latestTime && (
+                                              <Typography
+                                                variant="caption"
+                                                color="text.secondary"
+                                                sx={{ display: 'block', mt: 0.5 }}
+                                              >
+                                                {new Date(chat.latestTime).toLocaleTimeString([], {
+                                                  hour:   '2-digit',
+                                                  minute: '2-digit'
+                                                })}
+                                              </Typography>
+                                            )}
+                                          </>
+                                        }
+                                      />
+                                      
                                     )}
 
                                     
