@@ -7,7 +7,7 @@ import MapCircleOverlay from "./MapCircleOverlay";
 
 const Geolocation = navigator.geolocation;
 
-export default function LocationPicker({ containerProps, textInput = true, radiusSlider = true }: { containerProps?: ContainerProps, textInput?: boolean, radiusSlider?: boolean }) {
+export default function LocationPicker({ onChange, containerProps, textInput = true, radiusSlider = true }: { onChange?: (location: Location | null, radius: number | null) => void, containerProps?: ContainerProps, textInput?: boolean, radiusSlider?: boolean }) {
     const MIN_RADIUS = 1;
     const MAX_RADIUS = 20;
 
@@ -23,6 +23,12 @@ export default function LocationPicker({ containerProps, textInput = true, radiu
     const [searchedPlaceId, setSearchedPlaceId] = useState<string | null>(null);
 
     const [radius, setRadius] = useState<number>(5);
+
+    useEffect(() => {
+        if (onChange) {
+            onChange(location, radius);
+        }
+    }, [location, radius]);
 
     useEffect(() => {
         Geolocation.getCurrentPosition(
@@ -152,14 +158,18 @@ export default function LocationPicker({ containerProps, textInput = true, radiu
                 >
                     { location?.coordinates &&
                         <>
-                            <AdvancedMarker
-                                position = { location.coordinates }
-                                draggable
-                                clickable
-                            />
                             { radius && radius > 0 &&
                                 <MapCircleOverlay centre = { location.coordinates } radius = { radius } />
                             }
+                            <AdvancedMarker
+                                position = { location.coordinates }
+                                onDrag = { (event) => { event.latLng && setClickCoordinates({
+                                    lat: event.latLng.lat(),
+                                    lng: event.latLng.lng()
+                                }) } }
+                                draggable
+                                clickable
+                            />
                         </>
                     }
                 </ Map>
