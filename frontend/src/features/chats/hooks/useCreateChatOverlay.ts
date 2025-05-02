@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getChatMatches, getChats, createChat } from '../../../features/chats/chatsApi';
-import { getFriendList } from '../../../features/accounts/accountsApi';
+import { getAcceptedFriendData } from '../../../features/accounts/accountsApi';
 import useUserContext from '../../../features/auth/hooks/useUserContext';
 import { ChatUser } from '../../../features/chats/chatsConstants';
 
@@ -34,11 +34,11 @@ export function useCreateChatOverlay(
         setLoadingUsers(true);
         (async () => {
             const matches = await getChatMatches();
-            const friendsRaw = await getFriendList(user.username);
+            const friendsRaw = await getAcceptedFriendData(user.username);
             const friends = (friendsRaw || []).map(f => ({
-                id: f.userId,
+                id: f.id,
                 username: f.username,
-                profilePicUrl: `/api/users/${f.userId}/profile-picture`,
+                profilePicUrl: `/api/users/${f.id}/profile-picture`,
             }));
             const combined = [...(matches || []), ...friends];
             const deduped = [...new Map(combined.map(u => [u.id, u])).values()];

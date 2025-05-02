@@ -1,11 +1,12 @@
-export type PublicUserData  = {
+export type UserData = {
     id: number;
     firstName: string;
     lastName: string;
     username: string;
+    email: string;
 };
 
-export type UserData = PublicUserData & { email: string };
+export type PublicUserData  = Omit<UserData, "email">;
 
 export async function getCurrentUser(): Promise<UserData | null> {
     try {

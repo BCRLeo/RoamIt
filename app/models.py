@@ -5,7 +5,7 @@ from flask_login import UserMixin
 from geodistpy import geodist
 import math
 import requests
-from sqlalchemy import text
+from sqlalchemy import or_, text
 from typing import Optional
 
 # Association table for listing tags
@@ -214,6 +214,46 @@ class User(db.Model, UserMixin):
     # if we need to access all the swipes across all listings direclty from jsut the user, we will need to use backpopulates one each side of the 
     # relationship 
     
+    outgoing_friend_requests = db.relationship(
+        "User",
+        secondary = "friendships",
+        primaryjoin = "Friendship.requester_id == User.id",
+        secondaryjoin = "and_(Friendship.status == 'pending', Friendship.receiver_id == User.id)",
+        lazy = "dynamic",
+        viewonly = True
+    )
+    
+    accepted_outgoing_friend_requests = db.relationship(
+        "User",
+        secondary = "friendships",
+        primaryjoin = "and_(Friendship.requester_id == User.id, Friendship.status == 'accepted')",
+        secondaryjoin = "User.id == Friendship.receiver_id",
+        lazy = "dynamic",
+        viewonly = True
+    )
+    
+    incoming_friend_requests = db.relationship(
+        "User",
+        secondary = "friendships",
+        primaryjoin = "Friendship.receiver_id == User.id",
+        secondaryjoin = "and_(Friendship.status == 'pending', Friendship.requester_id == User.id)",
+        lazy = "dynamic",
+        viewonly = True
+    )
+    
+    accepted_incoming_friend_requests = db.relationship(
+        "User",
+        secondary = "friendships",
+        primaryjoin = "and_(Friendship.receiver_id == User.id, Friendship.status == 'accepted')",
+        secondaryjoin = "User.id == Friendship.requester_id",
+        lazy = "dynamic",
+        viewonly = True
+    )
+    
+    @property
+    def accepted_friend_requests(self):
+        return self.accepted_outgoing_friend_requests.union(self.accepted_incoming_friend_requests)
+    
     # Users that this user has blocked; the blocked users will also have a 'blocked_by' attribute via backref
     blocked_users = db.relationship(
         'User',
@@ -223,6 +263,151 @@ class User(db.Model, UserMixin):
         backref='blocked_by',
         lazy='dynamic'
     )
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "firstName": self.first_name,
+            "lastName": self.last_name,
+            "username": self.username,
+            "email": self.email
+        }
+    
+    def get_all_friendships(self):
+        """Retrieve all pending, accepted, and declined friendships."""
+        friendships = db.session.execute(
+            db.select(Friendship)
+            .where(
+                or_(
+                    Friendship.requester_id == self.id,
+                    Friendship.receiver_id == self.id
+                )
+            )
+        ).scalars().all()
+        
+        return friendships
+    
+    def send_friend_request(self, to_user: "User"):
+        if self.id == to_user.id:
+            raise ValueError("Cannot send a friend request to yourself.")
+        
+        existing_sent = db.session.execute(
+            db.select(Friendship)
+            .filter_by(requester_id = self.id, receiver_id = to_user.id)
+        ).scalar_one_or_none()
+        existing_received = db.session.execute(
+            db.select(Friendship)
+            .filter_by(requester_id = to_user.id, receiver_id = self.id)
+        ).scalar_one_or_none()
+
+        if existing_sent:
+            if existing_sent.status == "declined":
+                try:
+                    existing_sent.status = "pending"
+                    existing_sent.timestamp = datetime.now(timezone.utc)
+                    db.session.commit()
+                    return
+                except Exception as error:
+                    db.session.rollback()
+                    print("Error updating friend request to pending:", error)
+                    raise Exception(error)
+            else:
+                raise ValueError("Friend request already exists or you're already friends.")
+        elif existing_received:
+            raise ValueError("Incoming friend request already exists.")
+        
+        try:
+            friend_request = Friendship(
+                requester_id = self.id,
+                receiver_id = to_user.id,
+                status = "pending",
+                timestamp=datetime.now(timezone.utc)
+            )
+            db.session.add(friend_request)
+            db.session.commit()
+        except Exception as error:
+            db.session.rollback()
+            print("Error sending friend request:", error)
+            
+            raise Exception(error)
+    
+    def accept_friend_request(self, from_user: "User"):
+        friendship = db.session.execute(
+            db.select(Friendship)
+            .filter_by(requester_id = from_user.id, receiver_id = self.id, status = "pending")
+        ).scalar_one_or_none()
+        
+        if friendship:
+            try:
+                friendship.status = "accepted"
+                db.session.commit()
+            except Exception as error:
+                db.session.rollback()
+                print("Error accepting friend request:", error)
+                raise Exception(error)
+        else:
+            raise ValueError("No pending friend request from this user.")
+    
+    def decline_friend_request(self, from_user: "User"):
+        friendship = db.session.execute(
+            db.select(Friendship)
+            .filter_by(requester_id = from_user.id, receiver_id = self.id, status = "pending")
+        ).scalar_one_or_none()
+        
+        if friendship:
+            try:
+                friendship.status = "declined"
+                db.session.commit()
+            except Exception as error:
+                db.session.rollback()
+                print("Error declining friend request:", error)
+                raise Exception(error)
+        else:
+            raise ValueError("No pending friend request from this user.")
+    
+    def remove_friend(self, friend: "User"):
+        query1 = (
+            db.select(Friendship)
+            .filter_by(requester_id = friend.id, receiver_id = self.id, status = "accepted")
+        )
+        query2 = (
+            db.select(Friendship)
+            .filter_by(requester_id = self.id, receiver_id = friend.id, status = "accepted")
+        )
+        
+        friendship = db.session.execute(query1).scalar_one_or_none() or db.session.execute(query2).scalar_one_or_none()
+        
+        if friendship:
+            try:
+                db.session.delete(friendship)
+                db.session.commit()
+            except Exception as error:
+                db.session.rollback()
+                print("Error removing friendship:", error)
+                raise Exception(error)
+        else:
+            raise ValueError("No friendship found between these users.")
+
+    def get_request_status_with(self, other_user: "User"):
+        query1 = (
+            db.select(Friendship)
+            .filter_by(requester_id = other_user.id, receiver_id = self.id)
+        )
+        query2 = (
+            db.select(Friendship)
+            .filter_by(requester_id = self.id, receiver_id = other_user.id)
+        )
+        
+        friendship = db.session.execute(query1).scalar_one_or_none() or db.session.execute(query2).scalar_one_or_none()
+
+        if friendship:
+            return {
+                "status": friendship.status,
+                "requester_id": friendship.requester_id,
+                "timestamp": friendship.timestamp
+            }
+
+        return None
     
     def get_listing_ids(self):
         """Return a list of all listing IDs associated with this user."""
@@ -438,12 +623,9 @@ class Location(db.Model):
 
 class Friendship(db.Model):
     __tablename__ = "friendships"
-    id: int = db.Column(db.Integer, primary_key=True)
-    requester_id: int = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    receiver_id: int = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    # status of the friend request
-    status: str = db.Column(db.String(20), nullable=False, default="pending")  # 'pending', 'accepted', 'rejected'
-    # when the friend request was made
+    requester_id: int = db.Column(db.Integer, db.ForeignKey("users.id"), primary_key = True)
+    receiver_id: int = db.Column(db.Integer, db.ForeignKey("users.id"), primary_key = True)
+    status: str = db.Column(db.String(20), nullable=False, default="pending")  # 'pending', 'accepted', 'declined'
     timestamp: datetime = db.Column(db.DateTime, default=datetime.now(timezone.utc))
 
     requester = db.relationship("User", foreign_keys=[requester_id], backref="sent_requests")
@@ -454,7 +636,6 @@ class Friendship(db.Model):
 
     def to_dict(self):
         return {
-            "id": self.id,
             "requesterId": self.requester_id,
             "receiverId": self.receiver_id,
             "status": self.status,

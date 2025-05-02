@@ -89,7 +89,7 @@ def create_listing():
         print("Error creating listing:", error)
         db.session.rollback()
         
-        return jsonify({"error": error}), 500
+        return jsonify({"error": str(error)}), 500
 
 @listings.route("/listings/<int:listing_id>", methods = ["GET"])
 def get_listing(listing_id: int):
@@ -125,4 +125,4 @@ def delete_listing(listing_id: int):
         print(f"Error deleting listing #{listing_id}:", error)
         db.session.rollback()
         
-        return jsonify({"error": error}), 500
+        return jsonify({"error": str(error)}), 500

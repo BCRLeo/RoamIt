@@ -1,4 +1,5 @@
 import dayjs from "dayjs";
+import { UserData } from "../auth/authApi";
 
 export const USERNAME_REGEX = /^[A-Za-z][\w.]{3,30}$/;
 export const EMAIL_REGEX = /(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)/;
@@ -32,4 +33,19 @@ export type Gender = (typeof genders)[number];
 
 export function isGender(value: string): value is Gender {
     return (genders as readonly string[]).includes(value);
+}
+
+export type FriendData = UserData & { timestamp: string };
+
+export type FriendRequest = {
+    requesterId: number,
+    receiverId: number,
+    status: "pending" | "accepted" | "declined",
+    timestamp: string
+}
+
+export type CategorizedFriendRequests = {
+    accepted: FriendRequest[],
+    outgoing: FriendRequest[],
+    incoming: FriendRequest[]
 }

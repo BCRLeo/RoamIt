@@ -1,5 +1,5 @@
 import { PublicUserData, UserData } from "../auth/authApi";
-import { Gender } from "./accountsConstants";
+import { FriendData, Gender } from "./accountsConstants";
 
 export async function signUp(firstName: string, lastName: string, username: string, email: string, password: string, birthday: string, gender: Gender): Promise<UserData | null> {
     try {
@@ -144,7 +144,7 @@ export async function getProfilePicture(userIdOrUsername?: number | string): Pro
         const response = await fetch(`/api/users/${ urlUser ?? null }profile-picture`, { method: "GET" });
 
         if (!response.ok) {
-            console.error(`Failed to retrieve ${ possessiveUser }$'s profile picture.`);
+            console.error(`Failed to retrieve ${ possessiveUser }'s profile picture.`);
             return null;
         }
 
@@ -357,10 +357,9 @@ export async function deletePhone(): Promise<boolean> {
     return false;
 }
 
-// Send a friend request
 export async function sendFriendRequest(username: string): Promise<boolean> {
     try {
-        const response = await fetch(`/api/users/@${username}/friends`, {
+        const response = await fetch(`/api/users/friends/@${username}`, {
             method: "POST"
         });
 
@@ -375,10 +374,9 @@ export async function sendFriendRequest(username: string): Promise<boolean> {
     return false;
 }
 
-// Accept a friend request
 export async function acceptFriendRequest(username: string): Promise<boolean> {
     try {
-        const response = await fetch(`/api/users/@${username}/friends`, {
+        const response = await fetch(`/api/users/friends/@${username}`, {
             method: "PATCH"
         });
 
@@ -393,10 +391,26 @@ export async function acceptFriendRequest(username: string): Promise<boolean> {
     return false;
 }
 
-// Remove a friend
+export async function declineFriendRequest(username: string) {
+    try {
+        const response = await fetch(`/api/users/friends/@${username}`, {
+            method: "DELETE"
+        });
+
+        if (response.ok) return true;
+
+        const data = await response.json();
+        throw new Error(data.error);
+    } catch (error) {
+        console.error(`Error declining friend request from @${username}:`, error);
+    }
+
+    return false;
+}
+
 export async function removeFriend(username: string): Promise<boolean> {
     try {
-        const response = await fetch(`/api/users/@${username}/friends`, {
+        const response = await fetch(`/api/users/friends/@${username}`, {
             method: "DELETE"
         });
 
@@ -411,37 +425,143 @@ export async function removeFriend(username: string): Promise<boolean> {
     return false;
 }
 
-// View incoming friend requests (for current user)
-export async function getIncomingFriendRequests(): Promise<{ requesterId: number, timestamp: string }[] | null> {
+export async function getFriendData(userIdOrUsername?: number | string): Promise<{ accepted: FriendData[], incoming: FriendData[], outgoing: FriendData[] } | null> {
+    let possessiveUser = "user";
+    let urlUser = "";
+
+    switch (typeof(userIdOrUsername)) {
+        case "number":
+            possessiveUser = `user #${ userIdOrUsername }}`;
+            urlUser = userIdOrUsername + "/";
+            break;
+        case "string":
+            possessiveUser = userIdOrUsername;
+            urlUser = "@" + userIdOrUsername + "/";
+            break;
+    }
+
     try {
-        const response = await fetch("/api/users/friend-requests", { method: "GET" });
+        const response = await fetch(`/api/users/${ urlUser ?? null }friends`, { method: "GET" });
         const data = await response.json();
 
-        if (response.ok) {
-            return data.data;
+        if (!response.ok) {
+            throw new Error(data.error);
         }
 
-        throw new Error(data.error);
+        return data.data;
     } catch (error) {
-        console.error("Error retrieving incoming friend requests:", error);
+        console.error(`Error retrieving ${ possessiveUser }'s friend data:`, error);
     }
 
     return null;
 }
 
-// View friends of a user (implement so that one can only see their own friends)
-export async function getFriendList(username: string): Promise<{ userId: number, username: string, firstName: string, lastName: string }[] | null> {
-    try {
-        const response = await fetch(`/api/users/@${username}/friends`, { method: "GET" });
-        const data = await response.json();
+export async function getAcceptedFriendData(userIdOrUsername?: number | string): Promise<FriendData[] | null> {
+    let possessiveUser = "user";
+    let urlUser = "";
 
-        if (response.ok) {
-            return data.data;
+    switch (typeof(userIdOrUsername)) {
+        case "number":
+            possessiveUser = `user #${ userIdOrUsername }}`;
+            urlUser = userIdOrUsername + "/";
+            break;
+        case "string":
+            possessiveUser = userIdOrUsername;
+            urlUser = "@" + userIdOrUsername + "/";
+            break;
+    }
+
+    
+    try {
+        const response = await fetch(`/api/users/${ urlUser ?? null }friends?status=accepted`, { method: "GET" });
+        
+        if (response.status === 204) {
+            return [];
         }
 
-        throw new Error(data.error);
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error);
+        }
+
+        return data.data;
     } catch (error) {
-        console.error(`Error retrieving friend list for @${username}:`, error);
+        console.error(`Error retrieving ${ possessiveUser }'s accepted friend data:`, error);
+    }
+
+    return null;
+}
+
+export async function getIncomingFriendData(userIdOrUsername?: number | string): Promise<FriendData[] | null> {
+    let possessiveUser = "user";
+    let urlUser = "";
+
+    switch (typeof(userIdOrUsername)) {
+        case "number":
+            possessiveUser = `user #${ userIdOrUsername }}`;
+            urlUser = userIdOrUsername + "/";
+            break;
+        case "string":
+            possessiveUser = userIdOrUsername;
+            urlUser = "@" + userIdOrUsername + "/";
+            break;
+    }
+
+    try {
+        const response = await fetch(`/api/users/${ urlUser ?? null }friends?status=incoming`, { method: "GET" });
+
+        if (response.status === 204) {
+            return [];
+        }
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error);
+        }
+
+        return data.data;
+    } catch (error) {
+        console.error(`Error retrieving ${ possessiveUser }'s incoming friend data:`, error);
+    }
+
+    return null;
+}
+
+export async function getOutgoingFriendData(userIdOrUsername?: number | string): Promise<FriendData[] | null> {
+    let possessiveUser = "user";
+    let urlUser = "";
+
+    switch (typeof(userIdOrUsername)) {
+        case "number":
+            possessiveUser = `user #${ userIdOrUsername }}`;
+            urlUser = userIdOrUsername + "/";
+            break;
+        case "string":
+            possessiveUser = userIdOrUsername;
+            urlUser = "@" + userIdOrUsername + "/";
+            break;
+    }
+
+    try {
+        const response = await fetch(`/api/users/${ urlUser ?? null }friends?status=outgoing`, { method: "GET" });
+
+        if (response.status === 204) {
+            return [];
+        }
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error);
+        } else if (response.status === 204) {
+            return [];
+        }
+
+        return data.data;
+    } catch (error) {
+        console.error(`Error retrieving ${ possessiveUser }'s outgoing friend data:`, error);
     }
 
     return null;

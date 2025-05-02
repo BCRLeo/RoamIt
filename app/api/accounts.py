@@ -1,10 +1,10 @@
 from datetime import date, datetime
 from io import BytesIO
 import re
-from flask import Blueprint, jsonify, request, send_file
+from flask import Blueprint, current_app, jsonify, request, send_file
 from flask_login import current_user, login_required, login_user
 from werkzeug.security import generate_password_hash
-from ..models import ProfilePicture, Tag, User, Friendship
+from ..models import ProfilePicture, Tag, User
 from ..extensions import db
 
 accounts = Blueprint('accounts', __name__)
@@ -192,7 +192,7 @@ def upload_profile_picture():
         print(f"Error uploading profile picture: {error}")
         db.session.rollback()
         
-        return jsonify({"error": error}), 500
+        return jsonify({"error": str(error)}), 500
 
 @accounts.route("/users/<int:user_id>/profile-picture", methods = ["GET"])
 def get_profile_picture_from_user_id(user_id: int):
@@ -244,7 +244,7 @@ def upload_bio():
         current_user.bio = bio
         db.session.commit()
         
-        return "", 200
+        return "", 204
     except Exception as error:
         print("Error uploading bio:", error)
         db.session.rollback()
@@ -261,7 +261,7 @@ def get_bio_from_user_id(user_id: int):
     bio = user.bio
     
     if not bio:
-        return jsonify({"data": ""}), 200
+        return "", 204
     
     return jsonify({"data": bio}), 200
 
@@ -275,7 +275,7 @@ def get_bio_from_username(username: str):
     bio = user.bio
     
     if not bio:
-        return jsonify({"data": ""}), 200
+        return "", 204
     
     return jsonify({"data": bio}), 200
 
@@ -291,7 +291,7 @@ def delete_bio():
         print(f"Error deleting bio: {error}")
         db.session.rollback()
         
-        return jsonify({"error": error}), 500
+        return jsonify({"error": str(error)}), 500
 
 @accounts.route("/users/tags", methods = ["POST"])
 @login_required
@@ -314,12 +314,12 @@ def upload_tags():
         
         db.session.commit()
         
-        return "", 200
+        return "", 204
     except Exception as error:
         print(f"Error uploading interests: {error}")
         db.session.rollback()
         
-        return jsonify({"error": error}), 500
+        return jsonify({"error": str(error)}), 500
 
 @accounts.route("/users/<int:user_id>/tags", methods = ["GET"])
 def get_tags_from_user_id(user_id: int):
@@ -331,7 +331,7 @@ def get_tags_from_user_id(user_id: int):
     tags = user.tags
     
     if not tags:
-        return jsonify({"data": ""}), 200
+        return "", 204
     
     tag_names = [tag.name for tag in tags]
     return jsonify({"data": tag_names}), 200
@@ -346,7 +346,7 @@ def get_tags_from_username(username: int):
     tags = user.tags
     
     if not tags:
-        return jsonify({"data": ""}), 200
+        return "", 204
     
     tag_names = [tag.name for tag in tags]
     return jsonify({"data": tag_names}), 200
@@ -369,7 +369,7 @@ def delete_tags():
             print(f"Error uploading interests: {error}")
             db.session.rollback()
             
-            return jsonify({"error": error}), 500
+            return jsonify({"error": str(error)}), 500
     
     try:
         for tag_name in data:
@@ -382,12 +382,12 @@ def delete_tags():
         
         db.session.commit()
         
-        return "", 200
+        return "", 204
     except Exception as error:
         print(f"Error uploading interests: {error}")
         db.session.rollback()
         
-        return jsonify({"error": error}), 500
+        return jsonify({"error": str(error)}), 500
     
 @accounts.route("/users/phone", methods=["POST"])
 @login_required
@@ -402,7 +402,7 @@ def upload_phone_number():
 
         current_user.phone_number = data
         db.session.commit()
-        return "", 200
+        return "", 204
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": f"Failed to update phone number: {str(e)}"}), 500
@@ -434,157 +434,244 @@ def delete_phone():
         db.session.rollback()
         return jsonify({"error": str(error)}), 500
 
-# Send a friend request to a user by username
-@accounts.route("/users/@<username>/friends", methods=["POST"])
+@accounts.post("/users/friends/@<username>")
 @login_required
-def send_friend_request(username: str):
-    receiver = db.session.execute(
-        db.select(User).filter_by(username=username)
+def send_friend_request_to_username(username: str):
+    user: User | None = db.session.execute(
+        db.select(User).filter_by(username = username)
     ).scalar_one_or_none()
-
-    if not receiver:
-        return jsonify({"error": f"User @{username} not found."}), 404
-
-    if current_user.id == receiver.id:
-        return jsonify({"error": "Cannot send a friend request to yourself."}), 400
-
-    existing = db.session.execute(
-        db.select(Friendship).filter_by(requester_id=current_user.id, receiver_id=receiver.id)
-    ).scalar_one_or_none()
-
-    if existing:
-        return jsonify({"error": "Friend request already sent."}), 400
-
-    friendship = Friendship(
-        requester_id=current_user.id,
-        receiver_id=receiver.id,
-        status="pending"
-    )
-
-    try:
-        db.session.add(friendship)
-        db.session.commit()
-        return "", 204
-    except Exception as error:
-        db.session.rollback()
-        return jsonify({"error": str(error)}), 500
-
-
-# Accept a friend request
-@accounts.route("/users/@<username>/friends", methods=["PATCH"])
-@login_required
-def accept_friend_request(username: str):
-    requester = db.session.execute(
-        db.select(User).filter_by(username=username)
-    ).scalar_one_or_none()
-
-    if not requester:
-        return jsonify({"error": f"User @{username} not found."}), 404
-
-    friendship = db.session.execute(
-        db.select(Friendship).filter_by(
-            requester_id=requester.id,
-            receiver_id=current_user.id,
-            status="pending"
-        )
-    ).scalar_one_or_none()
-
-    if not friendship:
-        return jsonify({"error": "No pending friend request from this user."}), 404
-
-    try:
-        friendship.status = "accepted"
-        db.session.commit()
-        return "", 204
-    except Exception as error:
-        db.session.rollback()
-        return jsonify({"error": str(error)}), 500
-
-
-# Remove a friend
-@accounts.route("/users/@<username>/friends", methods=["DELETE"])
-@login_required
-def remove_friend(username: str):
-    other = db.session.execute(
-        db.select(User).filter_by(username=username)
-    ).scalar_one_or_none()
-
-    if not other:
-        return jsonify({"error": f"User @{username} not found."}), 404
-
-    friendship = db.session.execute(
-        db.select(Friendship).filter(
-            ((Friendship.requester_id == current_user.id) & (Friendship.receiver_id == other.id)) |
-            ((Friendship.requester_id == other.id) & (Friendship.receiver_id == current_user.id)),
-            Friendship.status == "accepted"
-        )
-    ).scalar_one_or_none()
-
-    if not friendship:
-        return jsonify({"error": "No active friendship found."}), 404
-
-    try:
-        db.session.delete(friendship)
-        db.session.commit()
-        return "", 204
-    except Exception as error:
-        db.session.rollback()
-        return jsonify({"error": str(error)}), 500
-
-
-# View incoming friend requests
-@accounts.route("/users/friend-requests", methods=["GET"])
-@login_required
-def view_friend_requests():
-    pending = db.session.execute(
-        db.select(Friendship).filter_by(receiver_id=current_user.id, status="pending")
-    ).scalars().all()
-
-    return jsonify({
-        "data": [
-            {
-                "requesterId": fr.requester_id,
-                "timestamp": fr.timestamp.isoformat()
-            }
-            for fr in pending
-        ]
-    }), 200
-
-
-# View list of accepted friends
-@accounts.route("/users/@<username>/friends", methods=["GET"])
-def get_friend_list(username: str):
-    user = db.session.execute(
-        db.select(User).filter_by(username=username)
-    ).scalar_one_or_none()
-
+    
     if not user:
         return jsonify({"error": f"User @{username} not found."}), 404
+    
+    if current_user.id == user.id:
+        return jsonify({"error": "Cannot send a friend request to yourself."}), 400
 
-    friendships = db.session.execute(
-        db.select(Friendship).filter(
-            ((Friendship.requester_id == user.id) | (Friendship.receiver_id == user.id)),
-            Friendship.status == "accepted"
-        )
-    ).scalars().all()
+    request = current_user.get_request_status_with(user)
+    
+    if not request or request["status"] == "declined":
+        try:
+            current_user.send_friend_request(user)
+            return "", 204
+        except Exception as error:
+            return jsonify({"error": str(error)}), 500
+    
+    if request["status"] == "accepted":
+        return jsonify({"error": f"User is already friends with @{username}."}), 400
+    
+    if request["requester_id"] == user.id:
+        return jsonify({"error": "User already has an incoming friend request from @{username}."}), 400
+    
+    return jsonify({"error": "User already has an outgoing friend request to @{username}."}), 400
 
-    friend_ids = [
-        fr.receiver_id if fr.requester_id == user.id else fr.requester_id
-        for fr in friendships
-    ]
+@accounts.patch("/users/friends/@<username>")
+@login_required
+def accept_friend_request_from_username(username: str):
+    user: User | None = db.session.execute(
+        db.select(User).filter_by(username = username)
+    ).scalar_one_or_none()
+    
+    if not user:
+        return jsonify({"error": f"User @{username} not found."}), 404
+    
+    if current_user.id == user.id:
+        return jsonify({"error": "Cannot accept a friend request from yourself."}), 400
+    
+    request = current_user.get_request_status_with(user)
+    
+    if not request or request["status"] == "declined":
+        return jsonify({"error": f"User does not have an incoming friend request from @{username}."}), 400
+    
+    if request["status"] == "accepted":
+        return jsonify({"error": f"User is already friends with @{username}."}), 400
+    
+    if request["requester_id"] == current_user.id:
+        return jsonify({"error": f"User does not have an incoming friend request from @{username}."}), 400
+    
+    try:
+        current_user.accept_friend_request(user)
+        return "", 204
+    except Exception as error:
+        return jsonify({"error": str(error)}), 500
 
-    friends = db.session.execute(
-        db.select(User).filter(User.id.in_(friend_ids))
-    ).scalars().all()
+@accounts.delete("/users/friends/@<username>")
+def decline_or_remove_friend_by_username(username: str):
+    user: User | None = db.session.execute(
+        db.select(User).filter_by(username = username)
+    ).scalar_one_or_none()
+    
+    if not user:
+        return jsonify({"error": f"User @{username} not found."}), 404
+    
+    if current_user.id == user.id:
+        return jsonify({"error": "There is no friendship with yourself."}), 400
+    
+    request = current_user.get_request_status_with(user)
+    
+    if not request or request["status"] == "declined":
+        return jsonify({"error": "User does not have an incoming friend request from @{username}."}), 400
+    
+    if request["status"] == "accepted":
+        current_user.remove_friend(user)
+        return "", 204
+    
+    if request["requester_id"] == current_user.id:
+        return jsonify({"error": "User does not have an incoming friend request from @{username}."}), 400
+    
+    try:
+        current_user.decline_friend_request(user)
+        return "", 204
+    except Exception as error:
+        return jsonify({"error": str(error)}), 500
 
+@accounts.get("/users/friends")
+@login_required
+def get_friend_data():
+    friends: list[User] = current_user.accepted_friend_requests.all()
+    outgoing: list[User] = current_user.outgoing_friend_requests.all()
+    incoming: list[User] = current_user.incoming_friend_requests.all()
+    
+    status = request.args.get("status")
+    
+    match status:
+        case "accepted":
+            return jsonify({"data": [user.to_dict() for user in friends]}), 200
+        case "outgoing":
+            return jsonify({"data": [user.to_dict() for user in outgoing]}), 200
+        case "incoming":
+            return jsonify({"data": [user.to_dict() for user in incoming]}), 200
+        case _:
+            return jsonify({
+                "data": {
+                    "accepted": [friend.to_dict() for friend in friends],
+                    "outgoing": [requester.to_dict() for requester in outgoing],
+                    "incoming": [requester.to_dict() for requester in incoming]
+                }
+            }), 200
+
+@accounts.get("/users/<int:user_id>/friends")
+def get_friend_data_from_user_id(user_id: int):
+    user: User | None = db.session.execute(
+        db.select(User).filter_by(id = user_id)
+    ).scalar_one_or_none()
+    
+    if not user:
+        return jsonify({"error": f"User #{user_id} not found."}), 404
+    
+    status = request.args.get("status")
+    
+    if status and status != "accepted" and (not current_user.is_authenticated or current_user.id != user.id):
+        return current_app.login_manager.unauthorized()
+    
+    match status:
+        case "accepted":
+            friends: list[User] = user.accepted_friend_requests.all()
+        case "outgoing":
+            friends: list[User] = user.outgoing_friend_requests.all()
+        case "incoming":
+            friends: list[User] = user.incoming_friend_requests.all()
+        case _:
+            if current_user.is_authenticated and current_user.id == user.id:
+                return get_friend_data()
+            
+            friends: list[User] = user.accepted_friend_requests.all()
+    
+    if not friends:
+        return jsonify({"data": ""}), 204
+    
+    return jsonify({"data": [friend.to_dict() for friend in friends]}), 200
+
+@accounts.get("/users/@<username>/friends")
+def get_friend_data_from_username(username: str):
+    user: User | None = db.session.execute(
+        db.select(User).filter_by(username = username)
+    ).scalar_one_or_none()
+    
+    if not user:
+        return jsonify({"error": f"User @{username} not found."}), 404
+    
+    status = request.args.get("status")
+    
+    if status and status != "accepted" and (not current_user.is_authenticated or current_user.id != user.id):
+        return current_app.login_manager.unauthorized()
+    
+    match status:
+        case "accepted":
+            friends: list[User] = user.accepted_friend_requests.all()
+        case "outgoing":
+            friends: list[User] = user.outgoing_friend_requests.all()
+        case "incoming":
+            friends: list[User] = user.incoming_friend_requests.all()
+        case _:
+            if current_user.is_authenticated and current_user.id == user.id:
+                print("hi")
+                return get_friend_data()
+            
+            friends: list[User] = user.accepted_friend_requests.all()
+    
+    if not friends:
+        return jsonify({"data": []}), 204
+    print(friends)
+    return jsonify({"data": [friend.to_dict() for friend in friends]}), 200
+
+@accounts.get("/users/<int:user1_id>/friends/<int:user2_id>")
+def get_friendship_status_between_user_ids(user1_id: int, user2_id: int):
+    user1: User | None = db.session.execute(
+        db.select(User).filter_by(id = user1_id)
+    ).scalar_one_or_none()
+    
+    user2: User | None = db.session.execute(
+        db.select(User).filter_by(id = user2_id)
+    ).scalar_one_or_none()
+    
+    if not user1 and not user2:
+        return jsonify({"error": f"Users #{user1_id} and #{user2_id} not found."}), 404
+    elif not user1:
+        return jsonify({"error": f"User #{user1_id} not found."}), 404
+    elif not user2:
+        return jsonify({"error": f"User #{user2_id} not found."}), 404
+    
+    if user1_id == user2_id:
+        return jsonify({"error": "There is no friendship status between the user and themself."}), 400
+    
+    request = user1.get_request_status_with(user2)
+    
+    if not request:
+        return jsonify({"data": ""}), 204
+    
     return jsonify({
-        "data": [
-            {
-                "userId": f.id,
-                "username": f.username,
-                "firstName": f.first_name,
-                "lastName": f.last_name,
-                "profilePicUrl": f"/api/users/{f.id}/profile-picture"
-            } for f in friends
-        ]
+        "data": {
+            "status": request["status"],
+            "requesterId": request["requester_id"],
+            "timestamp": request["timestamp"]
+        }
     }), 200
+
+@accounts.get("/users/<username1>/friends/<username2>")
+def get_friendship_status_between_usernames(username1: str, username2: str):
+    user1: User | None = db.session.execute(
+        db.select(User).filter_by(username = username1)
+    ).scalar_one_or_none()
+    
+    user2: User | None = db.session.execute(
+        db.select(User).filter_by(username = username2)
+    ).scalar_one_or_none()
+    
+    if not user1 and not user2:
+        return jsonify({"error": f"Users @{username1} and @{username2} not found."}), 404
+    elif not user1:
+        return jsonify({"error": f"User @{username1} not found."}), 404
+    elif not user2:
+        return jsonify({"error": f"User @{username2} not found."}), 404
+    
+    return get_friendship_status_between_user_ids(user1.id, user2.id)
+
+@accounts.get("/users/friends/<int:user_id>")
+@login_required
+def get_friendship_status_with_user_id(user_id: int):
+    return get_friendship_status_between_user_ids(current_user.id, user_id)
+
+@accounts.get("/users/friends/@<username>")
+@login_required
+def get_friendship_status_with_username(username: str):
+    return get_friendship_status_between_usernames(current_user.username, username)
