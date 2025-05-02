@@ -127,7 +127,7 @@ class Listing(db.Model):
     __tablename__ = 'listings'
     id: int = db.Column(db.Integer, primary_key=True)
     user_id: int = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    category: str = db.Column(db.String(20), nullable=False)  # 'short', 'long', or 'hosting'
+    category: str = db.Column(db.String(20), nullable=False)  # 'short-term', 'long-term', or 'hosting'
     start_date: date = db.Column(db.Date, nullable=False)
     end_date: Optional[date] = db.Column(db.Date, nullable=True)
     dates_are_approximate: bool = db.Column(db.Boolean, default=True)
@@ -135,9 +135,9 @@ class Listing(db.Model):
     currency: Optional[str] = db.Column(db.String(3), nullable=True)
     description: Optional[str] = db.Column(db.Text, nullable=True)
     is_complete: bool = db.Column(db.Boolean, nullable = False, default = False)
-    # Indicates if only users of the same gender should be considered
     prefers_same_gender: bool = db.Column(db.Boolean, default=False)
     timestamp: datetime = db.Column(db.DateTime, index=True, default=datetime.now(timezone.utc))
+    radius: int = db.Column(db.Integer, nullable = False, default = 5)
 
     # Relationships
     creator = db.relationship('User', back_populates='listings')
