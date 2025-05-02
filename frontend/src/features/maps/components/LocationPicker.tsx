@@ -1,12 +1,18 @@
-import { Autocomplete, Box, Container, ContainerProps, TextField, Typography } from "@mui/material";
-import { Map, AdvancedMarker, useMap } from "@vis.gl/react-google-maps";
+import { Autocomplete, Box, Container, ContainerProps, InputLabel, Slider, TextField, Typography } from "@mui/material";
+import { AdvancedMarker, Map, useMap } from "@vis.gl/react-google-maps";
 import { ChangeEvent, SyntheticEvent, useEffect, useState } from "react";
 import { getLocationData, getPlacePredictions } from "../mapsApi";
 import { LatLngLiteral, Location, PlacePrediction } from "../mapsConstants";
+import MapCircleOverlay from "./MapCircleOverlay";
 
 const Geolocation = navigator.geolocation;
 
-export default function LocationPicker({ containerProps, textInput = true }: { containerProps?: ContainerProps, textInput?: boolean }) {
+export default function LocationPicker({ containerProps, textInput = true, radiusSlider = true }: { containerProps?: ContainerProps, textInput?: boolean, radiusSlider?: boolean }) {
+    const MIN_RADIUS = 1;
+    const MAX_RADIUS = 20;
+
+    const { sx: containerPropsSx = {}, ...containerPropsRest } = containerProps || {};
+
     const map = useMap();
 
     const [location, setLocation] = useState<Location | null>(null);
@@ -15,6 +21,8 @@ export default function LocationPicker({ containerProps, textInput = true }: { c
     const [searchInput, setSearchInput] = useState<string | null>(null);
     const [predictions, setPredictions] = useState<PlacePrediction[]>([]);
     const [searchedPlaceId, setSearchedPlaceId] = useState<string | null>(null);
+
+    const [radius, setRadius] = useState<number>(5);
 
     useEffect(() => {
         Geolocation.getCurrentPosition(
@@ -100,6 +108,14 @@ export default function LocationPicker({ containerProps, textInput = true }: { c
         setSearchedPlaceId(value.placeId);
     }
 
+    function handleRadiusSliderChange(_event: Event, value: number | number[]) {
+        if (typeof(value) === "number") {
+            setRadius(value);
+        } else {
+            setRadius(value[0]);
+        }
+    }
+
     return (
         <Container
             maxWidth = "lg"
@@ -108,9 +124,10 @@ export default function LocationPicker({ containerProps, textInput = true }: { c
                 flexDirection: "column",
                 width: "70vw",
                 height: "70vh",
-                marginTop: "auto"
+                marginTop: "auto",
+                ...containerPropsSx
             }}
-            { ...containerProps }
+            { ...containerPropsRest }
         >
             { textInput &&
                 <Autocomplete
@@ -134,23 +151,53 @@ export default function LocationPicker({ containerProps, textInput = true }: { c
                     disableDefaultUI
                 >
                     { location?.coordinates &&
-                        <AdvancedMarker
-                            position = { location.coordinates }
-                            draggable
-                            clickable
-                        />
+                        <>
+                            <AdvancedMarker
+                                position = { location.coordinates }
+                                draggable
+                                clickable
+                            />
+                            { radius && radius > 0 &&
+                                <MapCircleOverlay centre = { location.coordinates } radius = { radius } />
+                            }
+                        </>
                     }
                 </ Map>
             </Box>
 
-            <Typography>
+            { radiusSlider && 
+                <Box marginTop = "0.25rem" width = "100%">
+                    <InputLabel>Radius (km)</InputLabel>
+
+                    <Box>
+                        <Slider
+                            sx = {{
+                                width: "40%",
+                                marginX: "auto"
+                            }}
+                            value = { radius }
+                            valueLabelDisplay = "auto"
+                            min = { MIN_RADIUS }
+                            max = { MAX_RADIUS }
+                            step = { 1 }
+                            onChange = { handleRadiusSliderChange }
+                            marks = {[
+                                { value: 1, label: "1km" },
+                                { value: 20, label: "20km" },
+                            ]}
+                        />
+                    </Box>
+                </Box>
+            }
+
+            {/* <Typography>
                 { clickCoordinates && `${ clickCoordinates.lat }, ${ clickCoordinates.lng }` }
-            </Typography>
+            </Typography> */}
             <Typography>
                 { location?.locality && location?.country ?
                     `${ location.locality }, ${ location.country }`
                 :
-                    location?.country
+                    location?.country ?? "Select a location"
                 }
             </Typography>
         </Container>
