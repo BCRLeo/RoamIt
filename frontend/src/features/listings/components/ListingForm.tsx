@@ -1,0 +1,281 @@
+import { ChangeEvent, FormEvent, useState } from "react";
+
+import { Close, Upload } from "@mui/icons-material";
+import { TextField, Button, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent, Grid2, FormControlLabel, Checkbox, ImageList, ImageListItem, IconButton, Badge } from "@mui/material";
+import { DatePicker } from "@mui/x-date-pickers";
+import dayjs, { Dayjs } from "dayjs";
+
+import { isListingCategory, ListingCategory } from "../listingsConstants";
+import UploadButton from "../../../components/UploadButton/UploadButton";
+import LocationPicker from "../../maps/components/LocationPicker";
+
+export default function ListingForm() {
+    const [category, setCategory] = useState<ListingCategory | null>(null);
+    const [budget, setBudget] = useState<number | "">("");
+    const [startDate, setStartDate] = useState<Dayjs | null>(null);
+    const [endDate, setEndDate] = useState<Dayjs | null>(null);
+    const [description, setDescription] = useState("");
+    const [uploadedImages, setUploadedImages] = useState<File[]>([]);
+
+    function handleCategorySelect(event: SelectChangeEvent<ListingCategory | null>) {
+        const value = event.target.value;
+
+        if (!value || !isListingCategory(value)) {
+            setCategory(null);
+            return;
+        }
+
+        setCategory(value);
+    }
+
+    function handleBudgetChange(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+        const value = event.target.value;
+        if (!value) {
+            setBudget("");
+        }
+
+        if (/^\d+$/.test(value) && Number(value) > 0) {
+            setBudget(Math.trunc(Number(value)));
+        } else {
+            setBudget("");
+        }
+    }
+
+    function handleStartDateChange(value: Dayjs | null) {
+        if (!value || !value.isValid()) {
+            setStartDate(null);
+            return;
+        }
+
+        setStartDate(value);
+    }
+
+    function handleEndDateChange(value: Dayjs | null) {
+        if (!value || !value.isValid()) {
+            setEndDate(null);
+            return;
+        }
+
+        setEndDate(value);
+    }
+
+    function handleDescriptionChange(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+        const value = event.target.value;
+
+        setDescription(value);
+    }
+
+
+    function handleImageUpload(event: ChangeEvent<HTMLInputElement>) {
+        const files = event.target.files ? Array.from(event.target.files) : [];
+
+        if (!files.length) return;
+
+        const combined = Array.from(
+            new Map([...uploadedImages, ...files].map(file => [file.name, file])).values()
+        );
+
+        if (combined.length > 5) {
+            console.warn("You can upload a maximum of 5 images.");
+            setUploadedImages(combined.slice(0, 5));
+        } else {
+            setUploadedImages(combined);
+        }
+
+        event.target.value = "";
+    }
+
+    function handleRemoveImage(index: number) {
+        const updated = uploadedImages.filter((_, i) => i !== index);
+        setUploadedImages(updated);
+    }
+
+    function handleSubmit(event: FormEvent<HTMLButtonElement>) {
+        event.preventDefault();
+        console.log("Submitting", { category, budget, startDate, endDate, description, uploadedImages });
+        
+        // send 'text' and 'uploadedImages' to backend
+        // console.log("Submitting:", { text, uploadedImages });
+    }
+
+    return (
+        <Grid2
+            container
+            component = "form"
+            spacing = { 2 }
+            noValidate
+            sx = {{
+                width: "55%",
+                margin: "2rem auto"
+            }}
+        >
+            <Grid2 size = { 12 }>
+                <LocationPicker
+                    containerProps = {{
+                        sx: {
+                            width: "100%",
+                            marginX: 0
+                        }
+                    }}
+                />
+            </Grid2>
+
+            <Grid2 size = { 6 }>
+                <FormControl fullWidth required>
+                    <InputLabel>Category</InputLabel>
+                    <Select
+                        value = { category }
+                        label = "Category"
+                        onChange = { handleCategorySelect }
+                        sx = {{ textAlign: "left"}}
+                    >
+                        <MenuItem disabled selected>-- Select an listing category --</MenuItem>
+                        <MenuItem value = { "Short-term" }>Short-term</MenuItem>
+                        <MenuItem value = { "Long-term" }>Long-term</MenuItem>
+                        <MenuItem value = { "Hosting" }>Hosting</MenuItem>
+                    </Select>
+                </FormControl>
+            </Grid2>
+            <Grid2 size = { 6 }>
+                <FormControl fullWidth>
+                    <TextField
+                        label = "Nightly Budget"
+                        value = { budget }
+                        onChange = { handleBudgetChange }
+                    />
+                </FormControl>
+            </Grid2>
+            
+            <Grid2 size = { 3 }>
+                <DatePicker
+                    label = "Start Date"
+                    minDate = { dayjs() }
+                    onChange = { handleStartDateChange }
+                    value = { startDate }
+                    slotProps={{
+                        textField: {
+                            fullWidth: true,
+                            required: true
+                        }
+                    }}
+                />
+            </Grid2>
+            <Grid2 size = { 3 }>
+                <DatePicker
+                    label = "End Date"
+                    minDate = { startDate?.add(1, "day") ?? dayjs().add(1, "day") }
+                    onChange = { handleEndDateChange }
+                    value = { endDate }
+                    slotProps={{
+                        textField: {
+                            fullWidth: true
+                        }
+                    }}
+                />
+            </Grid2>
+            <Grid2 size = { 3 }>
+                <FormControlLabel
+                    required
+                    control = { <Checkbox size = "medium" /> }
+                    label = "Flexible Dates"
+                    sx = {{ height: "100%", width: "100%", margin: "auto" }}
+                />
+            </Grid2>
+            <Grid2 size = { 3 }>
+                <FormControlLabel
+                    required
+                    control = { <Checkbox size = "medium" /> }
+                    label = "Same Gender"
+                    sx = {{ height: "100%", width: "100%", margin: "auto" }}
+                />
+            </Grid2>
+
+            <Grid2 size = { 12 }>
+                <TextField
+                    label = "Description"
+                    value = { description }
+                    onChange = { handleDescriptionChange }
+                    fullWidth
+                    multiline
+                    required
+                />
+            </Grid2>
+
+            <Grid2 size = { 12 }>
+                <UploadButton
+                    icon = { <Upload /> }
+                    label = "Upload images"
+                    multiple
+                    inputProps = {{
+                        accept: "image/*",
+                        multiple: true,
+                        onChange: handleImageUpload,
+                        disabled: uploadedImages.length >= 5
+                    }}
+                />
+                <ImageList
+                    variant = "masonry"
+                    cols = { 3 }
+                    gap = { 8 }
+                    sx = {{
+                        height: "30dvh",
+                        display: "flex",
+                        overflowX: "auto",
+                        overflowY: "hidden",
+                        whiteSpace: "nowrap",
+                        gap: 2
+                    }}
+                >
+                    { uploadedImages.map((file, index) => {
+                        const url = URL.createObjectURL(file);
+                        return (
+                            <ImageListItem key = { `${index}_${file.name}` } sx = {{ height: "100%" }}>
+                                <Badge
+                                    overlap = "circular"
+                                    anchorOrigin={{ vertical: "top", horizontal: "right" }}
+                                    badgeContent = {
+                                        <IconButton
+                                            size = "small"
+                                            onClick = { () => handleRemoveImage(index) }
+                                            sx = { (theme) => ({
+                                                backgroundColor: theme.palette.background.default,
+                                                color: "red",
+                                                borderRadius: "50%",
+                                                "&:hover": {
+                                                    backgroundColor: "#ffe6e6",
+                                                },
+                                                display: "flex",
+                                                alignItems: "center",
+                                                justifyContent: "center",
+                                            })}
+                                        >
+                                            <Close sx={{ fontSize: 18, fontWeight: "bold" }} />
+                                        </IconButton>
+                                    }
+                                    sx = {{ width: length, height: length }}
+                                >
+                                    <img
+                                        src = { url }
+                                        style = {{
+                                            height: "100%",
+                                            objectFit: "contain",
+                                            borderRadius: "8px"
+                                        }}
+                                    />
+                                </Badge>
+                            </ImageListItem>
+                        );
+                    })}
+                </ImageList>
+            </Grid2>
+
+            { /* tags */ }
+
+            <Grid2 size = { 12 }>
+                <Button variant = "contained" type = "submit" onClick = { handleSubmit }>
+                    Create Listing
+                </Button>
+            </Grid2>
+        </Grid2>
+    );
+}
