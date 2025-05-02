@@ -1,25 +1,25 @@
 import { ChangeEvent, ChangeEventHandler, useState } from "react";
 
 import { PhotoCamera } from "@mui/icons-material";
-import { Avatar, Badge, Box } from "@mui/material";
+import { Avatar, Badge, Box, Breakpoint } from "@mui/material";
 import { useSuspenseQueries } from "@tanstack/react-query";
 
 import UploadButton from "../../../components/UploadButton/UploadButton";
-import { Size } from "../../../constants";
 import { getProfilePictureUrl, getUserData } from "../accountsApi";
 
 export default function ProfilePicture(props:
-    { userId?: number, size?: Size } |
-    { userId: number, onUpload: ChangeEventHandler<HTMLInputElement>, size?: Size }
+    { userId?: number, size?: Breakpoint } |
+    { userId: number, onUpload: ChangeEventHandler<HTMLInputElement>, size?: Breakpoint }
 ) {
     const userId = props.userId;
     const size = props.size;
 
-    const sizeMap: Record<Size, string> = {
+    const sizeMap: Record<Breakpoint, string> = {
         xs: "1rem",
         sm: "2rem",
         md: "4rem",
-        lg: "8rem"
+        lg: "8rem",
+        xl: "10rem"
     }
     const length = size ? sizeMap[size] : sizeMap["sm"];
 
