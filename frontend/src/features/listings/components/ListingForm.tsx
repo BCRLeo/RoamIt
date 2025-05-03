@@ -10,7 +10,7 @@ import LocationPicker from "../../maps/components/LocationPicker";
 import { useToggleState } from "../../../hooks/useToggleState";
 import { Place } from "../../maps/mapsConstants";
 import { createListing, getListingData } from "../listingsApi";
-import { isListingCategory, ListingCategory } from "../listingsConstants";
+import { isListingCategory, ListingCategory, ListingData } from "../listingsConstants";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import NotFoundPage from "../../../pages/NotFound/NotFoundPage";
 
@@ -37,14 +37,22 @@ export default function ListingForm(props:
     const [description, setDescription] = useState("");
     const [uploadedImages, setUploadedImages] = useState<File[]>([]);
 
-    const { data: listingData } = useSuspenseQuery({
+    const { data: listingResponse } = useSuspenseQuery({
         queryKey: [`getListingData`, listingId],
         queryFn: () => listingId ? getListingData(listingId) : null,
     });
 
+    const [listingData, setListingData] = useState<ListingData | null | undefined>();
+
+    useEffect(() => {        
+        if (!listingResponse || listingResponse.status === "error") return;
+
+        setListingData(listingResponse.data);
+    }, [listingResponse]);
+
     useEffect(() => {
         if (!listingData) return;
-
+        
         setPlace({
             coordinates: listingData.location.coordinates,
             country: listingData.location.country,

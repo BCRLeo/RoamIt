@@ -1,6 +1,7 @@
 import dayjs, { Dayjs } from "dayjs";
 import { LatLngLiteral } from "../maps/mapsConstants";
 import { ListingCategory, ListingData } from "./listingsConstants";
+import { ApiResult } from "../../constants";
 
 export async function createListing({
     coordinates,
@@ -72,16 +73,21 @@ export async function createListing({
     return null;
 }
 
-export async function getUserListingData(userIdOrUsername: number | string): Promise<ListingData[] | null> {
+export async function getUserListingData(userIdOrUsername: number | string): Promise<ApiResult<ListingData[]>> {
     const possessiveUser = typeof(userIdOrUsername) === "number" ? `user #${ userIdOrUsername }` : "@" + userIdOrUsername;
     const urlUser = typeof(userIdOrUsername) === "number" ? userIdOrUsername : "@" + userIdOrUsername;
 
     try {
         const response = await fetch (`/api/users/${ urlUser }/listings`, { method: "GET" });
+
+        if (response.status === 204) {
+            return { status: "success", data: null };
+        }
+
         const data = await response.json()
 
         if (response.ok) {
-            return data.data;
+            return { status: "success", data: data.data };
         }
 
         throw new Error(data.error);
@@ -89,14 +95,19 @@ export async function getUserListingData(userIdOrUsername: number | string): Pro
         console.error(`Error retrieving ${ possessiveUser }'s listings:`, error);
     }
 
-    return null;
+    return { status: "error" };
 }
 
-export async function getListingData(): Promise<ListingData[] | null>
-export async function getListingData(listingId: number): Promise<ListingData | null>;
-export async function getListingData(listingId?: number): Promise<ListingData | ListingData[] | null> {
+export async function getListingData(): Promise<ApiResult<ListingData[]>>
+export async function getListingData(listingId: number): Promise<ApiResult<ListingData>>;
+export async function getListingData(listingId?: number): Promise<ApiResult<ListingData> | ApiResult<ListingData[]>> {
     try {
         const response = await fetch(`/api/listings${ listingId ? "/" + listingId : "" }`, { method: "GET" });
+
+        if (response.status === 204) {
+            return { status: "success", data: null };
+        }
+
         const data = await response.json();
 
         if (!response.ok) {
@@ -110,7 +121,7 @@ export async function getListingData(listingId?: number): Promise<ListingData | 
                 data.data.endDate = dayjs(data.data.endDate);
             }
 
-            return data.data;
+            return { status: "success", data: data.data };
         }
 
         for (const listing of data.data) {
@@ -120,12 +131,12 @@ export async function getListingData(listingId?: number): Promise<ListingData | 
             }
         }
 
-        return data.data;
+        return { status: "success", data: data.data };
     } catch (error) {
         console.error(listingId ? `Error retrieving listing #${ listingId }:` : "Error retrieving user's listings:", error);
     }
 
-    return null;
+    return { status: "error" };
 }
 
 export async function deleteListing(listingId: number) {

@@ -21,7 +21,7 @@ export default function ListingsPage() {
         searchUsername = currentUser.username;
     }
 
-    const { user } = usePublicUserData(searchUsername);
+    const { user, isAuthenticated } = usePublicUserData(searchUsername);
 
     let listingId: number | undefined = undefined;
 
@@ -51,12 +51,14 @@ export default function ListingsPage() {
 
             <ListingList username = { user.username } />
             
-            <ListingFormModal
-                buttonProps = {{
-                    variant: "contained",
-                    sx: { color: "inherit" }
-                }}
-            />
+            { isAuthenticated && (
+                <ListingFormModal
+                    buttonProps = {{
+                        variant: "contained",
+                        sx: { color: "inherit" }
+                    }}
+                />
+            )}
         </Container>
     );
 }

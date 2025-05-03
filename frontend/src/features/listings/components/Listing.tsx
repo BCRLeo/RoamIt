@@ -10,7 +10,7 @@ import NotFoundPage from "../../../pages/NotFound/NotFoundPage";
 import LocationPicker from "../../maps/components/LocationPicker";
 import { Place } from "../../maps/mapsConstants";
 import { getListingData } from "../listingsApi";
-import { ListingCategory } from "../listingsConstants";
+import { ListingCategory, ListingData } from "../listingsConstants";
 
 export default function Listing(props: { listingId: number, gridProps?: Grid2Props }) {
     const listingId = props.listingId;
@@ -31,14 +31,22 @@ export default function Listing(props: { listingId: number, gridProps?: Grid2Pro
     const [description, setDescription] = useState("");
     const [uploadedImages, setUploadedImages] = useState<File[]>([]);
 
-    const { data: listingData } = useSuspenseQuery({
+    const { data: listingResponse } = useSuspenseQuery({
         queryKey: [`getListingData`, listingId],
-        queryFn: () => listingId ? getListingData(listingId) : null,
+        queryFn: () => getListingData(listingId),
     });
+
+    const [listingData, setListingData] = useState<ListingData | null | undefined>();
+
+    useEffect(() => {        
+        if (!listingResponse || listingResponse.status === "error") return;
+
+        setListingData(listingResponse.data);
+    }, [listingResponse]);
 
     useEffect(() => {
         if (!listingData) return;
-
+        
         setPlace({
             coordinates: listingData.location.coordinates,
             country: listingData.location.country,
