@@ -4,6 +4,7 @@ import { Close, Upload } from "@mui/icons-material";
 import { TextField, Badge, Button, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent, Grid2, FormControlLabel, Checkbox, ImageList, ImageListItem, IconButton, Grid2Props, Typography } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers";
 import dayjs, { Dayjs } from "dayjs";
+import { useNavigate } from "react-router";
 
 import UploadButton from "../../../components/UploadButton/UploadButton";
 import LocationPicker from "../../maps/components/LocationPicker";
@@ -23,6 +24,8 @@ export default function ListingForm(props:
     const listingId = props.mode === "edit" ? props.listingId : undefined;
 
     const { sx: gridPropsSx = {}, ...gridPropsRest } = gridProps ?? {};
+
+    const navigate = useNavigate();
 
     // replace with ListingData object?
     const [place, setPlace] = useState<Place | null>(null);
@@ -171,7 +174,7 @@ export default function ListingForm(props:
             return;
         }
 
-        await createListing({
+        const success = await createListing({
             coordinates: place.coordinates,
             radius: radius,
             locationName: locationName,
@@ -183,7 +186,11 @@ export default function ListingForm(props:
             prefersSameGender: prefersSameGender,
             description: description.trim(),
             images: uploadedImages
-        })
+        });
+
+        if (success) {
+            navigate(`/listings/${ success }`);
+        }
     }
 
     if (mode === "edit" && !listingData) {
