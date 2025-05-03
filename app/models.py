@@ -110,7 +110,7 @@ class Match(db.Model):
 class ListingPicture(db.Model):
     __tablename__ = "listing_pictures"
     id: int = db.Column(db.Integer, primary_key = True)
-    listing_id: int = db.Column(db.Integer, db.ForeignKey("listings.id"), nullable = False)
+    listing_id: int = db.Column(db.Integer, db.ForeignKey("listings.id", ondelete = "CASCADE"), nullable = False)
     image_data: bytes = db.Column(db.LargeBinary, nullable = False)
     image_mimetype: str = db.Column(db.String(255), nullable = False)
     timestamp: datetime = db.Column(db.DateTime, default = datetime.now(timezone.utc))
@@ -138,7 +138,7 @@ class Listing(db.Model):
     creator = db.relationship('User', back_populates='listings')
     tags = db.relationship('Tag', secondary=listing_tags, back_populates='listings')
     location = db.relationship("Location", back_populates = "listings")
-    pictures = db.relationship("ListingPicture", back_populates = "listing", lazy = "dynamic")
+    pictures = db.relationship("ListingPicture", back_populates = "listing", cascade="all, delete-orphan", lazy = "dynamic")
     
     def to_dict(self, for_javascript: bool = True):
         return {
