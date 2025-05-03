@@ -44,8 +44,12 @@ export default function ListingForm(props:
 
     useEffect(() => {
         if (!listingData) return;
-        console.log(typeof(listingData.startDate));
 
+        setPlace({
+            coordinates: listingData.location.coordinates,
+            country: listingData.location.country,
+            locality: listingData.location.locality
+        });
         setRadius(listingData.radius);
         setLocationName(listingData.location.name ?? "");
         setCategory(listingData.category);
@@ -195,6 +199,7 @@ export default function ListingForm(props:
             >
                 <Grid2 size = { 12 }>
                     <LocationPicker
+                        defaultPlace = { place ?? undefined }
                         onChange = { handleLocationChange }
                         containerProps = {{
                             sx: {

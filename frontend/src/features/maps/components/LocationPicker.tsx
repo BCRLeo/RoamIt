@@ -7,7 +7,7 @@ import MapCircleOverlay from "./MapCircleOverlay";
 
 const Geolocation = navigator.geolocation;
 
-export default function LocationPicker({ onChange, containerProps, textInput = true, radiusSlider = true }: { onChange?: (location: Place | null, radius: number | null) => void, containerProps?: ContainerProps, textInput?: boolean, radiusSlider?: boolean }) {
+export default function LocationPicker({ defaultPlace, onChange, containerProps, textInput = true, radiusSlider = true }: { defaultPlace?: Place, onChange?: (place: Place | null, radius: number | null) => void, containerProps?: ContainerProps, textInput?: boolean, radiusSlider?: boolean }) {
     const MIN_RADIUS = 1;
     const MAX_RADIUS = 20;
 
@@ -15,13 +15,13 @@ export default function LocationPicker({ onChange, containerProps, textInput = t
 
     const map = useMap();
 
-    const [place, setPlace] = useState<Place | null>(null);
-    const [userCoordinates, setUserCoordinates] = useState<LatLngLiteral | null>(null);
+    const [place, setPlace] = useState<Place | null>(defaultPlace ?? null);
+    const [initialCoordinates, setInitialCoordinates] = useState<LatLngLiteral | null>(defaultPlace?.coordinates ?? null);
     const [clickCoordinates, setClickCoordinates] = useState<LatLngLiteral | null>(null);
     const [searchInput, setSearchInput] = useState<string | null>(null);
     const [predictions, setPredictions] = useState<PlacePrediction[]>([]);
     const [searchedPlaceId, setSearchedPlaceId] = useState<string | null>(null);
-
+    
     const [radius, setRadius] = useState<number>(5);
 
     useEffect(() => {
@@ -31,13 +31,19 @@ export default function LocationPicker({ onChange, containerProps, textInput = t
     }, [place, radius]);
 
     useEffect(() => {
+        if (defaultPlace) {
+            map?.panTo(defaultPlace.coordinates);
+            setPlace(defaultPlace)
+            return;
+        };
+
         Geolocation.getCurrentPosition(
             (position) => {
                 const coords = {
                     lat: position.coords.latitude,
                     lng: position.coords.longitude
                 };
-                setUserCoordinates(coords);
+                setInitialCoordinates(coords);
                 map?.panTo(coords);
             },
             (error) => console.error("Geolocation error:", error)
@@ -151,7 +157,7 @@ export default function LocationPicker({ onChange, containerProps, textInput = t
                 <Map
                     mapId = "111f8ee2a113e89f"
                     onClick = { (event) => setClickCoordinates(event.detail.latLng) }
-                    defaultCenter = { userCoordinates ?? { lat: 45.468558, lng: 9.182338 } }
+                    defaultCenter = { initialCoordinates ?? { lat: 45.468558, lng: 9.182338 } }
                     defaultZoom = { 10 }
                     gestureHandling = { "greedy" }
                     disableDefaultUI
