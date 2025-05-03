@@ -5,7 +5,7 @@ from flask_login import current_user, login_required
 from werkzeug.datastructures import FileStorage
 
 from ..extensions import db
-from ..models import Listing, ListingPicture, Location
+from ..models import Listing, ListingPicture, Location, User
 from ..utilities import can_convert_to_float, can_convert_to_int, string_to_bool
 
 listings = Blueprint("listings", __name__)
@@ -156,6 +156,37 @@ def get_listing(listing_id: int):
     
     return jsonify({"data": listing.to_dict(for_javascript = True)}), 200
 
+@listings.get("/users/<int:user_id>/listings")
+def get_listings_by_user_id(user_id: int):
+    user = db.session.execute(
+        db.select(User)
+        .filter_by(id = user_id)
+    ).scalar_one_or_none()
+    
+    if not user:
+        return jsonify({"error": f"User #{user_id} not found."}), 404
+    
+    listings: list[Listing] = user.listings.all()
+    
+    if not listings:
+        return jsonify({"data": ""}), 204
+    
+    listing_data = [listing.to_dict(for_javascript = True) for listing in listings]
+    
+    return jsonify({"data": listing_data}), 200
+
+@listings.get("/users/@<username>/listings")
+def get_listings_by_username(username: str):
+    user = db.session.execute(
+        db.select(User)
+        .filter_by(username = username)
+    ).scalar_one_or_none()
+    
+    if not user:
+        return jsonify({"error": f"User @{username} not found."}), 404
+    
+    return get_listings_by_user_id(user.id)
+
 @listings.route("/listings", methods = ["GET"])
 @login_required
 def get_listings():
@@ -164,9 +195,7 @@ def get_listings():
     if not listings:
         return jsonify({"data": ""}), 204
     
-    listing_data = [listing.to_dict(for_javascript = True) for listing in listings]
-    
-    return jsonify({"data": listing_data}), 200
+    return get_listings_by_user_id(current_user.id)
 
 @listings.route("/listings/<int:listing_id>", methods = ["DELETE"])
 @login_required

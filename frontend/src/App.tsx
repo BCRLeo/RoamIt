@@ -31,6 +31,7 @@ export default function App() {
                     <Route path = "/users/:username" element = { <ProfilePage /> } />
                     <Route path = "/login" element = { <LogInPage /> } />
                     <Route path = "/signup" element = { <SignUpPage /> } />
+                    <Route path = "/users/:username/listings/:listingId?" element = { <ListingsPage /> } />
                     <Route path = "/listings/:listingId?" element={ <ListingsPage /> } />
                     <Route path = "/chats/:chatId?" element = { <ChatWrapper /> } />
 

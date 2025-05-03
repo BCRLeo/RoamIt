@@ -6,10 +6,22 @@ import Listing from "../../features/listings/components/Listing";
 import ListingFormModal from "../../features/listings/components/ListingFormModal";
 import ListingList from "../../features/listings/components/ListingList";
 import NotFoundPage from "../NotFound/NotFoundPage";
+import usePublicUserData from "../../features/accounts/hooks/usePublicUserData";
 
 export default function ListingsPage() {
     const listingIdString = useParams().listingId;
+    const username = useParams().username;
     const currentUser = useUserContext().user;
+
+    let searchUsername: string = "";
+
+    if (username) {
+        searchUsername = username;
+    } else if (currentUser) {
+        searchUsername = currentUser.username;
+    }
+
+    const { user } = usePublicUserData(searchUsername);
 
     let listingId: number | undefined = undefined;
 
@@ -27,7 +39,7 @@ export default function ListingsPage() {
         </Container>
     );
 
-    if (!currentUser) return (
+    if (!user) return (
         <NotFoundPage />
     );
 
@@ -37,7 +49,7 @@ export default function ListingsPage() {
                 Listings
             </Typography>
 
-            <ListingList username = { currentUser?.username } />
+            <ListingList username = { user.username } />
             
             <ListingFormModal
                 buttonProps = {{

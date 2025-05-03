@@ -72,6 +72,26 @@ export async function createListing({
     return null;
 }
 
+export async function getUserListingData(userIdOrUsername: number | string): Promise<ListingData[] | null> {
+    const possessiveUser = typeof(userIdOrUsername) === "number" ? `user #${ userIdOrUsername }` : "@" + userIdOrUsername;
+    const urlUser = typeof(userIdOrUsername) === "number" ? userIdOrUsername : "@" + userIdOrUsername;
+
+    try {
+        const response = await fetch (`/api/users/${ urlUser }/listings`, { method: "GET" });
+        const data = await response.json()
+
+        if (response.ok) {
+            return data.data;
+        }
+
+        throw new Error(data.error);
+    } catch (error) {
+        console.error(`Error retrieving ${ possessiveUser }'s listings:`, error);
+    }
+
+    return null;
+}
+
 export async function getListingData(): Promise<ListingData[] | null>
 export async function getListingData(listingId: number): Promise<ListingData | null>;
 export async function getListingData(listingId?: number): Promise<ListingData | ListingData[] | null> {
