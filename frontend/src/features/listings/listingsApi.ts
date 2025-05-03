@@ -1,6 +1,6 @@
 import { Dayjs } from "dayjs";
 import { LatLngLiteral } from "../maps/mapsConstants";
-import { ListingCategory } from "./listingsConstants";
+import { ListingCategory, ListingData } from "./listingsConstants";
 
 export async function createListing({
     coordinates,
@@ -48,8 +48,6 @@ export async function createListing({
             formData.append("images", image);
         }
     }
-
-    console.log(formData);
     
     try {
         const response = await fetch("/api/listings", {
@@ -72,4 +70,41 @@ export async function createListing({
     }
 
     return null;
+}
+
+export async function getListingData(): Promise<ListingData[] | null>
+export async function getListingData(listingId: number): Promise<ListingData | null>;
+export async function getListingData(listingId?: number): Promise<ListingData | ListingData[] | null> {
+    try {
+        const response = await fetch(`/api/listings${ listingId ? "/" + listingId : "" }`, { method: "GET" });
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error);
+        }
+
+        return data.data;
+    } catch (error) {
+        console.error(listingId ? `Error retrieving listing #${ listingId }:` : "Error retrieving user's listings:", error);
+    }
+
+    return null;
+}
+
+export async function deleteListing(listingId: number) {
+    try {
+        const response = await fetch(`/api/listings/${ listingId }`, { method: "DELETE" });
+
+        if (response.ok) {
+            return true;
+        }
+
+        const data = await response.json();
+
+        throw new Error(data.error);
+    } catch (error) {
+        console.error(`Error deleting listing #${ listingId }:`, error);
+    }
+
+    return false;
 }

@@ -146,7 +146,10 @@ def create_listing():
 
 @listings.route("/listings/<int:listing_id>", methods = ["GET"])
 def get_listing(listing_id: int):
-    listing: Listing | None = db.session.execute(db.select(Listing).filter_by(id = listing_id)).scalar_one_or_none()
+    listing: Listing | None = db.session.execute(
+        db.select(Listing)
+        .filter_by(id = listing_id)
+    ).scalar_one_or_none()
     
     if not listing:
         return jsonify({"error": f"Listing #{listing_id} not found."}), 404
@@ -157,6 +160,10 @@ def get_listing(listing_id: int):
 @login_required
 def get_listings():
     listings: list[Listing] = current_user.listings.all()
+    
+    if not listings:
+        return jsonify({"data": ""}), 204
+    
     listing_data = [listing.to_dict(for_javascript = True) for listing in listings]
     
     return jsonify({"data": listing_data}), 200
