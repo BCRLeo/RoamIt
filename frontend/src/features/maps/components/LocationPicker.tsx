@@ -7,7 +7,7 @@ import MapCircleOverlay from "./MapCircleOverlay";
 
 const Geolocation = navigator.geolocation;
 
-export default function LocationPicker({ defaultPlace, onChange, containerProps, textInput = true, radiusSlider = true }: { defaultPlace?: Place, onChange?: (place: Place | null, radius: number | null) => void, containerProps?: ContainerProps, textInput?: boolean, radiusSlider?: boolean }) {
+export default function LocationPicker({ defaultPlace, defaultRadius, onChange, containerProps, textInput = true, radiusSlider = true, disabled = false }: { defaultPlace?: Place, defaultRadius?: number, onChange?: (place: Place | null, radius: number | null) => void, containerProps?: ContainerProps, textInput?: boolean, radiusSlider?: boolean, disabled?: boolean }) {
     const MIN_RADIUS = 1;
     const MAX_RADIUS = 20;
 
@@ -22,7 +22,7 @@ export default function LocationPicker({ defaultPlace, onChange, containerProps,
     const [predictions, setPredictions] = useState<PlacePrediction[]>([]);
     const [searchedPlaceId, setSearchedPlaceId] = useState<string | null>(null);
     
-    const [radius, setRadius] = useState<number>(5);
+    const [radius, setRadius] = useState<number>(defaultRadius ?? 5);
 
     useEffect(() => {
         if (onChange) {
@@ -127,6 +127,59 @@ export default function LocationPicker({ defaultPlace, onChange, containerProps,
             setRadius(value[0]);
         }
     }
+
+    if (disabled) return (
+        <Container
+            maxWidth = "lg"
+            sx = {{
+                display: "flex",
+                flexDirection: "column",
+                width: "70vw",
+                height: "70vh",
+                marginTop: "auto",
+                ...containerPropsSx
+            }}
+            { ...containerPropsRest }
+        >    
+            <Box flexGrow = { 1 }>
+                <Map
+                    mapId = "111f8ee2a113e89f"
+                    defaultCenter = { defaultPlace?.coordinates ?? { lat: 45.468558, lng: 9.182338 } }
+                    defaultZoom = { 10.5 }
+                    center = { defaultPlace?.coordinates ?? { lat: 45.468558, lng: 9.182338 } }
+                    zoom = { 10.5 }
+                    gestureHandling = { "greedy" }
+                    disableDefaultUI
+                    controlled
+                >
+                    { place?.coordinates &&
+                        <>
+                            { radius && radius > 0 &&
+                                <MapCircleOverlay centre = { place.coordinates } radius = { radius } />
+                            }
+                            <AdvancedMarker
+                                position = { place.coordinates }
+                                onDrag = { (event) => { event.latLng && setClickCoordinates({
+                                    lat: event.latLng.lat(),
+                                    lng: event.latLng.lng()
+                                }) } }
+                                draggable
+                                clickable
+                            />
+                        </>
+                    }
+                </ Map>
+            </Box>
+
+            <Typography>
+                { place?.locality && place?.country ?
+                    `${ place.locality }, ${ place.country }`
+                :
+                    place?.country
+                }
+            </Typography>
+        </Container>
+    )
 
     return (
         <Container

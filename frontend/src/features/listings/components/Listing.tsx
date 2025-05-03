@@ -1,173 +1,176 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-import CloseIcon from "@mui/icons-material/Close";
-import { Box, Typography, TextField, Button, IconButton, Tooltip, ImageList, ImageListItem } from "@mui/material";
+import { Close } from "@mui/icons-material";
+import { Badge, Grid2, ImageList, ImageListItem, IconButton, Grid2Props, Typography } from "@mui/material";
+import { Dayjs } from "dayjs";
 
-import UploadButton from "../../../components/UploadButton/UploadButton";
+import LocationPicker from "../../maps/components/LocationPicker";
+import { useToggleState } from "../../../hooks/useToggleState";
+import { Place } from "../../maps/mapsConstants";
+import { getListingData } from "../listingsApi";
+import { ListingCategory } from "../listingsConstants";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import NotFoundPage from "../../../pages/NotFound/NotFoundPage";
 
-export default function Listing({ mode = "create", initialData }: { mode?: "create" | "view" | "edit", initialData?: { text: string, images: (File | string)[] } }) {
-    const [text, setText] = useState(initialData?.text || "");
-    const [uploadedImages, setUploadedImages] = useState<(File | string)[]>(initialData?.images || []);
+export default function Listing(props: { listingId: number, gridProps?: Grid2Props }) {
+    const gridProps = props.gridProps;
+    const listingId = props.listingId;
 
-    function handleImageUpload(event: React.ChangeEvent<HTMLInputElement>) {
-        const files = event.target.files ? Array.from(event.target.files) : [];
-        if (!files.length) return;
+    const { sx: gridPropsSx = {}, ...gridPropsRest } = gridProps ?? {};
 
-        const combined = [...uploadedImages, ...files];
+    // replace with ListingData object?
+    const [place, setPlace] = useState<Place | null>(null);
+    const [radius, setRadius] = useState<number | null>(null);
+    const [locationName, setLocationName] = useState("");
+    const [category, setCategory] = useState<ListingCategory | "">("");
+    const [budget, setBudget] = useState<number | null>(null);
+    const [startDate, setStartDate] = useState<Dayjs | null>(null);
+    const [endDate, setEndDate] = useState<Dayjs | null>(null);
+    const [datesAreApproximate, toggleDatesAreApproximate] = useToggleState(false);
+    const [prefersSameGender, togglePrefersSameGender] = useToggleState(false);
+    const [description, setDescription] = useState("");
+    const [uploadedImages, setUploadedImages] = useState<File[]>([]);
 
-        if (combined.length > 5) {
-            alert("You can upload a maximum of 5 images.");
-            setUploadedImages(combined.slice(0, 5)); // Limit to 5
-        } else {
-            setUploadedImages(combined);
+    const { data: listingData } = useSuspenseQuery({
+        queryKey: [`getListingData`, listingId],
+        queryFn: () => listingId ? getListingData(listingId) : null,
+    });
+
+    useEffect(() => {
+        if (!listingData) return;
+
+        setPlace({
+            coordinates: listingData.location.coordinates,
+            country: listingData.location.country,
+            locality: listingData.location.locality
+        });
+        setRadius(listingData.radius);
+        setLocationName(listingData.location.name ?? "");
+        setCategory(listingData.category);
+        setBudget(listingData.nightlyBudget ?? null);
+        setStartDate(listingData.startDate);
+        setEndDate(listingData.endDate ?? null);
+        if (datesAreApproximate !== listingData.datesAreApproximate) {
+            toggleDatesAreApproximate();
         }
-
-        // Reset input so selecting the same file again still triggers onChange
-        event.target.value = "";
-    }
+        if (prefersSameGender !== listingData.prefersSameGender) {
+            togglePrefersSameGender();
+        }
+        setDescription(listingData.description);
+    }, [listingData]);
 
     function handleRemoveImage(index: number) {
         const updated = uploadedImages.filter((_, i) => i !== index);
         setUploadedImages(updated);
     }
 
-    function handleSubmit() {
-        // send 'text' and 'uploadedImages' to backend
-        console.log("Submitting:", { text, uploadedImages });
+    if (!listingData) {
+        return <NotFoundPage />;
     }
 
-    const isEditable = mode === "create" || mode === "edit";
-
     return (
-        <Box sx={{ width: "60%", margin: "2rem auto" }}>
-            <Typography variant="h4" marginBottom="1rem">
-            {mode === "view"
-                ? "Your Listing"
-                : mode === "edit"
-                ? "Edit Your Listing"
-                : "Create a New Listing"}
+        <>
+            <Typography variant = "h2" pb = "1rem">{ locationName || `Listing #${ listingId }` }</Typography>
+            <Typography variant = "subtitle1">
+                { category.charAt(0).toUpperCase() + category.slice(1) } listing from { datesAreApproximate && "approximately" }  { startDate?.format("DD/MM/YYYY") }
+                {
+                    endDate && " until " + endDate.format("DD/MM/YYYY")
+                }
             </Typography>
+            { budget && (
+                <Typography variant = "subtitle2">Budget: { budget } per night</Typography>
+            )}
+            { prefersSameGender && (
+                <Typography variant = "subtitle2">Looking for same gender</Typography>
+            )}
 
-            <TextField
-                fullWidth
-                label="I am looking for..."
-                variant="outlined"
-                margin="normal"
-                value={text}
-                onChange={isEditable ? (e) => setText(e.target.value) : undefined}
-                disabled={!isEditable}
-                inputProps={{ maxLength: 500 }}
-            />
-            <Typography variant="caption" color="textSecondary">
-                {text.length} / 500 characters
-            </Typography>
-
-            {isEditable && (
-                <Box marginTop="1rem" marginBottom="1rem">
-                    <UploadButton
-                        label={uploadedImages.length >= 5 ? "Image limit reached" : "Upload images"}
-                        multiple={true}
-                        inputProps={{
-                            accept: "image/*",
-                            multiple: true,
-                            onChange: handleImageUpload,
-                            disabled: uploadedImages.length >= 5  // Disable after 5 images
+            <Grid2
+                container
+                spacing = { 2 }
+                sx = {{
+                    width: "55%",
+                    margin: "2rem auto",
+                    ...gridPropsSx
+                }}
+                { ...gridPropsRest }
+            >
+                <Grid2 size = { 12 }>
+                    <LocationPicker
+                        defaultPlace = { place ?? undefined }
+                        defaultRadius = { radius ?? undefined }
+                        containerProps = {{
+                            sx: {
+                                width: "100%",
+                                marginX: 0
+                            }
                         }}
+                        disabled
                     />
-                </Box>
-            )}
+                </Grid2>
 
-            {isEditable ? (
-                <Box marginTop="1rem" display="flex" flexWrap="wrap" gap={2}>
-                    {uploadedImages.map((file, index) => {
-                        const url = typeof file === "string" ? file : URL.createObjectURL(file);
-                        return (
-                            <Box
-                                key={index}
-                                sx={{
-                                    width: "100px",
-                                    textAlign: "center",
-                                    position: "relative"
-                                }}
-                            >
-                                <Box
-                                    sx={{
-                                        width: "100px",
-                                        height: "100px",
-                                        position: "relative",
-                                        borderRadius: "8px",
-                                        overflow: "visible"
-                                    }}
-                                >
-                                    <img
-                                        src={url}
-                                        alt={`Uploaded ${index}`}
-                                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                                    />
+                <Grid2 size = { 12 }>
+                    <Typography variant = "body1">{ description }</Typography>
+                </Grid2>
 
-                                    <Tooltip title="Remove image">
-                                        <IconButton
-                                            size="small"
-                                            onClick={() => handleRemoveImage(index)}
-                                            sx={{
-                                                position: "absolute",
-                                                top: -6,
-                                                right: -6,
-                                                width: 24,
-                                                height: 24,
-                                                padding: 0,
-                                                backgroundColor: "white",
-                                                color: "red",
-                                                borderRadius: "50%",
-                                                "&:hover": {
-                                                    backgroundColor: "#ffe6e6",
-                                                },
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "center",
+                <Grid2 size = { 12 }>
+                    { !!uploadedImages.length &&
+                        <ImageList
+                        variant = "masonry"
+                        cols = { 3 }
+                        gap = { 8 }
+                        sx = {{
+                            height: "30dvh",
+                            display: "flex",
+                            overflowX: "auto",
+                            overflowY: "hidden",
+                            whiteSpace: "nowrap",
+                            gap: 2
+                        }}
+                    >
+                        { uploadedImages.map((file, index) => {
+                            const url = URL.createObjectURL(file);
+                            return (
+                                <ImageListItem key = { `${index}_${file.name}` } sx = {{ height: "100%" }}>
+                                    <Badge
+                                        overlap = "circular"
+                                        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+                                        badgeContent = {
+                                            <IconButton
+                                                size = "small"
+                                                onClick = { () => handleRemoveImage(index) }
+                                                sx = { (theme) => ({
+                                                    backgroundColor: theme.palette.background.default,
+                                                    color: "red",
+                                                    borderRadius: "50%",
+                                                    "&:hover": {
+                                                        backgroundColor: "#ffe6e6",
+                                                    },
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    justifyContent: "center",
+                                                })}
+                                            >
+                                                <Close sx={{ fontSize: 18, fontWeight: "bold" }} />
+                                            </IconButton>
+                                        }
+                                        sx = {{ width: length, height: length }}
+                                    >
+                                        <img
+                                            src = { url }
+                                            style = {{
+                                                height: "100%",
+                                                objectFit: "contain",
+                                                borderRadius: "8px"
                                             }}
-                                        >
-                                            <CloseIcon sx={{ fontSize: 18, fontWeight: "bold" }} />
-                                        </IconButton>
-                                    </Tooltip>
-                                </Box>
-
-                                {typeof file !== "string" && (
-                                    <Typography variant="body2" sx={{ mt: 0.5 }} noWrap>
-                                        {file.name}
-                                    </Typography>
-                                )}
-                            </Box>
-                        );
-                    })}
-                </Box>
-            ) : (
-                <ImageList variant="masonry" cols={3} gap={8}>
-                    {uploadedImages.map((file, index) => {
-                        const url = typeof file === "string" ? file : URL.createObjectURL(file);
-                        return (
-                            <ImageListItem key={index}>
-                                <img
-                                    src={`${url}?w=248&fit=crop&auto=format`}
-                                    srcSet={`${url}?w=248&fit=crop&auto=format&dpr=2 2x`}
-                                    alt={`Uploaded image ${index + 1}`}
-                                    loading="lazy"
-                                />
-                            </ImageListItem>
-                        );
-                    })}
-                </ImageList>
-            )}
-
-            {isEditable && (
-                <Button
-                    variant="contained"
-                    sx={{ marginTop: "2rem" }}
-                    onClick={handleSubmit}
-                >
-                    Submit Listing
-                </Button>
-            )}
-        </Box>
+                                        />
+                                    </Badge>
+                                </ImageListItem>
+                            );
+                        })}
+                    </ImageList>
+                    }
+                </Grid2>
+            </Grid2>
+        </>
     );
 }
