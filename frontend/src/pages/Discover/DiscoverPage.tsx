@@ -3,17 +3,26 @@ import { useNavigate } from "react-router";
 
 import useUserContext from "../../features/auth/hooks/useUserContext";
 import ListingList from "../../features/listings/components/ListingList";
-import { MouseEvent } from "react";
-import { useToggleState } from "../../hooks/useToggleState";
+import { MouseEvent, useState } from "react";
+import Listing from "../../features/listings/components/Listing";
+import { getListingRecommendations } from "../../features/matches/matchesApi";
 
 export default function DiscoverPage() {
     const navigate = useNavigate();
     const user = useUserContext().user;
-    const [isCompact, toggleIsCompact] = useToggleState(false);
+    const [listingId, setListingId] = useState<number | null>(null);
+    const [recommendationIds, setRecommendationIds] = useState<number[]>([]);
 
-    function handleListingClick(_event: MouseEvent<HTMLDivElement>, listingId: number) {
-        console.log(listingId);
-        toggleIsCompact();
+    async function handleListingClick(_event: MouseEvent<HTMLDivElement>, listingId: number) {
+        setListingId(listingId);
+
+        const response = await getListingRecommendations(listingId);
+
+        if (response.status === "success" && response.data) {
+            setRecommendationIds(response.data);
+        } else {
+            setRecommendationIds([]);
+        }
     }
 
     if (!user) {
@@ -30,7 +39,7 @@ export default function DiscoverPage() {
             <Typography variant = "h1">Discover</Typography>
 
             <Box sx = {{
-                ...(isCompact ? {
+                ...(listingId ? {
                     position: "fixed",
                     top: "4rem", // nav bar height
                     left: 0,
@@ -48,22 +57,28 @@ export default function DiscoverPage() {
                 overflow: "auto"
             }}>
                 <Typography
-                    variant = { isCompact ? "h5" : "h4" }
+                    variant = { listingId ? "h5" : "h4" }
                     paddingTop = "1rem"
                 >
-                    { isCompact ? "Your Listings" : "Select one of your listings" }
+                    { listingId ? "Your Listings" : "Select one of your listings" }
                 </Typography>
 
-                { isCompact && (
+                { listingId && (
                     <Divider sx = {{ marginY: "1rem" }} />
                 )}
 
                 <ListingList
                     username = { user.username}
-                    compact = { isCompact }
+                    compact = { listingId !== null }
                     onClick = { handleListingClick }
                 />
             </Box>
+
+            { recommendationIds && (
+                recommendationIds.map((id) => (
+                    <Listing key = { `listingRecommendation${ id }` } listingId = { id } />
+                ))
+            )}
         </Box>
     );
 }
