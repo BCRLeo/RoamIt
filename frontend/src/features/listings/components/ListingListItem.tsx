@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { MouseEvent, useEffect, useState } from "react";
 
 import { Close } from "@mui/icons-material";
 import { Badge, Grid2, ImageList, ImageListItem, IconButton, Grid2Props, Typography, Box } from "@mui/material";
@@ -12,9 +12,10 @@ import { ListingCategory, ListingData } from "../listingsConstants";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import NotFoundPage from "../../../pages/NotFound/NotFoundPage";
 
-export default function ListingListItem(props: { listingId: number, gridProps?: Grid2Props }) {
+export default function ListingListItem(props: { listingId: number, gridProps?: Grid2Props, onClick?: (event: MouseEvent<HTMLDivElement>) => void }) {
     const listingId = props.listingId;
     const gridProps = props.gridProps;
+    const onClick = props.onClick;
 
     const { sx: gridPropsSx = {}, ...gridPropsRest } = gridProps ?? {};
 
@@ -77,9 +78,13 @@ export default function ListingListItem(props: { listingId: number, gridProps?: 
     }
 
     return (
-        <Box sx = {{
-            textAlign: "left"
-        }}>
+        <Box
+            onClick = { onClick }
+            sx = {{
+                textAlign: "left",
+                cursor: onClick ? 'pointer' : 'default' 
+            }}
+        >
             <Box sx = {{
                 display: "flex"
             }}>

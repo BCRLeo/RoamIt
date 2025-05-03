@@ -1,5 +1,7 @@
+import { MouseEvent } from "react";
+
 import { Container, Typography } from "@mui/material";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 
 import useUserContext from "../../features/auth/hooks/useUserContext";
 import Listing from "../../features/listings/components/Listing";
@@ -12,6 +14,8 @@ export default function ListingsPage() {
     const listingIdString = useParams().listingId;
     const username = useParams().username;
     const currentUser = useUserContext().user;
+
+    const navigate = useNavigate();
 
     let searchUsername: string = "";
 
@@ -27,6 +31,11 @@ export default function ListingsPage() {
 
     if (listingIdString && /^\d+$/.test(listingIdString)) {
         listingId = Number(listingIdString);
+    }
+
+    function handleListingClick(_event: MouseEvent<HTMLDivElement>, listingId: number) {
+        console.log(listingId);
+        navigate(`/listings/${listingId}`);
     }
 
     if (listingId !== undefined) return (
@@ -49,7 +58,7 @@ export default function ListingsPage() {
                 Listings
             </Typography>
 
-            <ListingList username = { user.username } />
+            <ListingList username = { user.username } onClick = { handleListingClick } />
             
             { isAuthenticated && (
                 <ListingFormModal

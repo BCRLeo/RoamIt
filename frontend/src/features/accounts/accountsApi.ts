@@ -35,12 +35,16 @@ export async function signUp(firstName: string, lastName: string, username: stri
 export async function getUserData(userIdOrUsername: number | string, isPublic?: false): Promise<UserData | null>;
 export async function getUserData(userIdOrUsername: number | string, isPublic: true): Promise<PublicUserData | null>;
 export async function getUserData(userIdOrUsername: number | string, isPublic: boolean = false) {
+    if (!userIdOrUsername) {
+        return null;
+    }
+
     const possessiveUser = typeof(userIdOrUsername) === "number" ? `user #${ userIdOrUsername }` : "@" + userIdOrUsername;
     const urlUser = typeof(userIdOrUsername) === "number" ? userIdOrUsername : "@" + userIdOrUsername;
 
     try {
         const response = await fetch (`/api/users/${ urlUser }${ isPublic ? "?privacy=public" : "" }`, { method: "GET" });
-        const data = await response.json()
+        const data = await response.json();
 
         if (response.ok) {
             return data.data;
