@@ -1,4 +1,4 @@
-import { Dayjs } from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
 import { LatLngLiteral } from "../maps/mapsConstants";
 import { ListingCategory, ListingData } from "./listingsConstants";
 
@@ -81,6 +81,23 @@ export async function getListingData(listingId?: number): Promise<ListingData | 
 
         if (!response.ok) {
             throw new Error(data.error);
+        }
+        
+        if (listingId !== undefined) {
+            data.data.startDate = dayjs(data.data.startDate);
+
+            if (data.data.endDate) {
+                data.data.endDate = dayjs(data.data.endDate);
+            }
+
+            return data.data;
+        }
+
+        for (const listing of data.data) {
+            listing.startDate = dayjs(listing.startDate);
+            if (listing.endDate) {
+                listing.endDate = dayjs(listing.endDate);
+            }
         }
 
         return data.data;

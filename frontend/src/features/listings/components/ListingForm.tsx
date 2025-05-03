@@ -1,24 +1,34 @@
-import { ChangeEvent, FormEvent, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 
 import { Close, Upload } from "@mui/icons-material";
 import { TextField, Badge, Button, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent, Grid2, FormControlLabel, Checkbox, ImageList, ImageListItem, IconButton, Grid2Props, Typography } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers";
 import dayjs, { Dayjs } from "dayjs";
 
-import { isListingCategory, ListingCategory } from "../listingsConstants";
-import { Place } from "../../maps/mapsConstants";
 import UploadButton from "../../../components/UploadButton/UploadButton";
 import LocationPicker from "../../maps/components/LocationPicker";
 import { useToggleState } from "../../../hooks/useToggleState";
-import { createListing } from "../listingsApi";
+import { Place } from "../../maps/mapsConstants";
+import { createListing, getListingData } from "../listingsApi";
+import { isListingCategory, ListingCategory } from "../listingsConstants";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import NotFoundPage from "../../../pages/NotFound/NotFoundPage";
 
-export default function ListingForm({ gridProps }: { gridProps?: Grid2Props}) {
-    const { sx: gridPropsSx = {}, ...gridPropsRest } = gridProps || {};
+export default function ListingForm(props:
+    { mode?: "create", gridProps?: Grid2Props } |
+    { mode: "edit", listingId: number, gridProps?: Grid2Props }
+) {
+    const mode = props.mode ?? "create";
+    const gridProps = props.gridProps;
+    const listingId = props.mode === "edit" ? props.listingId : undefined;
 
+    const { sx: gridPropsSx = {}, ...gridPropsRest } = gridProps ?? {};
+
+    // replace with ListingData object?
     const [place, setPlace] = useState<Place | null>(null);
     const [radius, setRadius] = useState<number | null>(null);
     const [locationName, setLocationName] = useState("");
-    const [category, setCategory] = useState<ListingCategory | null>(null);
+    const [category, setCategory] = useState<ListingCategory | "">("");
     const [budget, setBudget] = useState<number | null>(null);
     const [startDate, setStartDate] = useState<Dayjs | null>(null);
     const [endDate, setEndDate] = useState<Dayjs | null>(null);
@@ -26,6 +36,30 @@ export default function ListingForm({ gridProps }: { gridProps?: Grid2Props}) {
     const [prefersSameGender, togglePrefersSameGender] = useToggleState(false);
     const [description, setDescription] = useState("");
     const [uploadedImages, setUploadedImages] = useState<File[]>([]);
+
+    const { data: listingData } = useSuspenseQuery({
+        queryKey: [`getListingData`, listingId],
+        queryFn: () => listingId ? getListingData(listingId) : null,
+    });
+
+    useEffect(() => {
+        if (!listingData) return;
+        console.log(typeof(listingData.startDate));
+
+        setRadius(listingData.radius);
+        setLocationName(listingData.location.name ?? "");
+        setCategory(listingData.category);
+        setBudget(listingData.nightlyBudget ?? null);
+        setStartDate(listingData.startDate);
+        setEndDate(listingData.endDate ?? null);
+        if (datesAreApproximate !== listingData.datesAreApproximate) {
+            toggleDatesAreApproximate();
+        }
+        if (prefersSameGender !== listingData.prefersSameGender) {
+            togglePrefersSameGender();
+        }
+        setDescription(listingData.description);
+    }, [listingData]);
 
     function handleLocationChange(place: Place | null, radius: number | null) {
         if (place) {
@@ -49,7 +83,7 @@ export default function ListingForm({ gridProps }: { gridProps?: Grid2Props}) {
         const value = event.target.value;
 
         if (!value || !isListingCategory(value)) {
-            setCategory(null);
+            setCategory("");
             return;
         }
 
@@ -93,7 +127,6 @@ export default function ListingForm({ gridProps }: { gridProps?: Grid2Props}) {
         setDescription(value);
     }
 
-
     function handleImageUpload(event: ChangeEvent<HTMLInputElement>) {
         const files = event.target.files ? Array.from(event.target.files) : [];
 
@@ -120,9 +153,8 @@ export default function ListingForm({ gridProps }: { gridProps?: Grid2Props}) {
 
     async function handleSubmit(event: FormEvent<HTMLButtonElement>) {
         event.preventDefault();
-        //console.log("Submitting", { location, locationName, category, budget, startDate, endDate, datesAreApproximate, prefersSameGender, description, uploadedImages });
 
-        if (!place || radius === null || category === null || !startDate || !description.trim()) {
+        if (!place || radius === null || !category || !startDate || !description.trim()) {
             console.error("Incomplete form.");
             return;
         }
@@ -142,9 +174,13 @@ export default function ListingForm({ gridProps }: { gridProps?: Grid2Props}) {
         })
     }
 
+    if (mode === "edit" && !listingData) {
+        return <NotFoundPage />;
+    }
+
     return (
         <>
-            <Typography variant = "h2" pb = "1rem">Create Listing</Typography>
+            <Typography variant = "h2" pb = "1rem">{ mode === "create" ? "Create Listing" : `Listing #${ listingId }` }</Typography>
             <Grid2
                 container
                 component = "form"
@@ -189,7 +225,7 @@ export default function ListingForm({ gridProps }: { gridProps?: Grid2Props}) {
                             onChange = { handleCategorySelection }
                             sx = {{ textAlign: "left"}}
                         >
-                            <MenuItem disabled selected>-- Select an listing category --</MenuItem>
+                            <MenuItem value = { "" } disabled selected>-- Select an listing category --</MenuItem>
                             <MenuItem value = { "short-term" }>Short-term</MenuItem>
                             <MenuItem value = { "long-term" }>Long-term</MenuItem>
                             <MenuItem value = { "hosting" }>Hosting</MenuItem>
@@ -335,7 +371,7 @@ export default function ListingForm({ gridProps }: { gridProps?: Grid2Props}) {
 
                 <Grid2 size = { 12 }>
                     <Button variant = "contained" type = "submit" onClick = { handleSubmit }>
-                        Create Listing
+                        { mode === "create" ? "Create Listing" : "Save Listing" }
                     </Button>
                 </Grid2>
             </Grid2>
