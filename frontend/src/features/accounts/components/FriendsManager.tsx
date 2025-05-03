@@ -15,6 +15,7 @@ import {
     getIncomingFriendData,
     getProfilePicture,
     sendFriendRequest,
+    searchUsersByUsername,
 } from "../accountsApi";
 import { createChat, getChats } from "../../chats/chatsApi";
 import { getCurrentUser } from "../../auth/authApi"
@@ -71,24 +72,34 @@ export default function FriendsManager() {
         });
     }, [friends, incoming, outgoing]);
 
-    const filteredUsers = search
+    // Only trigger search if at least 3 characters entered
+    useEffect(() => {
+        if (search.length < 3) return;
+        searchUsersByUsername(search).then((users) => {
+            if (users) setAllUsers(users);
+        });
+    }, [search]);
+
+    const filteredUsers = search.length >= 3
         ? allUsers.filter(
             (user) =>
                 user.username.toLowerCase().startsWith(search.toLowerCase()) &&
-                user.id !== currentUserId  // exclude oneself from search results
+                user.id !== currentUserId  // exclude self
         )
         : [];
 
     useEffect(() => {
-        if (!search) return;
-        fetch("/api/users")
-            .then((res) => res.json())
-            .then((data) => {
-                if (Array.isArray(data.data)) {
-                    setAllUsers(data.data);
-                }
-            });
-    }, [search]);
+        filteredUsers.forEach((user) => {
+            if (!profilePictures[user.id]) {
+                getProfilePicture(user.id).then((blob) => {
+                    if (blob) {
+                        const url = URL.createObjectURL(blob);
+                        setProfilePictures((prev) => ({ ...prev, [user.id]: url }));
+                    }
+                });
+            }
+        });
+    }, [filteredUsers]);
 
     function handleAccept(username: string) {
         acceptFriendRequest(username).then(() => {
@@ -119,7 +130,12 @@ export default function FriendsManager() {
     return (
         <Box sx={{ maxWidth: 600, mx: "auto", mb: 2 }}>
             <SearchUsers value={search} onChange={setSearch} />
-            {search && (
+            {search.length > 0 && search.length < 3 && (
+                <Typography color="text.secondary" sx={{ mt: 1 }}>
+                    Type at least 3 characters to search users.
+                </Typography>
+            )}
+            {search.length >= 3 && (
                 <Box>
                     <Typography variant="h6" sx={{ mt: 2 }}>
                         Search Results
@@ -137,7 +153,9 @@ export default function FriendsManager() {
                                         sx={{ width: 32, height: 32 }}
                                     />
                                     <Typography>
-                                        @{user.username} {isFriend && "(Friend)"} {isPending && "(Pending)"}
+                                        @{user.username}
+                                        {isFriend && " (Friend)"}
+                                        {!isFriend && isPending && " (Pending)"}
                                     </Typography>
                                     {!isFriend && !isPending && (
                                         <Button
@@ -146,7 +164,13 @@ export default function FriendsManager() {
                                                 setSendingRequestTo(user.id);
                                                 const success = await sendFriendRequest(user.username);
                                                 if (success) {
-                                                    setOutgoing((prev) => [...prev, user]);
+                                                    const res = await getFriendData();
+                                                    if (res) {
+                                                        setFriends(res.accepted);
+                                                        setOutgoing(res.outgoing);
+                                                    }
+                                                } else {
+                                                    console.error("Failed to send friend request.");
                                                 }
                                                 setSendingRequestTo(null);
                                             }}
@@ -210,7 +234,7 @@ export default function FriendsManager() {
                                 sx={{ width: 32, height: 32 }}
                             />
                             <Typography
-                                onClick={() => navigate(`/users/@${user.username}`)}
+                                onClick={() => navigate(`/users/@${user.username}`)}  // view a friend's profile
                                 sx={{ cursor: "pointer" }}
                             >
                                 @{user.username}

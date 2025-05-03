@@ -675,3 +675,23 @@ def get_friendship_status_with_user_id(user_id: int):
 @login_required
 def get_friendship_status_with_username(username: str):
     return get_friendship_status_between_usernames(current_user.username, username)
+
+@accounts.route("/users")
+def search_users():
+    query = request.args.get("username", "").strip().lower()
+
+    if not query:
+        return jsonify({"data": []}), 200
+
+    users = db.session.execute(
+        db.select(User).filter(User.username.ilike(f"{query}%"))
+    ).scalars().all()
+
+    return jsonify({
+        "data": [
+            {
+                "id": user.id,
+                "username": user.username
+            } for user in users
+        ]
+    }), 200

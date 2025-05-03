@@ -570,3 +570,23 @@ export async function getOutgoingFriendData(userIdOrUsername?: number | string):
 
     return null;
 }
+
+export async function searchUsersByUsername(query: string): Promise<UserData[] | null> {
+    try {
+        const response = await fetch(`/api/users?username=${encodeURIComponent(query)}`, {
+            method: "GET"
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error);
+        }
+
+        return data.data;
+    } catch (error) {
+        console.error("Error searching users:", error);
+    }
+
+    return null;
+}
