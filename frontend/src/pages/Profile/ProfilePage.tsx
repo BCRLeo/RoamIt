@@ -124,6 +124,14 @@ export default function ProfilePage({ username = useParams()?.username }: { user
                     <Bio userId = { user.id } />
                     <Tags userId = { user.id } />
                 </Box>
+
+                <Button
+                    component = { Link }
+                    to = { `/users/${ user.username }/listings` }
+                    variant = "contained"
+                >
+                    { user.firstName }'s listings
+                </Button>
             </Container>
         );
     }
@@ -166,7 +174,7 @@ export default function ProfilePage({ username = useParams()?.username }: { user
                     to = "/listings"
                     variant = "outlined"
                 >
-                    Go to your listings
+                    Your listings
                 </Button>
             </Box>
         </Container>
