@@ -1,18 +1,18 @@
 import { useEffect, useState } from "react";
 
 import { Close } from "@mui/icons-material";
-import { Badge, Grid2, ImageList, ImageListItem, IconButton, Grid2Props, Typography } from "@mui/material";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { Badge, Grid2, ImageList, ImageListItem, IconButton, Grid2Props, Typography, Box } from "@mui/material";
 import { Dayjs } from "dayjs";
 
-import { useToggleState } from "../../../hooks/useToggleState";
-import NotFoundPage from "../../../pages/NotFound/NotFoundPage";
 import LocationPicker from "../../maps/components/LocationPicker";
+import { useToggleState } from "../../../hooks/useToggleState";
 import { Place } from "../../maps/mapsConstants";
 import { getListingData } from "../listingsApi";
 import { ListingCategory } from "../listingsConstants";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import NotFoundPage from "../../../pages/NotFound/NotFoundPage";
 
-export default function Listing(props: { listingId: number, gridProps?: Grid2Props }) {
+export default function ListingListItem(props: { listingId: number, gridProps?: Grid2Props }) {
     const listingId = props.listingId;
     const gridProps = props.gridProps;
 
@@ -69,47 +69,102 @@ export default function Listing(props: { listingId: number, gridProps?: Grid2Pro
     }
 
     return (
-        <>
-            <Typography variant = "h2" pb = "1rem">{ locationName || `Listing #${ listingId }` }</Typography>
-            <Typography variant = "subtitle1">
-                { category.charAt(0).toUpperCase() + category.slice(1) } listing from { datesAreApproximate && "approximately" }  { startDate?.format("DD/MM/YYYY") }
-                {
-                    endDate && " until " + endDate.format("DD/MM/YYYY")
-                }
-            </Typography>
-            { budget && (
-                <Typography variant = "subtitle2">Budget: { budget } per night</Typography>
-            )}
-            { prefersSameGender && (
-                <Typography variant = "subtitle2">Looking for same gender</Typography>
-            )}
+        <Box sx = {{
+            textAlign: "left"
+        }}>
+            <Box sx = {{
+                display: "flex"
+            }}>
+                <Typography
+                    variant = "h2"
+                    sx = {{
+                        marginTop: "auto",
+                        marginRight: "1rem",
+                        lineHeight: "0.8",
+                        borderRight: "0.1rem solid",
+                        paddingRight: "1rem"
+                    }}
+                >
+                    { locationName || `Listing #${ listingId }` }
+                </Typography>
+                <Typography
+                    variant = "subtitle1"
+                    sx = {{
+                        marginTop: "auto",
+                        height: "fit-content",
+                        lineHeight: "1.15"
+                    }}
+                >
+                    { category.charAt(0).toUpperCase() + category.slice(1) }<br />
+                    { budget && `~${ budget } / night` }
+                </Typography>
+            </Box>
 
             <Grid2
                 container
-                spacing = { 2 }
+                spacing = { 1 }
+                gap = { 1 }
                 sx = {{
-                    width: "55%",
-                    margin: "2rem auto",
+                    width: "100%",
+                    margin: "auto",
                     ...gridPropsSx
                 }}
                 { ...gridPropsRest }
             >
                 <Grid2 size = { 12 }>
+                    <Typography
+                        variant = "subtitle1"
+                        sx = {{
+                            display: "inline",
+                            height: "fit-content"
+                        }}
+                    >
+                        From { datesAreApproximate && "~" }{ startDate?.format("DD/MM/YYYY") }
+                    </Typography>
+                    { endDate && (
+                        <Typography
+                            variant = "subtitle1"
+                            sx = {{
+                                display: "inline",
+                                height: "fit-content"
+                            }}
+                        >
+                            { " " }until { datesAreApproximate && "~" }{ endDate?.format("DD/MM/YYYY") }
+                        </Typography>
+                    )}
+                </Grid2>
+
+                <Grid2 size = { 5 }>
                     <LocationPicker
                         defaultPlace = { place ?? undefined }
                         defaultRadius = { radius ?? undefined }
+                        defaultZoom = { 9 }
                         containerProps = {{
                             sx: {
                                 width: "100%",
-                                marginX: 0
+                                height: "9rem",
+                                marginX: 0,
+                                paddingX: "0"
                             }
                         }}
                         disabled
                     />
                 </Grid2>
 
-                <Grid2 size = { 12 }>
-                    <Typography variant = "body1">{ description }</Typography>
+                <Grid2 size = { 7 }>
+                    <Typography
+                        variant = "body1"
+                        sx = {{
+                            display: "-webkit-box",
+                            WebkitBoxOrient: "vertical",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            maxHeight: "9rem",
+                            WebkitLineClamp: 5,
+                        }}
+                    >
+                        { description }
+                    </Typography>
                 </Grid2>
 
                 <Grid2 size = { 12 }>
@@ -171,6 +226,6 @@ export default function Listing(props: { listingId: number, gridProps?: Grid2Pro
                     }
                 </Grid2>
             </Grid2>
-        </>
+        </Box>
     );
 }

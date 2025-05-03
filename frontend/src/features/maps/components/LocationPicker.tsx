@@ -7,7 +7,25 @@ import MapCircleOverlay from "./MapCircleOverlay";
 
 const Geolocation = navigator.geolocation;
 
-export default function LocationPicker({ defaultPlace, defaultRadius, onChange, containerProps, textInput = true, radiusSlider = true, disabled = false }: { defaultPlace?: Place, defaultRadius?: number, onChange?: (place: Place | null, radius: number | null) => void, containerProps?: ContainerProps, textInput?: boolean, radiusSlider?: boolean, disabled?: boolean }) {
+export default function LocationPicker({
+    defaultPlace,
+    defaultRadius,
+    defaultZoom,
+    onChange,
+    containerProps,
+    textInput = true,
+    radiusSlider = true,
+    disabled = false
+}: {
+    defaultPlace?: Place,
+    defaultRadius?: number,
+    defaultZoom?: number,
+    onChange?: (place: Place | null, radius: number | null) => void,
+    containerProps?: ContainerProps,
+    textInput?: boolean,
+    radiusSlider?: boolean,
+    disabled?: boolean
+}) {
     const MIN_RADIUS = 1;
     const MAX_RADIUS = 20;
 
@@ -145,9 +163,9 @@ export default function LocationPicker({ defaultPlace, defaultRadius, onChange, 
                 <Map
                     mapId = "111f8ee2a113e89f"
                     defaultCenter = { defaultPlace?.coordinates ?? { lat: 45.468558, lng: 9.182338 } }
-                    defaultZoom = { 10.5 }
+                    defaultZoom = { defaultZoom ?? 10.5 }
                     center = { defaultPlace?.coordinates ?? { lat: 45.468558, lng: 9.182338 } }
-                    zoom = { 10.5 }
+                    zoom = { defaultZoom ?? 10.5 }
                     gestureHandling = { "greedy" }
                     disableDefaultUI
                     controlled
@@ -157,15 +175,7 @@ export default function LocationPicker({ defaultPlace, defaultRadius, onChange, 
                             { radius && radius > 0 &&
                                 <MapCircleOverlay centre = { place.coordinates } radius = { radius } />
                             }
-                            <AdvancedMarker
-                                position = { place.coordinates }
-                                onDrag = { (event) => { event.latLng && setClickCoordinates({
-                                    lat: event.latLng.lat(),
-                                    lng: event.latLng.lng()
-                                }) } }
-                                draggable
-                                clickable
-                            />
+                            <AdvancedMarker position = { place.coordinates } />
                         </>
                     }
                 </ Map>
@@ -211,7 +221,7 @@ export default function LocationPicker({ defaultPlace, defaultRadius, onChange, 
                     mapId = "111f8ee2a113e89f"
                     onClick = { (event) => setClickCoordinates(event.detail.latLng) }
                     defaultCenter = { initialCoordinates ?? { lat: 45.468558, lng: 9.182338 } }
-                    defaultZoom = { 10 }
+                    defaultZoom = { defaultZoom ?? 10 }
                     gestureHandling = { "greedy" }
                     disableDefaultUI
                 >
