@@ -24,3 +24,5 @@ export type ListingData = {
     isComplete: boolean,
     timestamp: Dayjs
 }
+
+export type ListingViewMode = "full" | "preview" | "list";
