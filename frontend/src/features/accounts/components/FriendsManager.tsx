@@ -120,56 +120,56 @@ export default function FriendsManager() {
         <Box sx={{ maxWidth: 600, mx: "auto", mb: 2 }}>
             <SearchUsers value={search} onChange={setSearch} />
             {search && (
-            <Box>
-                <Typography variant="h6" sx={{ mt: 2 }}>
-                Search Results
-                </Typography>
+                <Box>
+                    <Typography variant="h6" sx={{ mt: 2 }}>
+                        Search Results
+                    </Typography>
 
-                {filteredUsers.length > 0 ? (
-                filteredUsers.map((user) => {
-                    const isFriend = friends.some((f) => f.id === user.id);
-                    const isPending = outgoing.some((f) => f.id === user.id);
+                    {filteredUsers.length > 0 ? (
+                        filteredUsers.map((user) => {
+                            const isFriend = friends.some((f) => f.id === user.id);
+                            const isPending = outgoing.some((f) => f.id === user.id);
 
-                    return (
-                    <Box key={user.id} display="flex" alignItems="center" gap={1} py={1}>
-                        <Avatar
-                        src={profilePictures[user.id]}
-                        sx={{ width: 32, height: 32 }}
-                        />
-                        <Typography>
-                        @{user.username} {isFriend && "(Friend)"} {isPending && "(Pending)"}
+                            return (
+                                <Box key={user.id} display="flex" alignItems="center" gap={1} py={1}>
+                                    <Avatar
+                                        src={profilePictures[user.id]}
+                                        sx={{ width: 32, height: 32 }}
+                                    />
+                                    <Typography>
+                                        @{user.username} {isFriend && "(Friend)"} {isPending && "(Pending)"}
+                                    </Typography>
+                                    {!isFriend && !isPending && (
+                                        <Button
+                                            size="small"
+                                            onClick={async () => {
+                                                setSendingRequestTo(user.id);
+                                                const success = await sendFriendRequest(user.username);
+                                                if (success) {
+                                                    setOutgoing((prev) => [...prev, user]);
+                                                }
+                                                setSendingRequestTo(null);
+                                            }}
+                                            disabled={sendingRequestTo === user.id}
+                                        >
+                                            {sendingRequestTo === user.id ? (
+                                                <CircularProgress size={16} />
+                                            ) : (
+                                                "Add"
+                                            )}
+                                        </Button>
+                                    )}
+                                </Box>
+                            );
+                        })
+                    ) : (
+                        <Typography color="text.secondary" sx={{ mt: 1 }}>
+                            No matches
                         </Typography>
-                        {!isFriend && !isPending && (
-                        <Button
-                            size="small"
-                            onClick={async () => {
-                            setSendingRequestTo(user.id);
-                            const success = await sendFriendRequest(user.username);
-                            if (success) {
-                                setOutgoing((prev) => [...prev, user]);
-                            }
-                            setSendingRequestTo(null);
-                            }}
-                            disabled={sendingRequestTo === user.id}
-                        >
-                            {sendingRequestTo === user.id ? (
-                            <CircularProgress size={16} />
-                            ) : (
-                            "Add"
-                            )}
-                        </Button>
-                        )}
-                    </Box>
-                    );
-                })
-                ) : (
-                <Typography color="text.secondary" sx={{ mt: 1 }}>
-                    No matches
-                </Typography>
-                )}
+                    )}
 
-                <Divider sx={{ my: 2 }} />
-            </Box>
+                    <Divider sx={{ my: 2 }} />
+                </Box>
             )}
 
             {incoming.length > 0 && (
@@ -202,29 +202,29 @@ export default function FriendsManager() {
 
             <Typography variant="h6">Friends</Typography>
             {friends.length > 0 ? (
-            friends.map((user) => (
-            <Box key={user.id} display="flex" alignItems="center" justifyContent="space-between" py={1}>
-                <Box display="flex" alignItems="center" gap={1}>
-                    <Avatar
-                        src={profilePictures[user.id]}
-                        sx={{ width: 32, height: 32 }}
-                    />
-                    <Typography
-                        onClick={() => navigate(`/users/@${user.username}`)}
-                        sx={{ cursor: "pointer" }}
-                    >
-                        @{user.username}
-                    </Typography>
-                </Box>
-                <Button size="small" onClick={() => handleChat(user)}>
-                    Chat
-                </Button>
-                </Box>
-            ))
+                friends.map((user) => (
+                    <Box key={user.id} display="flex" alignItems="center" justifyContent="space-between" py={1}>
+                        <Box display="flex" alignItems="center" gap={1}>
+                            <Avatar
+                                src={profilePictures[user.id]}
+                                sx={{ width: 32, height: 32 }}
+                            />
+                            <Typography
+                                onClick={() => navigate(`/users/@${user.username}`)}
+                                sx={{ cursor: "pointer" }}
+                            >
+                                @{user.username}
+                            </Typography>
+                        </Box>
+                        <Button size="small" onClick={() => handleChat(user)}>
+                            Chat
+                        </Button>
+                    </Box>
+                ))
             ) : (
-            <Typography color="text.secondary" sx={{ mt: 1 }}>
-                No friends added yet :(
-            </Typography>
+                <Typography color="text.secondary" sx={{ mt: 1 }}>
+                    No friends added yet :(
+                </Typography>
             )}
         </Box>
     );
