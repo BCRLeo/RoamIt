@@ -12,10 +12,11 @@ import { ListingCategory, ListingData } from "../listingsConstants";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import NotFoundPage from "../../../pages/NotFound/NotFoundPage";
 
-export default function ListingListItem(props: { listingId: number, gridProps?: Grid2Props, onClick?: (event: MouseEvent<HTMLDivElement>) => void }) {
+export default function ListingListItem(props: { listingId: number, gridProps?: Grid2Props, onClick?: (event: MouseEvent<HTMLDivElement>) => void, compact?: boolean }) {
     const listingId = props.listingId;
     const gridProps = props.gridProps;
     const onClick = props.onClick;
+    const compact = props.compact;
 
     const { sx: gridPropsSx = {}, ...gridPropsRest } = gridProps ?? {};
 
@@ -77,6 +78,80 @@ export default function ListingListItem(props: { listingId: number, gridProps?: 
         return <NotFoundPage />;
     }
 
+    if (compact) return (
+        <Box
+            onClick = { onClick }
+            sx = {{
+                textAlign: "center",
+                cursor: onClick ? 'pointer' : 'default' 
+            }}
+        >
+            <Grid2
+                container
+                spacing = { 1 }
+                gap = { 1 }
+                sx = {{
+                    width: "100%",
+                    margin: "auto",
+                    ...gridPropsSx
+                }}
+                { ...gridPropsRest }
+            >
+                <Grid2 size = { 12 }>
+                    <Typography
+                        variant = "h4"
+                        sx = {{
+                            marginTop: "auto",
+                            lineHeight: "0.9",
+                        }}
+                    >
+                        { locationName || `Listing #${ listingId }` }
+                    </Typography>
+                </Grid2>
+
+                <Grid2 size = { 12 }>
+                    <Typography
+                        variant = "caption"
+                        sx = {{
+                            display: "inline",
+                            height: "fit-content"
+                        }}
+                    >
+                        From { datesAreApproximate && "~" }{ startDate?.format("DD/MM/YYYY") }
+                    </Typography>
+                    { endDate && (
+                        <Typography
+                            variant = "caption"
+                            sx = {{
+                                display: "inline",
+                                height: "fit-content"
+                            }}
+                        >
+                            { " " }until { datesAreApproximate && "~" }{ endDate?.format("DD/MM/YYYY") }
+                        </Typography>
+                    )}
+                </Grid2>
+
+                <Grid2 size = { 12 }>
+                    <LocationPicker
+                        defaultPlace = { place ?? undefined }
+                        defaultRadius = { radius ?? undefined }
+                        defaultZoom = { 9 }
+                        containerProps = {{
+                            sx: {
+                                width: "100%",
+                                height: "9rem",
+                                marginX: 0,
+                                paddingX: "0"
+                            }
+                        }}
+                        disabled
+                    />
+                </Grid2>
+            </Grid2>
+        </Box>
+    );
+
     return (
         <Box
             onClick = { onClick }
@@ -93,7 +168,7 @@ export default function ListingListItem(props: { listingId: number, gridProps?: 
                     sx = {{
                         marginTop: "auto",
                         marginRight: "1rem",
-                        lineHeight: "0.8",
+                        lineHeight: "0.9",
                         borderRight: "0.1rem solid",
                         paddingRight: "1rem"
                     }}
@@ -109,7 +184,7 @@ export default function ListingListItem(props: { listingId: number, gridProps?: 
                     }}
                 >
                     { category.charAt(0).toUpperCase() + category.slice(1) }<br />
-                    { budget && `~${ budget } / night` }
+                    { budget && `~${ budget } ${ listingData.currency } / night` }
                 </Typography>
             </Box>
 

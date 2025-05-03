@@ -86,7 +86,7 @@ export default function Listing(props: { listingId: number, gridProps?: Grid2Pro
                 }
             </Typography>
             { budget && (
-                <Typography variant = "subtitle2">Budget: { budget } per night</Typography>
+                <Typography variant = "subtitle2">Budget: { budget } { listingData.currency } per night</Typography>
             )}
             { prefersSameGender && (
                 <Typography variant = "subtitle2">Looking for same gender</Typography>
@@ -117,7 +117,14 @@ export default function Listing(props: { listingId: number, gridProps?: Grid2Pro
                 </Grid2>
 
                 <Grid2 size = { 12 }>
-                    <Typography variant = "body1">{ description }</Typography>
+                    <Typography
+                        variant = "body1"
+                        maxWidth = "35rem"
+                        textAlign = "left"
+                        marginX = "auto"
+                    >
+                        { description }
+                    </Typography>
                 </Grid2>
 
                 <Grid2 size = { 12 }>

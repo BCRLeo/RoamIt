@@ -181,7 +181,7 @@ export default function LocationPicker({
                 </ Map>
             </Box>
 
-            <Typography>
+            <Typography textAlign = "center">
                 { place?.locality && place?.country ?
                     `${ place.locality }, ${ place.country }`
                 :

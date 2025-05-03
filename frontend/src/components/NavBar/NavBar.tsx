@@ -41,10 +41,23 @@ export default function NavBar() {
     return (
         <AppBar
             position = "sticky"
-            sx = {{ mb: "1.5rem" }}
+            sx = {{
+                mb: "1.5rem",
+                height: "4rem", 
+                overflowX: "auto"
+            }}
             enableColorOnDark
         >
-            <Toolbar>
+            <Toolbar sx = {{
+                display: "flex",
+                paddingX: 2,
+                minHeight: "4rem",
+                whiteSpace: "nowrap",
+                overflowX: "auto",
+                alignItems: "center",
+                gap: "1rem"
+            }}
+            >
                 <IconButton sx = {{ mr: "0.75rem" }} color = "inherit">
                     <Menu />
                 </IconButton>

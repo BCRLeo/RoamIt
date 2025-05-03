@@ -1,14 +1,13 @@
 import { MouseEvent } from "react";
-import { Fragment } from "react/jsx-runtime";
 
-import { Divider, Typography } from "@mui/material";
+import { Box, Divider, Typography } from "@mui/material";
 import { useSuspenseQuery } from "@tanstack/react-query";
 
 import NotFoundPage from "../../../pages/NotFound/NotFoundPage";
 import { getUserListingData } from "../listingsApi";
 import ListingListItem from "./ListingListItem";
 
-export default function ListingList({ username, onClick }: { username: string, onClick?: (event: MouseEvent<HTMLDivElement>, listingId: number) => void, size?: "compact" | "full" }) {
+export default function ListingList({ username, onClick, compact }: { username: string, onClick?: (event: MouseEvent<HTMLDivElement>, listingId: number) => void, compact?: boolean }) {
     const { data: listingResponse } = useSuspenseQuery({
         queryKey: ["getUserListingData", username],
         queryFn: () => getUserListingData(username)
@@ -27,10 +26,14 @@ export default function ListingList({ username, onClick }: { username: string, o
     return (
         <>
             { listingData.map((listing) => (
-                <Fragment key = { `listing${ listing.id }` }>
-                    <ListingListItem listingId = { listing.id} onClick = { onClick ? (event) => onClick(event, listing.id) : undefined } />
+                <Box key = { `listing${ listing.id }` }>
+                    <ListingListItem
+                        listingId = { listing.id}
+                        onClick = { onClick ? (event) => onClick(event, listing.id) : undefined }
+                        compact = { compact }
+                    />
                     { listingData.length > 1  && <Divider sx = {{ marginY: "1.5rem" }} />}
-                </Fragment>
+                </Box>
             )) }
         </>
     );
