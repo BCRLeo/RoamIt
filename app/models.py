@@ -85,6 +85,15 @@ class Swipe(db.Model):
             if reciprocal_swipe:
                 Match.create_match(swiped_by_listing, swiped_on_listing)
         return new_swipe
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "swipedByListingId": self.swiped_by_listing_id,
+            "swipedOnListingId": self.swiped_on_listing_id,
+            "isLike": self.is_like,
+            "timestamp": self.timestamp
+        }
 
 class Match(db.Model):
     __tablename__ = 'matches'
@@ -110,17 +119,25 @@ class Match(db.Model):
         Creates a match between two listing objects.
         To maintain consistency, orders the listing IDs.
         """
-        d1, d2 = sorted([listing_a.id, listing_b.id])
-        existing_match = cls.query.filter_by(listing1_id=d1, listing2_id=d2).first()
-        if not existing_match:
+        listing1_id, listing2_id = sorted([listing_a.id, listing_b.id])
+        existing_match = cls.query.filter_by(listing1_id=listing1_id, listing2_id=listing2_id).first()
+        
+        if existing_match:
+            return existing_match
+        
+        try:
             new_match = cls(
-                listing1_id=d1,
-                listing2_id=d2
+                listing1_id=listing1_id,
+                listing2_id=listing2_id
             )
             db.session.add(new_match)
             db.session.commit()
             return new_match
-        return existing_match
+        except Exception as error:
+            db.session.rollback()
+            print(f"Failed to create match between listings #{listing1_id} and #{listing2_id}:", error)
+            
+        return None
 
 class ListingPicture(db.Model):
     __tablename__ = "listing_pictures"
