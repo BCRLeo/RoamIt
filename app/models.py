@@ -41,7 +41,7 @@ class Swipe(db.Model):
     id: int = db.Column(db.Integer, primary_key=True)
     swiped_by_listing_id: int = db.Column(db.Integer, db.ForeignKey('listings.id'), nullable=False)
     swiped_on_listing_id: int = db.Column(db.Integer, db.ForeignKey('listings.id'), nullable=False)
-    is_right_swipe: bool = db.Column(db.Boolean, nullable=False)
+    is_like: bool = db.Column(db.Boolean, nullable=False)
     timestamp: datetime = db.Column(db.DateTime, default=datetime.now(timezone.utc))
 
     swiped_by_listing = db.relationship(
@@ -56,24 +56,31 @@ class Swipe(db.Model):
     )
 
     @classmethod
-    def swipe(cls, swiped_by_listing, swiped_on_listing, is_right_swipe):
+    def create_swipe(cls, swiped_by_listing: "Listing", swiped_on_listing: "Listing", is_like: bool):
         """
         Creates a swipe record using listing objects.
         If it's a right swipe, checks for a reciprocal right swipe to create a match.
         """
-        new_swipe = cls(
-            swiped_by_listing_id=swiped_by_listing.id,
-            swiped_on_listing_id=swiped_on_listing.id,
-            is_right_swipe=is_right_swipe
-        )
-        db.session.add(new_swipe)
-        db.session.commit()
+        try:
+            new_swipe = cls(
+                swiped_by_listing_id = swiped_by_listing.id,
+                swiped_on_listing_id = swiped_on_listing.id,
+                is_like = is_like
+            )
+            db.session.add(new_swipe)
+            db.session.commit()
+        except Exception as error:
+            db.session.rollback()
+            
+            print(f"Failed to swipe on listing #{swiped_on_listing.id} by listing #{swiped_by_listing.id}:", error)
+            
+            return None
 
-        if is_right_swipe:
+        if is_like:
             reciprocal_swipe = cls.query.filter_by(
                 swiped_by_listing_id=swiped_on_listing.id,
                 swiped_on_listing_id=swiped_by_listing.id,
-                is_right_swipe=True
+                is_like = True
             ).first()
             if reciprocal_swipe:
                 Match.create_match(swiped_by_listing, swiped_on_listing)
@@ -91,7 +98,7 @@ class Match(db.Model):
 
     def to_dict(self):
         return {
-            "matchId": self.id,
+            "id": self.id,
             "listing1Id": self.listing1_id,
             "listing2Id": self.listing2_id,
             "timestamp": self.timestamp.isoformat()
