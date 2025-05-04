@@ -93,9 +93,8 @@ export async function getUserListingData(userIdOrUsername: number | string): Pro
         throw new Error(data.error);
     } catch (error) {
         console.error(`Error retrieving ${ possessiveUser }'s listings:`, error);
+        return { status: "error", message: String(error) };
     }
-
-    return { status: "error" };
 }
 
 export async function getListingData(): Promise<ApiResult<ListingData[]>>
@@ -134,9 +133,8 @@ export async function getListingData(listingId?: number): Promise<ApiResult<List
         return { status: "success", data: data.data };
     } catch (error) {
         console.error(listingId ? `Error retrieving listing #${ listingId }:` : "Error retrieving user's listings:", error);
+        return { status: "error", message: String(error) };
     }
-
-    return { status: "error" };
 }
 
 export async function deleteListing(listingId: number) {
@@ -155,4 +153,86 @@ export async function deleteListing(listingId: number) {
     }
 
     return false;
+}
+
+/**
+ * Get the image blob of the ListingPicture associated to `listingPictureId`.
+ */
+export async function getListingPicture(listingPictureId: number): Promise<ApiResult<Blob>> {
+    try {
+        const response = await fetch(`/api/listings/pictures/${ listingPictureId }`, { method: "GET" });
+
+        if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error);
+        }
+
+        const image = await response.blob();
+
+        return { status: "success", data: image };
+    } catch (error) {
+        console.error(`Error retrieving listing picture #${ listingPictureId }:`, error);
+        return { status: "error", message: String(error) };
+    }
+}
+
+/**
+ * Get the IDs of all the ListingPictures associated to listing #`listingId`.
+ */
+export async function getListingPictureIds(listingId: number): Promise<ApiResult<number[]>> {
+    try {
+        const response = await fetch(`/api/listings/${ listingId }/pictures/ids`);
+
+        if (response.status === 204) {
+            return { status: "success", data: null };
+        }
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error);
+        }
+
+        return { status: "success", data: data.data };
+    } catch (error) {
+        console.error(`Error retrieving listing #${ listingId }'s picture IDs:`, error);
+        return { status: "error", message: String(error) };
+    }
+}
+
+export async function getListingPictures(listingId: number): Promise<ApiResult<Blob[]>> {
+    try {
+        const idsResponse = await getListingPictureIds(listingId);
+
+        if (idsResponse.status === "error") {
+            throw new Error(idsResponse.message);
+        }
+
+        const ids = idsResponse.data;
+
+        if (!ids) {
+            return { status: "success", data: null };
+        }
+
+        const pictures: Blob[] = [];
+
+        for (const id of ids) {
+            const pictureResponse = await getListingPicture(id);
+
+            if (pictureResponse.status === "success" && pictureResponse.data) {
+                pictures.push(pictureResponse.data);
+            } else {
+                console.error(`Failed to retrieve listing picture #${ id }.`);
+            }
+        }
+
+        if (!pictures.length) {
+            return { status: "success", data: null };
+        }
+
+        return { status: "success", data: pictures };
+    } catch (error) {
+        console.error(`Error retrieving listing #${ listingId }'s pictures:`, error);
+        return { status: "error", message: String(error) };
+    }
 }

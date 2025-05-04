@@ -1,7 +1,8 @@
 from babel.numbers import get_territory_currencies
 from datetime import date, datetime
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, send_file
 from flask_login import current_user, login_required
+from io import BytesIO
 from werkzeug.datastructures import FileStorage
 
 from ..extensions import db
@@ -215,3 +216,32 @@ def delete_listing(listing_id: int):
         db.session.rollback()
         
         return jsonify({"error": str(error)}), 500
+    
+@listings.get("/listings/pictures/<int:listing_picture_id>")
+def get_listing_picture(listing_picture_id: int):
+    listing_picture: ListingPicture | None = db.session.execute(
+        db.select(ListingPicture)
+        .filter_by(id = listing_picture_id)
+    ).scalar_one_or_none()
+
+    if not listing_picture:
+        return jsonify({"error": f"Listing picture #{listing_picture_id} not found."}), 404
+    
+    return send_file(BytesIO(listing_picture.image_data), listing_picture.image_mimetype), 200
+    
+@listings.get("/listings/<int:listing_id>/pictures/ids")
+def get_listing_picture_ids(listing_id: int):
+    listing: Listing | None = db.session.execute(
+        db.select(Listing)
+        .filter_by(id = listing_id)
+    ).scalar_one_or_none()
+    
+    if not listing:
+        return jsonify({"error": f"Listing #{listing_id} not found."}), 404
+    
+    pictures: list[ListingPicture] | None = listing.pictures.all()
+    
+    if not pictures:
+        return "", 204
+    
+    return jsonify({"data": [picture.id for picture in pictures]}), 200

@@ -9,4 +9,4 @@ export type ToggleClickProps = {
 export type ApiResult<T> = 
     { status: "success", data: T } |
     { status: "success", data: null } |
-    { status: "error" };
+    { status: "error", message: string };

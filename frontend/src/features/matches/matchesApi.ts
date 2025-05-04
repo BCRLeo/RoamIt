@@ -17,8 +17,6 @@ export async function getListingRecommendations(listingId: number): Promise<ApiR
         return { status: "success", data: data.data };
     } catch (error) {
         console.log(`Error retrieving listing #${ listingId }'s listing recommendations:`, error);
-        
+        return { status: "error", message: String(error) };
     }
-
-    return { status: "error" };
 }

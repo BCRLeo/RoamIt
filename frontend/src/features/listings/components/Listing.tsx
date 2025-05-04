@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { Close } from "@mui/icons-material";
-import { Badge, Grid2, ImageList, ImageListItem, IconButton, Grid2Props, Typography, Box } from "@mui/material";
+import { Grid2, Grid2Props, Typography, Box } from "@mui/material";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Dayjs } from "dayjs";
 import { useNavigate } from "react-router";
@@ -15,6 +14,7 @@ import { Place } from "../../maps/mapsConstants";
 import { getListingData } from "../listingsApi";
 import { ListingCategory, ListingData } from "../listingsConstants";
 import { getUserData } from "../../accounts/accountsApi";
+import ListingImages from "./ListingImages";
 
 export default function Listing(props: { listingId: number, gridProps?: Grid2Props }) {
     const listingId = props.listingId;
@@ -35,7 +35,6 @@ export default function Listing(props: { listingId: number, gridProps?: Grid2Pro
     const [datesAreApproximate, toggleDatesAreApproximate] = useToggleState(false);
     const [prefersSameGender, togglePrefersSameGender] = useToggleState(false);
     const [description, setDescription] = useState("");
-    const [uploadedImages, setUploadedImages] = useState<File[]>([]);
 
     const { data: listingResponse } = useSuspenseQuery({
         queryKey: [`getListingData`, listingId],
@@ -76,11 +75,6 @@ export default function Listing(props: { listingId: number, gridProps?: Grid2Pro
         }
         setDescription(listingData.description);
     }, [listingData]);
-
-    function handleRemoveImage(index: number) {
-        const updated = uploadedImages.filter((_, i) => i !== index);
-        setUploadedImages(updated);
-    }
 
     if (!listingData) {
         return <NotFoundPage />;
@@ -149,62 +143,7 @@ export default function Listing(props: { listingId: number, gridProps?: Grid2Pro
                 </Grid2>
 
                 <Grid2 size = { 12 }>
-                    { !!uploadedImages.length &&
-                        <ImageList
-                        variant = "masonry"
-                        cols = { 3 }
-                        gap = { 8 }
-                        sx = {{
-                            height: "30dvh",
-                            display: "flex",
-                            overflowX: "auto",
-                            overflowY: "hidden",
-                            whiteSpace: "nowrap",
-                            gap: 2
-                        }}
-                    >
-                        { uploadedImages.map((file, index) => {
-                            const url = URL.createObjectURL(file);
-                            return (
-                                <ImageListItem key = { `${index}_${file.name}` } sx = {{ height: "100%" }}>
-                                    <Badge
-                                        overlap = "circular"
-                                        anchorOrigin={{ vertical: "top", horizontal: "right" }}
-                                        badgeContent = {
-                                            <IconButton
-                                                size = "small"
-                                                onClick = { () => handleRemoveImage(index) }
-                                                sx = { (theme) => ({
-                                                    backgroundColor: theme.palette.background.default,
-                                                    color: "red",
-                                                    borderRadius: "50%",
-                                                    "&:hover": {
-                                                        backgroundColor: "#ffe6e6",
-                                                    },
-                                                    display: "flex",
-                                                    alignItems: "center",
-                                                    justifyContent: "center",
-                                                })}
-                                            >
-                                                <Close sx={{ fontSize: 18, fontWeight: "bold" }} />
-                                            </IconButton>
-                                        }
-                                        sx = {{ width: length, height: length }}
-                                    >
-                                        <img
-                                            src = { url }
-                                            style = {{
-                                                height: "100%",
-                                                objectFit: "contain",
-                                                borderRadius: "8px"
-                                            }}
-                                        />
-                                    </Badge>
-                                </ImageListItem>
-                            );
-                        })}
-                    </ImageList>
-                    }
+                    <ListingImages listingId = { listingId } />
                 </Grid2>
             </Grid2>
         </>
