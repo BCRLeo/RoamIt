@@ -14,8 +14,7 @@ export default function LocationPicker({
     onChange,
     containerProps,
     textInput = true,
-    radiusSlider = true,
-    disabled = false
+    radiusSlider = true
 }: {
     defaultPlace?: Place,
     defaultRadius?: number,
@@ -23,8 +22,7 @@ export default function LocationPicker({
     onChange?: (place: Place | null, radius: number | null) => void,
     containerProps?: ContainerProps,
     textInput?: boolean,
-    radiusSlider?: boolean,
-    disabled?: boolean
+    radiusSlider?: boolean
 }) {
     const MIN_RADIUS = 1;
     const MAX_RADIUS = 20;
@@ -145,51 +143,6 @@ export default function LocationPicker({
             setRadius(value[0]);
         }
     }
-
-    if (disabled) return (
-        <Container
-            maxWidth = "lg"
-            sx = {{
-                display: "flex",
-                flexDirection: "column",
-                width: "70vw",
-                height: "70vh",
-                marginTop: "auto",
-                ...containerPropsSx
-            }}
-            { ...containerPropsRest }
-        >    
-            <Box flexGrow = { 1 }>
-                <Map
-                    mapId = "111f8ee2a113e89f"
-                    defaultCenter = { defaultPlace?.coordinates ?? { lat: 45.468558, lng: 9.182338 } }
-                    defaultZoom = { defaultZoom ?? 10.5 }
-                    center = { defaultPlace?.coordinates ?? { lat: 45.468558, lng: 9.182338 } }
-                    zoom = { defaultZoom ?? 10.5 }
-                    gestureHandling = { "greedy" }
-                    disableDefaultUI
-                    controlled
-                >
-                    { place?.coordinates &&
-                        <>
-                            { radius && radius > 0 &&
-                                <MapCircleOverlay centre = { place.coordinates } radius = { radius } />
-                            }
-                            <AdvancedMarker position = { place.coordinates } />
-                        </>
-                    }
-                </ Map>
-            </Box>
-
-            <Typography textAlign = "center">
-                { place?.locality && place?.country ?
-                    `${ place.locality }, ${ place.country }`
-                :
-                    place?.country
-                }
-            </Typography>
-        </Container>
-    )
 
     return (
         <Container

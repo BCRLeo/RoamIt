@@ -9,13 +9,13 @@ import { useToggleState } from "../../../hooks/useToggleState";
 import NotFoundPage from "../../../pages/NotFound/NotFoundPage";
 import { PublicUserData } from "../../auth/authApi";
 import ProfilePicture from "../../accounts/components/ProfilePicture";
-import LocationPicker from "../../maps/components/LocationPicker";
 import { Place } from "../../maps/mapsConstants";
 import { getListingData } from "../listingsApi";
 import { ListingCategory, ListingData } from "../listingsConstants";
 import { getUserData } from "../../accounts/accountsApi";
 import ListingImages from "./ListingImages";
 import useUserContext from "../../auth/hooks/useUserContext";
+import LocationDisplay from "../../maps/components/LocationDisplay";
 
 export default function Listing(props: { listingId: number, gridProps?: Grid2Props }) {
     const listingId = props.listingId;
@@ -123,17 +123,20 @@ export default function Listing(props: { listingId: number, gridProps?: Grid2Pro
                 { ...gridPropsRest }
             >
                 <Grid2 size = { 12 }>
-                    <LocationPicker
-                        defaultPlace = { place ?? undefined }
-                        defaultRadius = { radius ?? undefined }
-                        containerProps = {{
-                            sx: {
-                                width: "100%",
-                                marginX: 0
-                            }
-                        }}
-                        disabled
-                    />
+                    { place ? (
+                        <LocationDisplay
+                            place = { place }
+                            radius = { radius ?? undefined }
+                            containerProps = {{
+                                sx: {
+                                    width: "100%",
+                                    marginX: 0
+                                }
+                            }}
+                        />
+                    ) : (
+                        <Typography variant = "caption">Failed to load listing location.</Typography>
+                    )}
                 </Grid2>
 
                 <Grid2 size = { 12 }>

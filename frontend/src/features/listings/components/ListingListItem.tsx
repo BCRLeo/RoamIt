@@ -3,7 +3,6 @@ import { MouseEvent, useEffect, useState } from "react";
 import { Grid2, Grid2Props, Typography, Box } from "@mui/material";
 import { Dayjs } from "dayjs";
 
-import LocationPicker from "../../maps/components/LocationPicker";
 import { useToggleState } from "../../../hooks/useToggleState";
 import { Place } from "../../maps/mapsConstants";
 import { getListingData } from "../listingsApi";
@@ -12,6 +11,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import NotFoundPage from "../../../pages/NotFound/NotFoundPage";
 import ListingImages from "./ListingImages";
 import useUserContext from "../../auth/hooks/useUserContext";
+import LocationDisplay from "../../maps/components/LocationDisplay";
 
 export default function ListingListItem(props: { listingId: number, gridProps?: Grid2Props, onClick?: (event: MouseEvent<HTMLDivElement>) => void, compact?: boolean }) {
     const listingId = props.listingId;
@@ -131,20 +131,23 @@ export default function ListingListItem(props: { listingId: number, gridProps?: 
                 </Grid2>
 
                 <Grid2 size = { 12 }>
-                    <LocationPicker
-                        defaultPlace = { place ?? undefined }
-                        defaultRadius = { radius ?? undefined }
-                        defaultZoom = { 9 }
-                        containerProps = {{
-                            sx: {
-                                width: "100%",
-                                height: "9rem",
-                                marginX: 0,
-                                paddingX: "0"
-                            }
-                        }}
-                        disabled
-                    />
+                    { place ? (
+                        <LocationDisplay
+                            place = { place }
+                            radius = { radius ?? undefined }
+                            zoom = { 9 }
+                            containerProps = {{
+                                sx: {
+                                    width: "100%",
+                                    height: "9rem",
+                                    marginX: 0,
+                                    paddingX: "0"
+                                }
+                            }}
+                        />
+                    ) : (
+                        <Typography variant = "caption">Failed to load listing location.</Typography>
+                    )}
                 </Grid2>
             </Grid2>
         </Box>
@@ -223,20 +226,23 @@ export default function ListingListItem(props: { listingId: number, gridProps?: 
                 </Grid2>
 
                 <Grid2 size = { 5 }>
-                    <LocationPicker
-                        defaultPlace = { place ?? undefined }
-                        defaultRadius = { radius ?? undefined }
-                        defaultZoom = { 9 }
-                        containerProps = {{
-                            sx: {
-                                width: "100%",
-                                height: "9rem",
-                                marginX: 0,
-                                paddingX: "0"
-                            }
-                        }}
-                        disabled
-                    />
+                    { place ? (
+                        <LocationDisplay
+                            place = { place }
+                            radius = { radius ?? undefined }
+                            zoom = { 9 }
+                            containerProps = {{
+                                sx: {
+                                    width: "100%",
+                                    height: "9rem",
+                                    marginX: 0,
+                                    paddingX: "0"
+                                }
+                            }}
+                        />
+                    ) : (
+                        <Typography variant = "caption">Failed to load listing location.</Typography>
+                    )}
                 </Grid2>
 
                 <Grid2 size = { 7 }>
