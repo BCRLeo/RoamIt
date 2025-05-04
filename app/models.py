@@ -84,10 +84,18 @@ class Match(db.Model):
     id: int = db.Column(db.Integer, primary_key=True)
     listing1_id: int = db.Column(db.Integer, db.ForeignKey('listings.id'), nullable=False)
     listing2_id: int = db.Column(db.Integer, db.ForeignKey('listings.id'), nullable=False)
-    matched_on: datetime = db.Column(db.DateTime, default=datetime.now(timezone.utc))
+    timestamp: datetime = db.Column(db.DateTime, default=datetime.now(timezone.utc))
 
     listing1 = db.relationship('Listing', foreign_keys=[listing1_id])
     listing2 = db.relationship('Listing', foreign_keys=[listing2_id])
+
+    def to_dict(self):
+        return {
+            "matchId": self.id,
+            "listing1Id": self.listing1_id,
+            "listing2Id": self.listing2_id,
+            "timestamp": self.timestamp.isoformat()
+        }
 
     @classmethod
     def create_match(cls, listing_a, listing_b):
