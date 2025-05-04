@@ -17,7 +17,7 @@ export default function ProfilePicture(props:
     const sizeMap: Record<Breakpoint, string> = {
         xs: "1rem",
         sm: "2rem",
-        md: "4rem",
+        md: "6rem",
         lg: "8rem",
         xl: "10rem"
     }

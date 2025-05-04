@@ -1,23 +1,29 @@
 import { useEffect, useState } from "react";
 
 import { Close } from "@mui/icons-material";
-import { Badge, Grid2, ImageList, ImageListItem, IconButton, Grid2Props, Typography } from "@mui/material";
+import { Badge, Grid2, ImageList, ImageListItem, IconButton, Grid2Props, Typography, Box } from "@mui/material";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Dayjs } from "dayjs";
+import { useNavigate } from "react-router";
 
 import { useToggleState } from "../../../hooks/useToggleState";
 import NotFoundPage from "../../../pages/NotFound/NotFoundPage";
+import { PublicUserData } from "../../auth/authApi";
+import ProfilePicture from "../../accounts/components/ProfilePicture";
 import LocationPicker from "../../maps/components/LocationPicker";
 import { Place } from "../../maps/mapsConstants";
 import { getListingData } from "../listingsApi";
 import { ListingCategory, ListingData } from "../listingsConstants";
+import { getUserData } from "../../accounts/accountsApi";
 
 export default function Listing(props: { listingId: number, gridProps?: Grid2Props }) {
     const listingId = props.listingId;
     const gridProps = props.gridProps;
-
     const { sx: gridPropsSx = {}, ...gridPropsRest } = gridProps ?? {};
 
+    const navigate = useNavigate();
+
+    const [user, setUser] = useState<PublicUserData | null>(null);
     // replace with ListingData object?
     const [place, setPlace] = useState<Place | null>(null);
     const [radius, setRadius] = useState<number | null>(null);
@@ -46,6 +52,10 @@ export default function Listing(props: { listingId: number, gridProps?: Grid2Pro
 
     useEffect(() => {
         if (!listingData) return;
+
+        (async () => {
+            setUser(await getUserData(listingData.userId, true));
+        })();
         
         setPlace({
             coordinates: listingData.location.coordinates,
@@ -116,12 +126,23 @@ export default function Listing(props: { listingId: number, gridProps?: Grid2Pro
                     />
                 </Grid2>
 
-                <Grid2 size = { 12 }>
+                <Grid2 size = { 12 } display = "flex" marginX = "auto" justifyContent = "center">
+                    <Box
+                        component = "div"
+                        sx = {{
+                            marginRight: "1rem",
+                            cursor: "pointer"
+                        }}
+                        onClick = { user ? () => navigate(`/users/${ user?.username }`) : undefined }
+                    >
+                        <ProfilePicture userId = { listingData.userId } size = "md" />
+                        <Typography variant = "caption">{ user?.firstName } { user?.lastName}</Typography>
+                    </Box>
                     <Typography
                         variant = "body1"
                         maxWidth = "35rem"
                         textAlign = "left"
-                        marginX = "auto"
+                        marginLeft = "1rem"
                     >
                         { description }
                     </Typography>
