@@ -11,6 +11,7 @@ import { ListingCategory, ListingData } from "../listingsConstants";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import NotFoundPage from "../../../pages/NotFound/NotFoundPage";
 import ListingImages from "./ListingImages";
+import useUserContext from "../../auth/hooks/useUserContext";
 
 export default function ListingListItem(props: { listingId: number, gridProps?: Grid2Props, onClick?: (event: MouseEvent<HTMLDivElement>) => void, compact?: boolean }) {
     const listingId = props.listingId;
@@ -20,6 +21,7 @@ export default function ListingListItem(props: { listingId: number, gridProps?: 
 
     const { sx: gridPropsSx = {}, ...gridPropsRest } = gridProps ?? {};
 
+    const currentUser = useUserContext().user;
     // replace with ListingData object?
     const [place, setPlace] = useState<Place | null>(null);
     const [radius, setRadius] = useState<number | null>(null);
@@ -91,17 +93,19 @@ export default function ListingListItem(props: { listingId: number, gridProps?: 
                 }}
                 { ...gridPropsRest }
             >
-                <Grid2 size = { 12 }>
-                    <Typography
-                        variant = "h4"
-                        sx = {{
-                            marginTop: "auto",
-                            lineHeight: "0.9",
-                        }}
-                    >
-                        { locationName || `Listing #${ listingId }` }
-                    </Typography>
-                </Grid2>
+                { currentUser?.id === listingData.userId && (
+                    <Grid2 size = { 12 }>
+                        <Typography
+                            variant = "h4"
+                            sx = {{
+                                marginTop: "auto",
+                                lineHeight: "0.9",
+                            }}
+                        >
+                            { locationName || `Listing #${ listingId }` }
+                        </Typography>
+                    </Grid2>
+                )}
 
                 <Grid2 size = { 12 }>
                     <Typography
@@ -157,18 +161,20 @@ export default function ListingListItem(props: { listingId: number, gridProps?: 
             <Box sx = {{
                 display: "flex"
             }}>
-                <Typography
-                    variant = "h2"
-                    sx = {{
-                        marginTop: "auto",
-                        marginRight: "1rem",
-                        lineHeight: "0.9",
-                        borderRight: "0.1rem solid",
-                        paddingRight: "1rem"
-                    }}
-                >
-                    { locationName || `Listing #${ listingId }` }
-                </Typography>
+                { currentUser?.id === listingData.userId && (
+                    <Typography
+                        variant = "h2"
+                        sx = {{
+                            marginTop: "auto",
+                            marginRight: "1rem",
+                            lineHeight: "0.9",
+                            borderRight: "0.1rem solid",
+                            paddingRight: "1rem"
+                        }}
+                    >
+                        { locationName || `Listing #${ listingId }` }
+                    </Typography>
+                )}
                 <Typography
                     variant = "subtitle1"
                     sx = {{

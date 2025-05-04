@@ -15,6 +15,7 @@ import { getListingData } from "../listingsApi";
 import { ListingCategory, ListingData } from "../listingsConstants";
 import { getUserData } from "../../accounts/accountsApi";
 import ListingImages from "./ListingImages";
+import useUserContext from "../../auth/hooks/useUserContext";
 
 export default function Listing(props: { listingId: number, gridProps?: Grid2Props }) {
     const listingId = props.listingId;
@@ -24,6 +25,7 @@ export default function Listing(props: { listingId: number, gridProps?: Grid2Pro
     const navigate = useNavigate();
 
     const [user, setUser] = useState<PublicUserData | null>(null);
+    const currentUser = useUserContext().user; // can't use usePublicUserData() because listing data isn't immediately available
     // replace with ListingData object?
     const [place, setPlace] = useState<Place | null>(null);
     const [radius, setRadius] = useState<number | null>(null);
@@ -82,7 +84,21 @@ export default function Listing(props: { listingId: number, gridProps?: Grid2Pro
 
     return (
         <>
-            <Typography variant = "h2" pb = "1rem">{ locationName || `Listing #${ listingId }` }</Typography>
+            { user?.id === currentUser?.id ? (
+                <Typography variant = "h2" pb = "1rem">{ locationName || `Listing #${ listingId }` }</Typography>
+            ) : (
+                <Box
+                    component = "div"
+                    sx = {{
+                        marginRight: "1rem",
+                        cursor: "pointer"
+                    }}
+                    onClick = { user ? () => navigate(`/users/${ user?.username }`) : undefined }
+                >
+                    <ProfilePicture userId = { listingData.userId } size = "md" />
+                    <Typography variant = "caption">{ user?.firstName } { user?.lastName}</Typography>
+                </Box>
+            )}
             <Typography variant = "subtitle1">
                 { category.charAt(0).toUpperCase() + category.slice(1) } listing from { datesAreApproximate && "approximately" }  { startDate?.format("DD/MM/YYYY") }
                 {
@@ -120,23 +136,12 @@ export default function Listing(props: { listingId: number, gridProps?: Grid2Pro
                     />
                 </Grid2>
 
-                <Grid2 size = { 12 } display = "flex" marginX = "auto" justifyContent = "center">
-                    <Box
-                        component = "div"
-                        sx = {{
-                            marginRight: "1rem",
-                            cursor: "pointer"
-                        }}
-                        onClick = { user ? () => navigate(`/users/${ user?.username }`) : undefined }
-                    >
-                        <ProfilePicture userId = { listingData.userId } size = "md" />
-                        <Typography variant = "caption">{ user?.firstName } { user?.lastName}</Typography>
-                    </Box>
+                <Grid2 size = { 12 }>
                     <Typography
                         variant = "body1"
                         maxWidth = "35rem"
                         textAlign = "left"
-                        marginLeft = "1rem"
+                        marginX = "auto"
                     >
                         { description }
                     </Typography>
