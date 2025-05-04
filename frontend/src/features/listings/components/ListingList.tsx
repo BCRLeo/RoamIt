@@ -27,12 +27,12 @@ export default function ListingList({ username, onClick, compact }: { username: 
         <>
             { listingData.map((listing) => (
                 <Box key = { `listing${ listing.id }` }>
+                    <Divider sx = {{ marginY: "1.5rem" }} />
                     <ListingListItem
                         listingId = { listing.id}
                         onClick = { onClick ? (event) => onClick(event, listing.id) : undefined }
                         compact = { compact }
                     />
-                    { listingData.length > 1  && <Divider sx = {{ marginY: "1.5rem" }} />}
                 </Box>
             )) }
         </>

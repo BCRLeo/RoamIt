@@ -1,33 +1,42 @@
-import { Box, Divider, Typography } from "@mui/material";
+import { Box, CircularProgress, Divider, Typography } from "@mui/material";
 import { useNavigate } from "react-router";
 
 import useUserContext from "../../features/auth/hooks/useUserContext";
 import ListingList from "../../features/listings/components/ListingList";
-import { MouseEvent, useState } from "react";
-import Listing from "../../features/listings/components/Listing";
+import { MouseEvent, Suspense, useEffect, useState } from "react";
 import { getListingRecommendations } from "../../features/matches/matchesApi";
+import ListingRecommendationsCarousel from "../../features/matches/components/ListingRecommendationCarousel";
 
 export default function DiscoverPage() {
     const navigate = useNavigate();
     const user = useUserContext().user;
     const [listingId, setListingId] = useState<number | null>(null);
-    const [recommendationIds, setRecommendationIds] = useState<number[]>([]);
+    const [recommendationIds, setRecommendationIds] = useState<number[] | null>(null);
 
     async function handleListingClick(_event: MouseEvent<HTMLDivElement>, listingId: number) {
         setListingId(listingId);
 
         const response = await getListingRecommendations(listingId);
 
-        if (response.status === "success" && response.data) {
+        if (response.status === "error") {
+            return;
+        }
+        
+        if (response.data) {
             setRecommendationIds(response.data);
         } else {
             setRecommendationIds([]);
         }
     }
 
+    useEffect(() => {
+        if (!user) {
+            navigate("/");
+        }
+    }, [user]);
+
     if (!user) {
-        navigate("/");
-        return null;
+        return;
     }
 
     return (
@@ -75,9 +84,9 @@ export default function DiscoverPage() {
             </Box>
 
             { recommendationIds && (
-                recommendationIds.map((id) => (
-                    <Listing key = { `listingRecommendation${ id }` } listingId = { id } />
-                ))
+                <Suspense fallback = { <CircularProgress sx = {{ position: "fixed", left: "50%", top: "50%", translate: "-50% -50%" }} /> }>
+                    <ListingRecommendationsCarousel listingIds = { recommendationIds } />
+                </Suspense>
             )}
         </Box>
     );

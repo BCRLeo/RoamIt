@@ -58,16 +58,19 @@ export default function ListingsPage() {
                 Listings
             </Typography>
 
-            <ListingList username = { user.username } onClick = { handleListingClick } />
-            
             { isAuthenticated && (
                 <ListingFormModal
                     buttonProps = {{
                         variant: "contained",
-                        sx: { color: "inherit" }
+                        sx: {
+                            marginBottom: "1rem",
+                            color: "inherit"
+                        }
                     }}
                 />
             )}
+
+            <ListingList username = { user.username } onClick = { handleListingClick } />
         </Container>
     );
 }
