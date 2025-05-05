@@ -5,11 +5,14 @@ export const LISTING_TAG_OPTIONS = [
     "Art",
     "Group",
     "Hiking",
+    "Local",
     "Looking for group",
+    "Looking for local",
     "Looking for solo",
     "Movies",
     "Solo",
     "Surfing",
+    "Tourist",
     "Wine"
 ] as const;
 

@@ -154,6 +154,82 @@ export async function deleteListing(listingId: number) {
     return false;
 }
 
+export async function uploadListingTags(listingId: number, tags: string | string[]): Promise<ApiResult<true>> {
+    if (!Array.isArray(tags)) {
+        tags = [tags];
+    }
+
+    try {
+        const response = await fetch(`/api/listings/${ listingId }/tags`, {
+            method: "POST",
+            body: JSON.stringify(tags),
+            headers: {
+                "Content-Type": "application/json"
+            }
+        });
+
+        if (response.ok) {
+            return { status: "success", data: true };
+        }
+
+        const data = await response.json();
+        throw new Error(data.error);
+    } catch (error) {
+        console.error(`Error uploading listing #${ listingId }'s tags:`, error);
+        return { status: "error", message: String(error) };
+    }
+}
+
+export async function getListingTags(listingId: number): Promise<ApiResult<string[]>> {
+    try {
+        const response = await fetch(`/api/listings/${ listingId }/tags`, { method: "GET" });
+
+        if (response.status === 204) {
+            return { status: "success", data: null };
+        }
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error);
+        }
+
+        return { status: "success", data: data.data };
+    } catch (error) {
+        console.error(`Error retrieving listing #${ listingId }'s tags:`, error);
+        return { status: "error", message: String(error) };
+    }
+}
+
+export async function deleteListingTags(listingId: number, tags?: string | string[]): Promise<ApiResult<true>> {
+    if (tags && !Array.isArray(tags)) {
+        tags = [tags];
+    }
+
+    try {
+        const response = await fetch(`/api/listings/${ listingId }/tags`, {
+            method: "DELETE",
+            ...(tags && {
+                body: JSON.stringify(tags),
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            })
+        });
+
+        if (response.ok) {
+            return { status: "success", data: true };
+        }
+
+        const data = await response.json();
+
+        throw new Error(data.error);
+    } catch (error) {
+        console.error(`Error deleting listing #${ listingId }'s tags:`, error);
+        return { status: "error", message: String(error) };
+    }
+}
+
 export async function uploadListingPictures(listingId: number, images: File | File[]): Promise<ApiResult<File[]>> {
     if (images && images instanceof File) {
         images = [images];

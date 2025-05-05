@@ -6,7 +6,7 @@ from io import BytesIO
 from werkzeug.datastructures import FileStorage
 
 from ..extensions import db
-from ..models import Listing, ListingPicture, Location, User
+from ..models import Listing, ListingPicture, Location, User, Tag
 from ..utilities import can_convert_to_float, can_convert_to_int, string_to_bool
 
 listings = Blueprint("listings", __name__)
@@ -212,6 +212,101 @@ def delete_listing(listing_id: int):
         return "", 204
     except Exception as error:
         print(f"Error deleting listing #{listing_id}:", error)
+        db.session.rollback()
+        
+        return jsonify({"error": str(error)}), 500
+
+@listings.post("/listings/<int:listing_id>/tags")
+@login_required
+def upload_listing_tags(listing_id: int):
+    listing: Listing | None = db.session.get(Listing, listing_id)
+    
+    if not listing:
+        return jsonify({"error": f"Listing #{listing_id} not found."}), 404
+    
+    if listing.user_id != current_user.id:
+        return jsonify({"error": f"Listing #{listing_id} does not belong to user."}), 403
+    
+    data = request.get_json(silent = True)
+    
+    if not data:
+        return jsonify({"error": "No tags provided."}), 400
+    
+    try:
+        listing.tags.clear()
+        
+        for tag_name in data:
+            tag = db.session.execute(db.select(Tag).filter_by(name = str(tag_name))).scalar_one_or_none()
+            
+            if not tag:
+                tag = Tag(name = tag_name)
+            
+            listing.tags.append(tag)
+        
+        db.session.commit()
+        
+        return "", 204
+    except Exception as error:
+        print(f"Error uploading listing #{listing_id}'s tags: {error}")
+        db.session.rollback()
+        
+        return jsonify({"error": str(error)}), 500
+
+@listings.get("/listings/<int:listing_id>/tags")
+def get_listing_tags(listing_id: int):
+    listing: Listing | None = db.session.get(Listing, listing_id)
+    
+    if not listing:
+        return jsonify({"error": f"Listing #{listing_id} not found."}), 404
+    
+    tags: list[Tag] = listing.tags
+    
+    if not tags:
+        return "", 204
+    
+    tag_names = [tag.name for tag in tags]
+    return jsonify({"data": tag_names}), 200
+
+@listings.delete("/listings/<int:listing_id>/tags")
+@login_required
+def delete_tags(listing_id: int):
+    listing: Listing | None = db.session.get(Listing, listing_id)
+    
+    if not listing:
+        return jsonify({"error": f"Listing #{listing_id} not found."}), 404
+    
+    if listing.user_id != current_user.id:
+        return jsonify({"error": f"Listing #{listing_id} does not belong to user."}), 403
+    
+    data = request.get_json(silent = True)
+    
+    if not data:
+        try:
+            listing.tags.clear()
+            db.session.commit()
+            
+            return "", 204
+        except Exception as error:
+            print(f"Error deleting listing #{listing_id}'s tags: {error}")
+            db.session.rollback()
+            
+            return jsonify({"error": str(error)}), 500
+    
+    try:
+        for tag_name in data:
+            tag = db.session.execute(
+                db.select(Tag)
+                .filter_by(name = str(tag_name))
+            ).scalar_one_or_none()
+            
+            if tag and tag in listing.tags:
+                listing.tags.remove(tag)
+        
+        db.session.commit()
+        
+        return "", 204
+    except Exception as error:
+        print(f"Error deleting listing #{listing_id}'s tags: {error}")
         db.session.rollback()
         
         return jsonify({"error": str(error)}), 500

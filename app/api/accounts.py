@@ -384,7 +384,7 @@ def delete_tags():
         
         return "", 204
     except Exception as error:
-        print(f"Error uploading interests: {error}")
+        print(f"Error deleting interests: {error}")
         db.session.rollback()
         
         return jsonify({"error": str(error)}), 500
