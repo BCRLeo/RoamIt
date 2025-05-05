@@ -8,6 +8,7 @@ import { getListingData } from "../listingsApi";
 import ListingImages from "./ListingImages";
 import LocationDisplay from "../../maps/components/LocationDisplay";
 import usePublicUserData from "../../accounts/hooks/usePublicUserData";
+import ListingTags from "./ListingTags";
 
 export default function Listing({ listingId, gridProps }: { listingId: number, gridProps?: Grid2Props }) {
     const { sx: gridPropsSx = {}, ...gridPropsRest } = gridProps ?? {};
@@ -53,12 +54,14 @@ export default function Listing({ listingId, gridProps }: { listingId: number, g
                     <Typography variant = "caption">{ user?.firstName } { user?.lastName}</Typography>
                 </Box>
             )}
+
             <Typography variant = "subtitle1">
                 { category.charAt(0).toUpperCase() + category.slice(1) } listing from { datesAreApproximate && "approximately" }  { startDate?.format("DD/MM/YYYY") }
                 {
                     endDate && " until " + endDate.format("DD/MM/YYYY")
                 }
             </Typography>
+
             { budget && (
                 <Typography variant = "subtitle2">Budget: { budget } { listingData.currency } per night</Typography>
             )}
@@ -76,6 +79,10 @@ export default function Listing({ listingId, gridProps }: { listingId: number, g
                 }}
                 { ...gridPropsRest }
             >
+                <Grid2 size = { 12 }>
+                    <ListingTags listingId = { listingId } />
+                </Grid2>
+
                 <Grid2 size = { 12 }>
                     { place ? (
                         <LocationDisplay

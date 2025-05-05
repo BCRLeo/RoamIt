@@ -1,24 +1,21 @@
-import { MouseEvent, MouseEventHandler, SyntheticEvent, useEffect, useState } from "react";
-
+import { MouseEvent, MouseEventHandler, SyntheticEvent, useState } from "react";
 import { Autocomplete, AutocompleteChangeReason, Box, Chip, Fab, TextField } from "@mui/material";
-
-import { getTags } from "../../features/accounts/accountsApi";
 import { Done, Edit } from "@mui/icons-material";
+import { useToggleState } from "../../hooks/useToggleState";
 
 export default function Tags(props: {
-    userId: number,
+    tags?: string[],
     options: string[]
 } | {
-    userId: number,
+    tags?: string[],
     options: string[],
     onEdit: ((event: SyntheticEvent, value: string[], reason: AutocompleteChangeReason) => void),
     onSave?: MouseEventHandler<HTMLButtonElement>
 }) {
-    const userId = props.userId;
     const options = props.options;
     
-    const [tags, setTags] = useState<string[]>([]);
-    const [isEditing, setIsEditing] = useState(false);
+    const [tags, setTags] = useState<string[]>(props.tags ?? []);
+    const [isEditing, toggleIsEditing] = useToggleState(false);
 
     const tagDisplay = (
         <Box sx = {{ display: "flex", flexWrap: "nowrap", overflowX: "scroll" }}>
@@ -79,18 +76,8 @@ export default function Tags(props: {
             props.onSave(event);
         }
 
-        setIsEditing((isEditing) => !isEditing);
+        toggleIsEditing();
     }
-
-    useEffect(() => {
-        (async () => {
-            const response = await getTags(userId);
-
-            if (response) {
-                setTags(response);
-            }
-        })();
-    }, []);
 
     // <Tags userId = { userId } />
     if (!("onEdit" in props) || props.onEdit === undefined) {
