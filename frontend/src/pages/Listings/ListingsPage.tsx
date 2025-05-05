@@ -34,7 +34,6 @@ export default function ListingsPage() {
     }
 
     function handleListingClick(_event: MouseEvent<HTMLDivElement>, listingId: number) {
-        console.log(listingId);
         navigate(`/listings/${listingId}`);
     }
 

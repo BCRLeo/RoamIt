@@ -1,78 +1,39 @@
-import { MouseEvent, useEffect, useState } from "react";
+import { MouseEvent } from "react";
 
 import { Grid2, Grid2Props, Typography, Box } from "@mui/material";
-import { Dayjs } from "dayjs";
 
-import { useToggleState } from "../../../hooks/useToggleState";
 import { Place } from "../../maps/mapsConstants";
 import { getListingData } from "../listingsApi";
-import { ListingCategory, ListingData } from "../listingsConstants";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import NotFoundPage from "../../../pages/NotFound/NotFoundPage";
 import ListingImages from "./ListingImages";
-import useUserContext from "../../auth/hooks/useUserContext";
 import LocationDisplay from "../../maps/components/LocationDisplay";
+import usePublicUserData from "../../accounts/hooks/usePublicUserData";
 
-export default function ListingListItem(props: { listingId: number, gridProps?: Grid2Props, onClick?: (event: MouseEvent<HTMLDivElement>) => void, compact?: boolean }) {
-    const listingId = props.listingId;
-    const gridProps = props.gridProps;
-    const onClick = props.onClick;
-    const compact = props.compact;
-
+export default function ListingListItem({ listingId, gridProps, onClick, compact }: { listingId: number, gridProps?: Grid2Props, onClick?: (event: MouseEvent<HTMLDivElement>) => void, compact?: boolean }) {
     const { sx: gridPropsSx = {}, ...gridPropsRest } = gridProps ?? {};
 
-    const currentUser = useUserContext().user;
-    // replace with ListingData object?
-    const [place, setPlace] = useState<Place | null>(null);
-    const [radius, setRadius] = useState<number | null>(null);
-    const [locationName, setLocationName] = useState("");
-    const [category, setCategory] = useState<ListingCategory | "">("");
-    const [budget, setBudget] = useState<number | null>(null);
-    const [startDate, setStartDate] = useState<Dayjs | null>(null);
-    const [endDate, setEndDate] = useState<Dayjs | null>(null);
-    const [datesAreApproximate, toggleDatesAreApproximate] = useToggleState(false);
-    const [prefersSameGender, togglePrefersSameGender] = useToggleState(false);
-    const [description, setDescription] = useState("");
-
-    const { data: listingResponse } = useSuspenseQuery({
+    const { data: listingData } = useSuspenseQuery({
         queryKey: [`getListingData`, listingId],
-        queryFn: () => getListingData(listingId),
+        queryFn: async () => { 
+            const response = await getListingData(listingId);
+
+            if (response.status === "error" || !response.data) {
+                throw new Error("Failed to retrieve listing data.");
+            };
+            
+            const listingData = response.data;
+            
+            return listingData;
+        },
     });
-
-    const [listingData, setListingData] = useState<ListingData | null | undefined>();
-
-    useEffect(() => {        
-        if (!listingResponse || listingResponse.status === "error") return;
-
-        setListingData(listingResponse.data);
-    }, [listingResponse]);
-
-    useEffect(() => {
-        if (!listingData) return;
-        
-        setPlace({
-            coordinates: listingData.location.coordinates,
-            country: listingData.location.country,
-            locality: listingData.location.locality
-        });
-        setRadius(listingData.radius);
-        setLocationName(listingData.location.name ?? "");
-        setCategory(listingData.category);
-        setBudget(listingData.nightlyBudget ?? null);
-        setStartDate(listingData.startDate);
-        setEndDate(listingData.endDate ?? null);
-        if (datesAreApproximate !== listingData.datesAreApproximate) {
-            toggleDatesAreApproximate();
-        }
-        if (prefersSameGender !== listingData.prefersSameGender) {
-            togglePrefersSameGender();
-        }
-        setDescription(listingData.description);
-    }, [listingData]);
-
-    if (!listingData) {
-        return <NotFoundPage />;
+    const { isAuthenticated } = usePublicUserData(listingData.userId);
+    const place: Place = {
+        coordinates: listingData.location.coordinates,
+        country: listingData.location.country,
+        locality: listingData.location.locality
     }
+    const locationName = listingData.location.name;
+    const { radius, category, nightlyBudget: budget, startDate, endDate, datesAreApproximate, description } = listingData;
 
     if (compact) return (
         <Box
@@ -93,7 +54,7 @@ export default function ListingListItem(props: { listingId: number, gridProps?: 
                 }}
                 { ...gridPropsRest }
             >
-                { currentUser?.id === listingData.userId && (
+                { isAuthenticated && (
                     <Grid2 size = { 12 }>
                         <Typography
                             variant = "h4"
@@ -164,7 +125,7 @@ export default function ListingListItem(props: { listingId: number, gridProps?: 
             <Box sx = {{
                 display: "flex"
             }}>
-                { currentUser?.id === listingData.userId && (
+                { isAuthenticated && (
                     <Typography
                         variant = "h2"
                         sx = {{

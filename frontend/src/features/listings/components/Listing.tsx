@@ -1,90 +1,44 @@
-import { useEffect, useState } from "react";
-
 import { Grid2, Grid2Props, Typography, Box } from "@mui/material";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Dayjs } from "dayjs";
 import { useNavigate } from "react-router";
 
-import { useToggleState } from "../../../hooks/useToggleState";
-import NotFoundPage from "../../../pages/NotFound/NotFoundPage";
-import { PublicUserData } from "../../auth/authApi";
 import ProfilePicture from "../../accounts/components/ProfilePicture";
 import { Place } from "../../maps/mapsConstants";
 import { getListingData } from "../listingsApi";
-import { ListingCategory, ListingData } from "../listingsConstants";
-import { getUserData } from "../../accounts/accountsApi";
 import ListingImages from "./ListingImages";
-import useUserContext from "../../auth/hooks/useUserContext";
 import LocationDisplay from "../../maps/components/LocationDisplay";
+import usePublicUserData from "../../accounts/hooks/usePublicUserData";
 
-export default function Listing(props: { listingId: number, gridProps?: Grid2Props }) {
-    const listingId = props.listingId;
-    const gridProps = props.gridProps;
+export default function Listing({ listingId, gridProps }: { listingId: number, gridProps?: Grid2Props }) {
     const { sx: gridPropsSx = {}, ...gridPropsRest } = gridProps ?? {};
-
     const navigate = useNavigate();
 
-    const [user, setUser] = useState<PublicUserData | null>(null);
-    const currentUser = useUserContext().user; // can't use usePublicUserData() because listing data isn't immediately available
-    // replace with ListingData object?
-    const [place, setPlace] = useState<Place | null>(null);
-    const [radius, setRadius] = useState<number | null>(null);
-    const [locationName, setLocationName] = useState("");
-    const [category, setCategory] = useState<ListingCategory | "">("");
-    const [budget, setBudget] = useState<number | null>(null);
-    const [startDate, setStartDate] = useState<Dayjs | null>(null);
-    const [endDate, setEndDate] = useState<Dayjs | null>(null);
-    const [datesAreApproximate, toggleDatesAreApproximate] = useToggleState(false);
-    const [prefersSameGender, togglePrefersSameGender] = useToggleState(false);
-    const [description, setDescription] = useState("");
-
-    const { data: listingResponse } = useSuspenseQuery({
+    const { data: listingData } = useSuspenseQuery({
         queryKey: [`getListingData`, listingId],
-        queryFn: () => getListingData(listingId),
+        queryFn: async () => { 
+            const response = await getListingData(listingId);
+
+            if (response.status === "error" || !response.data) {
+                throw new Error("Failed to retrieve listing data.");
+            };
+            
+            const listingData = response.data;
+            
+            return listingData;
+        },
     });
-
-    const [listingData, setListingData] = useState<ListingData | null | undefined>();
-
-    useEffect(() => {        
-        if (!listingResponse || listingResponse.status === "error") return;
-
-        setListingData(listingResponse.data);
-    }, [listingResponse]);
-
-    useEffect(() => {
-        if (!listingData) return;
-
-        (async () => {
-            setUser(await getUserData(listingData.userId, true));
-        })();
-        
-        setPlace({
-            coordinates: listingData.location.coordinates,
-            country: listingData.location.country,
-            locality: listingData.location.locality
-        });
-        setRadius(listingData.radius);
-        setLocationName(listingData.location.name ?? "");
-        setCategory(listingData.category);
-        setBudget(listingData.nightlyBudget ?? null);
-        setStartDate(listingData.startDate);
-        setEndDate(listingData.endDate ?? null);
-        if (datesAreApproximate !== listingData.datesAreApproximate) {
-            toggleDatesAreApproximate();
-        }
-        if (prefersSameGender !== listingData.prefersSameGender) {
-            togglePrefersSameGender();
-        }
-        setDescription(listingData.description);
-    }, [listingData]);
-
-    if (!listingData) {
-        return <NotFoundPage />;
+    const { user, isAuthenticated } = usePublicUserData(listingData.userId);
+    const place: Place = {
+        coordinates: listingData.location.coordinates,
+        country: listingData.location.country,
+        locality: listingData.location.locality
     }
+    const locationName = listingData.location.name;
+    const { radius, category, nightlyBudget: budget, startDate, endDate, datesAreApproximate, prefersSameGender, description } = listingData;
 
     return (
         <>
-            { user?.id === currentUser?.id ? (
+            { isAuthenticated ? (
                 <Typography variant = "h2" pb = "1rem">{ locationName || `Listing #${ listingId }` }</Typography>
             ) : (
                 <Box
