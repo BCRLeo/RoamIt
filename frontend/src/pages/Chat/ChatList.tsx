@@ -24,8 +24,9 @@ import CreateChatOverlay from './CreateChatOverlay';
 import { ChatData } from '../../features/chats/chatsConstants';
 import ProfilePicture from '../../features/accounts/components/ProfilePicture';
 import NotFoundPage from '../NotFound/NotFoundPage';
+import Name from '../../features/accounts/components/Name';
 
-export default function ChatList({ collapsed = false }: { collapsed?: boolean }) {
+export default function ChatList({ collapsed = false }: { collapsed?: boolean; }) {
     const [chats, setChats] = useState<ChatData[]>([]);
     const [showCreateOverlay, setShowCreateOverlay] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
@@ -68,7 +69,7 @@ export default function ChatList({ collapsed = false }: { collapsed?: boolean })
                 backgroundColor: theme.palette.background.default,
             }}
         >
-            
+
             <Box sx={{ p: 2 }}>
                 <Button
                     variant="contained"
@@ -80,7 +81,7 @@ export default function ChatList({ collapsed = false }: { collapsed?: boolean })
                 </Button>
             </Box>
 
-           
+
             <Box sx={{ flex: 1, overflowY: 'auto' }}>
                 <List>
                     {chats.length === 0 ? (
@@ -115,36 +116,36 @@ export default function ChatList({ collapsed = false }: { collapsed?: boolean })
 
                                     {!collapsed && (
                                         <ListItemText
-                                        primary={chat.title}
-                                        secondary={
-                                          <>
-                                            <Typography
-                                              variant="body2"
-                                              color="text.secondary"
-                                              noWrap
-                                              sx={{ display: 'block' }}
-                                            >
-                                              {chat.latestMessage ?? 'No messages yet'}
-                                            </Typography>
-                                            {chat.latestTime && (
-                                              <Typography
-                                                variant="caption"
-                                                color="text.secondary"
-                                                sx={{ display: 'block', mt: 0.5 }}
-                                              >
-                                                {new Date(chat.latestTime).toLocaleTimeString([], {
-                                                  hour:   '2-digit',
-                                                  minute: '2-digit'
-                                                })}
-                                              </Typography>
-                                            )}
-                                          </>
-                                        }
-                                      />
-                                      
+                                            primary = { chat.title ?? ( chat.isGroup ? `Group with ${ chat.memberIds.length } others` : <Name userId = { chat.memberIds[(chat.memberIds.indexOf(user.id) + 1) % 2] } />) }
+                                            secondary={
+                                                <>
+                                                    <Typography
+                                                        variant="body2"
+                                                        color="text.secondary"
+                                                        noWrap
+                                                        sx={{ display: 'block' }}
+                                                    >
+                                                        {chat.latestMessage ?? 'No messages yet'}
+                                                    </Typography>
+                                                    {chat.latestTime && (
+                                                        <Typography
+                                                            variant="caption"
+                                                            color="text.secondary"
+                                                            sx={{ display: 'block', mt: 0.5 }}
+                                                        >
+                                                            {new Date(chat.latestTime).toLocaleTimeString([], {
+                                                                hour: '2-digit',
+                                                                minute: '2-digit'
+                                                            })}
+                                                        </Typography>
+                                                    )}
+                                                </>
+                                            }
+                                        />
+
                                     )}
 
-                                    
+
                                     <IconButton
                                         edge="end"
                                         aria-label="delete"
