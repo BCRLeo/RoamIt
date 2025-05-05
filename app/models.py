@@ -136,11 +136,14 @@ class Match(db.Model):
         }
 
     @classmethod
-    def create_match(cls, listing_a, listing_b):
+    def create_match(cls, listing_a: "Listing", listing_b: "Listing"):
         """
         Creates a match between two listing objects.
         To maintain consistency, orders the listing IDs.
         """
+        user_a = db.session.get(User, listing_a.user_id)
+        user_b = db.session.get(User, listing_b.user_id)
+        
         listing1_id, listing2_id = sorted([listing_a.id, listing_b.id])
         existing_match = cls.query.filter_by(listing1_id=listing1_id, listing2_id=listing2_id).first()
         
@@ -148,13 +151,37 @@ class Match(db.Model):
             return existing_match
         
         try:
-            new_match = cls(
+            match = cls(
                 listing1_id=listing1_id,
                 listing2_id=listing2_id
             )
-            db.session.add(new_match)
+            db.session.add(match)
+            
+            existing_friendship: Friendship | None = db.session.execute(
+                db.select(Friendship)
+                .filter_by(requester_id = user_a.id, receiver_id = user_b.id)
+            ).scalar_one_or_none()
+            if not existing_friendship:
+                friendship = Friendship(requester_id = user_a.id, receiver_id = user_b.id, status = "accepted")
+                db.session.add(friendship)
+            elif existing_friendship.status != "accepted":
+                existing_friendship.status = "accepted"
+            
+            existing_chat: Chat | None = db.session.execute(
+                db.select(Chat)
+                .filter(
+                    Chat.is_group == False,
+                    Chat.members.any(id = user_a.id),
+                    Chat.members.any(id = user_b.id)
+                )
+            ).scalar_one_or_none()
+            if not existing_chat:
+                chat = Chat(is_group = False)
+                chat.members.extend([user_a, user_b])
+                db.session.add(chat)
+            
             db.session.commit()
-            return new_match
+            return match
         except Exception as error:
             db.session.rollback()
             print(f"Failed to create match between listings #{listing1_id} and #{listing2_id}:", error)
@@ -497,15 +524,15 @@ class Chat(db.Model):
         data = {
             "id": self.id,
             "title": self.title,
-            "is_group": self.is_group,
-            "member_ids": [u.id for u in self.members],
-            "created_at": self.created_at.isoformat(),
+            "isGroup": self.is_group,
+            "memberIds": [u.id for u in self.members],
+            "createdAt": self.created_at.isoformat(),
         }
 
         if include_latest:
             latest = self.latest_message()
-            data["latest_message"] = latest.content if latest else ""
-            data["latest_time"] = latest.timestamp.isoformat() if latest else None
+            data["latestMessage"] = latest.content if latest else None
+            data["latestTime"] = latest.timestamp.isoformat() if latest else None
 
         return data
 

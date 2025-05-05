@@ -10,6 +10,7 @@ import { PublicUserData } from "../../auth/authApi";
 import { getListingData } from "../../listings/listingsApi";
 import { getUserData } from "../../accounts/accountsApi";
 import { NavLink } from "react-router";
+import { getChats } from "../../chats/chatsApi";
 
 export default function MatchModal({ matchId }: { matchId: number }) {
     const { data } = useSuspenseQuery({
@@ -38,10 +39,12 @@ export default function MatchModal({ matchId }: { matchId: number }) {
                 return null;
             }
 
-            return { match, user1, user2 };
+            const chat = await getChats([user1.id, user2.id]);
+
+            return { match, user1, user2, chat };
         }
     });
-    const { match, user1, user2 } = data || { match: null, user1: null, user2: null };
+    const { match, user1, user2, chat } = data || { match: null, user1: null, user2: null, chat: null };
 
     const currentUser = useUserContext().user;
     const [otherUser, setOtherUser] = useState<PublicUserData | null>(null);
@@ -60,13 +63,13 @@ export default function MatchModal({ matchId }: { matchId: number }) {
     return (
         <Modal open = { isOpen } onClose = { () => setIsOpen(false) }>
             <PopUp>
-                { match && otherUser ? (
+                { match && otherUser && chat ? (
                     <>
                         <Typography variant = "h5">It's a match!</Typography>
                         <Button
                             component = { NavLink }
                             variant = "contained"
-                            to = "/chats"
+                            to = { `/chats/${ chat.id }` }
                             sx = {{ marginY: "1rem" }}
                         >
                             Start chatting with { otherUser.firstName }

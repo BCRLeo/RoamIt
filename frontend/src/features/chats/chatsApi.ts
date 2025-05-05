@@ -31,9 +31,23 @@ export async function createChat(userIds: number[], title?: string): Promise<num
     return null;
 }
 
-export async function getChats(): Promise<ChatData[] | null> {
+export async function getChats(): Promise<ChatData[] | null>;
+export async function getChats(memberIds: number | number[]): Promise<ChatData | null>;
+export async function getChats(memberIds: number | number[] = []) {
+    if (typeof(memberIds) === "number") {
+        memberIds = [memberIds];
+    }
+
+    let memberQueries: string[] = [];
+
+    for (const id of memberIds) {
+        memberQueries.push(`member_ids=${ id }`);
+    }
+
+    const memberQuery = memberIds.length ? "?" + memberQueries.join("&") : "";
+
     try {
-        const response = await fetch("/api/chats", {
+        const response = await fetch(`/api/chats${ memberQuery }`, {
             credentials: "include"
         });
         const data = await response.json();

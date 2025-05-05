@@ -1,9 +1,10 @@
 from flask import Blueprint, jsonify, request
 from flask_login import login_required, current_user
-from sqlalchemy import or_
+from sqlalchemy import func, or_
 
 from .. import db
 from ..models import Message, Chat, User, Match
+from ..utilities import can_convert_to_int
 
 chats = Blueprint("chats", __name__)
 
@@ -46,43 +47,53 @@ def create_chat():
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
-@chats.route("/chats", methods=["GET"])
+@chats.get("/chats")
 @login_required
-def list_chats():
+def get_chats():
     """
     Return all chats current_user belongs to.
     """
-    # Join Chat <-> chat_members table via Chat.members relationship
-    user_chats = (
-        db.session
-        .query(Chat)
-        .join(Chat.members)
-        .filter(User.id == current_user.id)
-        .all()
-    )
-
-    result = []
-    for chat in user_chats:
+    member_id_strings = request.args.getlist("member_ids")
+    member_ids = [int(id) for id in member_id_strings if can_convert_to_int(id)]
+    
+    if current_user.id in member_ids and len(member_ids) == 1:
+        member_ids = []
+    
+    if current_user.id not in member_ids and member_ids:
+        member_ids += current_user.id
+    
+    if len(member_id_strings) - len(member_ids) > 1:
+        return jsonify({"error": "Invalid member ids."}), 400
+    elif len(member_id_strings) - len(member_id_strings) == 1:
+        return jsonify({"error": "Invalid member id."}), 400
+    
+    if member_ids:
+        chats: list[Chat] = db.session.execute(
+            db.select(Chat)
+            .filter(
+                Chat.members.any(id = current_user.id),
+                *[Chat.members.any(id = member_id) for member_id in member_ids]
+            )
+        ).scalars().all()
         
-        if chat.is_group:
-            display_title = chat.title or "Unnamed Group"
-        else:
-            
-            other = next(u for u in chat.members if u.id != current_user.id)
-            display_title = other.username
+        for chat in chats:
+            if {member.id for member in chat.members} == set(member_ids):
+                return jsonify({"data": chat.to_dict(True)}), 200
+                
+        return jsonify({"error": f"Chat with member ids {member_ids} not found."}), 404
+    else:
+        chats: list[Chat] = db.session.execute(
+            db.select(Chat)
+            .join(Chat.members)
+            .filter(User.id == current_user.id)
+        ).scalars().all()
 
-        latest = chat.messages.order_by(Message.timestamp.desc()).first()
-        result.append({
-            "id": chat.id,
-            "isGroup": chat.is_group,
-            "title": display_title,           
-            "memberIds": [u.id for u in chat.members],
-            "latestMessage": latest.content if latest else None,
-            "latestTime": latest.timestamp.isoformat() if latest else None
-        })
-
-
-    return jsonify({"data": result}), 200
+        results = [chat.to_dict(True) for chat in chats]
+    
+    if not results:
+        return "", 204
+    
+    return jsonify({"data": results}), 200
 
 @chats.route("/chats/<int:chat_id>", methods=["GET"])
 @login_required

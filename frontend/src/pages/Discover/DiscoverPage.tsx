@@ -32,7 +32,7 @@ export default function DiscoverPage() {
         }
     }
 
-    function handleMatch(matchData: MatchData) {
+    async function handleMatch(matchData: MatchData) {
         setMatch(matchData);
     }
 
