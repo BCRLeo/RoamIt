@@ -12,7 +12,7 @@ export default function ThemeContextProvider({ children }: { children: ReactNode
         setDarkMode(prefersDarkMode);
     }, [prefersDarkMode]);
 
-    const primary = "#B32919";
+    const primary = "#f7280f";
 
     const background = {
         light: "#FFF",
@@ -33,6 +33,12 @@ export default function ThemeContextProvider({ children }: { children: ReactNode
             message: {
                 main: themedMessage
             }
+        },
+        typography: {
+            fontFamily: "'Nunito', 'Arial', sans-serif"
+        },
+        shape: {
+            borderRadius: 16
         },
         cssVariables: true
     });
