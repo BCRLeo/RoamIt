@@ -58,8 +58,7 @@ export async function createListing({
         const data = await response.json();
 
         if (response.status === 207) {
-            console.warn(data.data.message);
-            console.warn(data.data.unsavedImages)
+            console.warn(`Listing created, but the following image${ data.data.unsavedImages.length > 1 ? "s" : "" } failed to upload:`, data.data.unsavedImages);
             return data.data.id;
         } else if (response.ok) {
             return data.data;
@@ -155,6 +154,55 @@ export async function deleteListing(listingId: number) {
     return false;
 }
 
+export async function uploadListingPictures(listingId: number, images: File | File[]): Promise<ApiResult<File[]>> {
+    if (images && images instanceof File) {
+        images = [images];
+    }
+
+    const formData = new FormData();
+
+    for (const image of images) {
+        formData.append("images", image);
+    }
+
+    try {
+        const response = await fetch(`/api/listings/${ listingId }/pictures`, {
+            method: "POST",
+            body: formData
+        });
+
+        if (response.status === 204) {
+            return { status: "success", data: null };
+        }
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error);
+        }
+
+        const unsavedImageNames: string[] = data.data.unsavedImages;
+        console.warn(`Listing created, but the following image${ unsavedImageNames.length > 1 ? "s" : "" } failed to upload:`, unsavedImageNames);
+
+        if (unsavedImageNames.length === images.length) {
+            throw new Error(`Image${ images.length > 1 ? "s" : ""} failed to uploaded.`);
+        }
+
+        const unsavedImages: File[] = [];
+
+        for (const image of images) {
+            if (unsavedImageNames.includes(image.name)) {
+                unsavedImages.push(image);
+            }
+        }
+
+        return { status: "success", data: unsavedImages };
+    } catch (error) {
+        console.error(`Error uploading listing picture${ images.length > 1 ? "s" : "" }:`, error);
+        return { status: "error", message: String(error) };
+    }
+}
+
 /**
  * Get the image blob of the ListingPicture associated to `listingPictureId`.
  */
@@ -233,6 +281,22 @@ export async function getListingPictures(listingId: number): Promise<ApiResult<B
         return { status: "success", data: pictures };
     } catch (error) {
         console.error(`Error retrieving listing #${ listingId }'s pictures:`, error);
+        return { status: "error", message: String(error) };
+    }
+}
+
+export async function deleteListingPicture(listingPictureId: number): Promise<ApiResult<true>> {
+    try {
+        const response = await fetch(`/api/listings/pictures/${ listingPictureId }`, { method: "DELETE" });
+
+        if (response.ok) {
+            return { status: "success", data: true };
+        }
+
+        const data = await response.json();
+        throw new Error(data.error);
+    } catch (error) {
+        console.error(`Error deleting listing picture #${ listingPictureId }:`, error);
         return { status: "error", message: String(error) };
     }
 }

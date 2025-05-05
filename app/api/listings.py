@@ -135,7 +135,6 @@ def create_listing():
     if unsaved_images:
         return jsonify({
             "data": {
-                "message": "Listing created, but some images failed to upload.",
                 "id": listing.id,
                 "unsavedImages": unsaved_images
             }
@@ -216,7 +215,54 @@ def delete_listing(listing_id: int):
         db.session.rollback()
         
         return jsonify({"error": str(error)}), 500
+
+@listings.post("/listings/<int:listing_id>/pictures")
+@login_required
+def upload_listing_pictures(listing_id: int):
+    listing: Listing | None = db.session.get(Listing, listing_id)
     
+    if not listing:
+        return jsonify({"error": f"Listing #{listing_id} not found."}), 404
+    
+    if listing.user_id != current_user.id:
+        return jsonify({"error": f"Listing #{listing_id} does not belong to user."}), 403
+    
+    images: list[FileStorage] = request.files.getlist("images") if "images" in request.files else []
+    
+    if not images:
+        return jsonify({"error": "Missing listing picture."}), 400
+    
+    unsaved_images: list[str] = []
+    
+    for image in images:
+        try:
+            file_data = image.read()
+            file_type = image.content_type
+            
+            if not file_type.startswith('image/'):
+                return jsonify({"error": "Invalid file type."}), 400
+
+            if len(file_data) > 5 * 1024 * 1024:  # 5MB limit
+                return jsonify({"error": "Image too large."}), 400
+            
+            listing_picture = ListingPicture(listing_id = listing.id, image_data = file_data, image_mimetype = file_type)
+            db.session.add(listing_picture)
+            db.session.commit()
+        except Exception as error:
+            db.session.rollback()
+            print(f"Error uploading listing image {image.filename}:", error)
+            unsaved_images.append(image.filename)
+    
+    if unsaved_images:
+        return jsonify({
+            "data": {
+                "id": listing.id,
+                "unsavedImages": unsaved_images
+            }
+        }), 207
+    
+    return "", 204
+
 @listings.get("/listings/pictures/<int:listing_picture_id>")
 def get_listing_picture(listing_picture_id: int):
     listing_picture: ListingPicture | None = db.session.execute(
@@ -245,3 +291,25 @@ def get_listing_picture_ids(listing_id: int):
         return "", 204
     
     return jsonify({"data": [picture.id for picture in pictures]}), 200
+
+@listings.delete("/listings/pictures/<int:listing_picture_id>")
+@login_required
+def delete_listing_picture(listing_picture_id: int):
+    listing_picture: ListingPicture | None = db.session.get(ListingPicture, listing_picture_id)
+    
+    if not listing_picture:
+        return jsonify({"error": f"Listing picture #{listing_picture_id} not found."}), 404
+    
+    if listing_picture.listing.user_id != current_user.id:
+        return jsonify({"error": f"Listing picture #{listing_picture_id} does not belong to user."}), 403
+    
+    try:
+        db.session.delete(listing_picture)
+        db.session.commit()
+        
+        return "", 204
+    except Exception as error:
+        db.session.rollback()
+        print(f"Failed to delete listing picture #{listing_picture_id}:", error)
+        
+        return jsonify({"error": str(error)}), 500
