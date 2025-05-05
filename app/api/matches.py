@@ -68,7 +68,10 @@ def swipe_listing(listing_id: int):
         return jsonify({"error": f"Listing #{target_listing_id} not found."}), 404
     
     try:
-        Swipe.create_swipe(listing, target, is_like)
+        swipe = Swipe.create_swipe(listing, target, is_like)
+        
+        if not swipe:
+            return jsonify({"error": f"Identical swipe on listing #{target_listing_id} already exists."}), 400
     except Exception as error:
         db.session.rollback()
         print(f"Failed to swipe on listing #{target_listing_id}:", str(error))
@@ -125,6 +128,28 @@ def get_swipes():
     
     return "", 204
 
+@matches.delete("/swipes/<int:swipe_id>")
+@login_required
+def delete_swipe(swipe_id: int):
+    swipe: Swipe | None = db.session.get(Swipe, swipe_id)
+    
+    if not swipe:
+        return jsonify({"error": f"Swipe #{swipe_id} not found."}), 404
+    
+    if swipe.swiped_by_listing.user_id != current_user.id:
+        return jsonify({"error": f"Swipe #{swipe_id} does not belong to user."}), 403
+    
+    try:
+        db.session.delete(swipe)
+        db.session.commit()
+        
+        return "", 204
+    except Exception as error:
+        db.session.rollback()
+        print(f"Failed to delete swipe #{swipe_id}:", error)
+        
+        return jsonify({"error": str(error)}), 500
+
 # TODO: add get_swipes_by_listing_id
 
 @matches.get("/matches")
@@ -169,3 +194,25 @@ def get_matches_by_listing_id(listing_id: int):
         return "", 204
     
     return jsonify({"data": [match.to_dict() for match in matches]}), 200
+
+@matches.delete("/matches/<int:match_id>")
+@login_required
+def delete_match(match_id: int):
+    match: Match | None = db.session.get(Match, match_id)
+    
+    if not match:
+        return jsonify({"error": f"Match #{match_id} not found."}), 404
+    
+    if current_user.id not in (match.listing1.user_id, match.listing2.user_id):
+        return jsonify({"error": f"Match #{match_id} does not belong to user."}), 403
+    
+    try:
+        db.session.delete(match)
+        db.session.commit()
+        
+        return "", 204
+    except Exception as error:
+        db.session.rollback()
+        print(f"Failed to delete match #{match_id}:", error)
+        
+        return jsonify({"error": str(error)}), 500

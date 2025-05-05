@@ -4,7 +4,7 @@ import { useNavigate } from "react-router";
 import useUserContext from "../../features/auth/hooks/useUserContext";
 import ListingList from "../../features/listings/components/ListingList";
 import { MouseEvent, Suspense, useEffect, useState } from "react";
-import { getListingRecommendations } from "../../features/matches/matchesApi";
+import { getListingRecommendations, swipeListing } from "../../features/matches/matchesApi";
 import ListingRecommendationsCarousel from "../../features/matches/components/ListingRecommendationCarousel";
 
 export default function DiscoverPage() {
@@ -27,6 +27,26 @@ export default function DiscoverPage() {
         } else {
             setRecommendationIds([]);
         }
+    }
+
+    async function handleSwipe(_event: MouseEvent<HTMLButtonElement>, onListingId: number, isLike: boolean) {        
+        if (!listingId) return;
+        
+        const response = await swipeListing(listingId, onListingId, isLike);
+
+        if (response.status === "error") {
+            console.error(`Failed to swipe on listing #${ onListingId }:`, response.message);
+            return;
+        }
+
+        const matchData = response.data;
+
+        if (!matchData) {
+            console.log(`Swiped on listing #${ onListingId }.`);
+            return;
+        }
+
+        console.log(`Matched with listing #${ onListingId }!`, matchData);
     }
 
     useEffect(() => {
@@ -85,7 +105,10 @@ export default function DiscoverPage() {
 
             { recommendationIds && (
                 <Suspense fallback = { <CircularProgress sx = {{ position: "fixed", left: "50%", top: "50%", translate: "-50% -50%" }} /> }>
-                    <ListingRecommendationsCarousel listingIds = { recommendationIds } />
+                    <ListingRecommendationsCarousel
+                        listingIds = { recommendationIds }
+                        onChange = { handleSwipe }
+                    />
                 </Suspense>
             )}
         </Box>

@@ -93,6 +93,23 @@ export async function getSwipes(): Promise<ApiResult<CategorizedSwipeData>> {
 
 // TODO: add getIncomingSwipes and getOutgoingSwipes
 
+export async function deleteSwipe(swipeId: number): Promise<ApiResult<true>> {
+    try {
+        const response = await fetch(`/api/swipes/${ swipeId }`, { method: "DELETE" });
+
+        if (response.ok) {
+            return { status: "success", data: true };
+        }
+
+        const data = await response.json();
+
+        throw new Error(data.error);
+    } catch (error) {
+        console.error(`Error deleting swipe #${ swipeId }:`, error);
+        return { status: "error", message: String(error) };
+    }
+}
+
 export async function getMatches(listingId?: number): Promise<ApiResult<MatchData[]>> {
     try {
         const response = await fetch(`/api/${ listingId ? "listings/" + listingId + "/" : "" }matches`, { method: "GET" });
@@ -114,6 +131,23 @@ export async function getMatches(listingId?: number): Promise<ApiResult<MatchDat
         return { status: "success", data: data.data };
     } catch (error) {
         console.error(listingId ? `Error retrieving listing #${ listingId }'s matches:` : "Error retrieving user's matches:", error);
+        return { status: "error", message: String(error) };
+    }
+}
+
+export async function deleteMatch(matchId: number): Promise<ApiResult<true>> {
+    try {
+        const response = await fetch(`/api/matches/${ matchId }`, { method: "DELETE" });
+
+        if (response.ok) {
+            return { status: "success", data: true };
+        }
+
+        const data = await response.json();
+
+        throw new Error(data.error);
+    } catch (error) {
+        console.error(`Error deleting match #${ matchId }:`, error);
         return { status: "error", message: String(error) };
     }
 }

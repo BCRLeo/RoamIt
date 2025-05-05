@@ -1,9 +1,9 @@
 import { Close, Favorite } from "@mui/icons-material";
 import { Box, Fab, Typography } from "@mui/material";
 import Listing from "../../listings/components/Listing";
-import { useState } from "react";
+import { MouseEvent, useState } from "react";
 
-export default function ListingRecommendationsCarousel({ listingIds }: { listingIds: number[] }) {
+export default function ListingRecommendationsCarousel({ listingIds, onChange }: { listingIds: number[], onChange?: (event: MouseEvent<HTMLButtonElement>, listingId: number, isLike: boolean) => void }) {
     const [index, setIndex] = useState<number | null>(0);
 
     function incrementIndex() {
@@ -18,13 +18,17 @@ export default function ListingRecommendationsCarousel({ listingIds }: { listing
         }
     }
 
-    function handlePass() {
-        
+    function handlePass(event: MouseEvent<HTMLButtonElement>) {        
+        if (onChange && index !== null) {
+            onChange(event, listingIds[index], false);
+        }
         incrementIndex();
     }
 
-    function handleLike() {
-        
+    function handleLike(event: MouseEvent<HTMLButtonElement>) {
+        if (onChange && index !== null) {
+            onChange(event, listingIds[index], true);
+        }
         incrementIndex();
     }
 

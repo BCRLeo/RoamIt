@@ -61,6 +61,28 @@ class Swipe(db.Model):
         Creates a swipe record using listing objects.
         If it's a right swipe, checks for a reciprocal right swipe to create a match.
         """
+        existing: Swipe | None = db.session.execute(
+            db.select(Swipe)
+            .filter_by(
+                swiped_by_listing_id = swiped_by_listing.id,
+                swiped_on_listing_id = swiped_on_listing.id
+            )
+        ).scalar_one_or_none()
+        
+        if existing:
+            if existing.is_like == is_like:
+                return None
+            
+            try:
+                db.session.delete(existing)
+                db.session.commit()
+                return cls.create_swipe(swiped_by_listing, swiped_on_listing, is_like)
+            except Exception as error:
+                db.session.rollback()
+                print(f"Failed to override swipe on listing #${swiped_on_listing.id} by listing #{swiped_by_listing}:", error)
+                
+                return None
+        
         try:
             new_swipe = cls(
                 swiped_by_listing_id = swiped_by_listing.id,
