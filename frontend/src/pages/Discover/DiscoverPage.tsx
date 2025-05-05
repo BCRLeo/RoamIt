@@ -6,12 +6,15 @@ import ListingList from "../../features/listings/components/ListingList";
 import { MouseEvent, Suspense, useEffect, useState } from "react";
 import { getListingRecommendations, swipeListing } from "../../features/matches/matchesApi";
 import ListingRecommendationsCarousel from "../../features/matches/components/ListingRecommendationCarousel";
+import { MatchData } from "../../features/matches/matchesConstants";
+import MatchModal from "../../features/matches/components/MatchModal";
 
 export default function DiscoverPage() {
     const navigate = useNavigate();
     const user = useUserContext().user;
     const [listingId, setListingId] = useState<number | null>(null);
     const [recommendationIds, setRecommendationIds] = useState<number[] | null>(null);
+    const [match, setMatch] = useState<MatchData | null>(null);
 
     async function handleListingClick(_event: MouseEvent<HTMLDivElement>, listingId: number) {
         setListingId(listingId);
@@ -27,6 +30,10 @@ export default function DiscoverPage() {
         } else {
             setRecommendationIds([]);
         }
+    }
+
+    function handleMatch(matchData: MatchData) {
+        setMatch(matchData);
     }
 
     async function handleSwipe(_event: MouseEvent<HTMLButtonElement>, onListingId: number, isLike: boolean) {        
@@ -47,6 +54,7 @@ export default function DiscoverPage() {
         }
 
         console.log(`Matched with listing #${ onListingId }!`, matchData);
+        handleMatch(matchData);
     }
 
     useEffect(() => {
@@ -110,6 +118,10 @@ export default function DiscoverPage() {
                         onChange = { handleSwipe }
                     />
                 </Suspense>
+            )}
+
+            { match && (
+                <MatchModal matchId = { match.id } />
             )}
         </Box>
     );

@@ -135,6 +135,22 @@ export async function getMatches(listingId?: number): Promise<ApiResult<MatchDat
     }
 }
 
+export async function getMatch(matchId: number): Promise<ApiResult<MatchData>> {
+    try {
+        const response = await fetch(`/api/matches/${ matchId }`, { method: "GET" });
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error);
+        }
+
+        return { status: "success", data: data.data };
+    } catch (error) {
+        console.error(`Error retrieving match #${ matchId }:`, error);
+        return { status: "error", message: String(error) };
+    }
+}
+
 export async function deleteMatch(matchId: number): Promise<ApiResult<true>> {
     try {
         const response = await fetch(`/api/matches/${ matchId }`, { method: "DELETE" });

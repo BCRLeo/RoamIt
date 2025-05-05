@@ -172,6 +172,19 @@ def get_matches():
     
     return jsonify({"data": [match.to_dict() for match in matches]}), 200
 
+@matches.get("/matches/<int:match_id>")
+@login_required
+def get_match(match_id: int):
+    match: Match | None = db.session.get(Match, match_id)
+    
+    if not match:
+        return jsonify({"error": f"Match #{match_id} not found."}), 404
+    
+    if current_user.id not in (match.listing1.user_id, match.listing2.user_id):
+        return jsonify({"error": f"Match #{match_id} does not belong to user."}), 403
+    
+    return jsonify({"data": match.to_dict()}), 200
+
 @matches.get("/listings/<int:listing_id>/matches")
 @login_required
 def get_matches_by_listing_id(listing_id: int):
