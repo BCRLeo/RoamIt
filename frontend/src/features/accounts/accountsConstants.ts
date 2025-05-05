@@ -8,25 +8,25 @@ export const MIN_BIRTHDAY = dayjs().subtract(125, "year");
 export const MAX_BIRTHDAY = dayjs().subtract(18, "year");
 
 export const USER_TAG_OPTIONS = [
-    "Travel",
-    "Cooking",
-    "Reading",
-    "Gaming",
-    "Music",
     "Art",
-    "Writing",
-    "Photography",
-    "Fitness",
-    "Hiking",
-    "Volunteering",
-    "Machine Learning",
-    "Data Science",
+    "Backpacking",
+    "Calisthenics",
+    "Chess",
+    "Cooking",
     "Design",
-    "UX/UI",
+    "Hiking",
+    "Music",
+    "Parties",
     "Philosophy",
-    "Psychology",
-    "Chess"
-];
+    "Photography",
+    "Reading",
+    "Skiing",
+    "Surfing",
+    "Travel",
+    "Video games",
+    "Volunteering",
+    "Writing"
+] as const;
 
 const genders = ["Man", "Woman", "Other", "PNS"] as const;
 export type Gender = (typeof genders)[number];

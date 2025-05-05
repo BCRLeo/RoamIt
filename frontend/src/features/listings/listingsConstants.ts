@@ -1,6 +1,18 @@
 import { Dayjs } from "dayjs";
 import { Location } from "../maps/mapsConstants";
 
+export const LISTING_TAG_OPTIONS = [
+    "Art",
+    "Group",
+    "Hiking",
+    "Looking for group",
+    "Looking for solo",
+    "Movies",
+    "Solo",
+    "Surfing",
+    "Wine"
+] as const;
+
 const listingCategories = ["short-term", "long-term", "hosting"] as const;
 export type ListingCategory = (typeof listingCategories)[number];
 

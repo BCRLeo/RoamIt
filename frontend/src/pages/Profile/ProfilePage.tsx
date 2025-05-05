@@ -7,12 +7,11 @@ import { deleteBio, deleteTags, uploadBio, uploadProfilePicture, uploadTags, upl
 import Bio from "../../features/accounts/components/Bio";
 import PhoneNumber from "../../features/accounts/components/PhoneNumber";
 import ProfilePicture from "../../features/accounts/components/ProfilePicture";
-import Tags from "../../features/accounts/components/Tags";
 import usePublicUserData from "../../features/accounts/hooks/usePublicUserData";
 import useUnsavedStatus from "../../hooks/useUnsavedStatus";
 import NotFoundPage from "../NotFound/NotFoundPage";
 import { useToggleState } from "../../hooks/useToggleState";
-
+import UserTags from "../../features/accounts/components/UserTags";
 
 export default function ProfilePage({ username = useParams()?.username }: { username?: string }) {
     if (!username) {
@@ -122,7 +121,7 @@ export default function ProfilePage({ username = useParams()?.username }: { user
 
                 <Box sx = {{ width: "60%", mx: "auto", textAlign: "left" }}>
                     <Bio userId = { user.id } />
-                    <Tags userId = { user.id } />
+                    <UserTags userId = { user.id } />
                 </Box>
 
                 <Button
@@ -149,7 +148,7 @@ export default function ProfilePage({ username = useParams()?.username }: { user
 
             <Box sx = {{ width: "60%", mx: "auto", textAlign: "left" }}>
                 <Bio userId = { user.id } onEdit = { isEditing ? (event) => setUpdatedBio(event.target.value) : undefined } />
-                <Tags userId = { user.id } onEdit = { isEditing ? handleUpdateTags : undefined } />
+                <UserTags userId = { user.id } onEdit = { isEditing ? handleUpdateTags : undefined } />
                 <PhoneNumber userId = { user.id } onEdit = { isEditing ? (event) => setUpdatedPhone(event.target.value) : undefined } />
             </Box>
 
