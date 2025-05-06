@@ -1,4 +1,48 @@
 # RoamIt
+## Running the project
+### 1. Set up environment variables
+Create a file called `.env` in the root directory `RoamIt` and copy the following text into it:
+```
+PASSWORD_HASH = "pbkdf2:sha256"
+GOOGLE_API_KEY = "AIzaSyBKgLPlRSzW74IySfwkHcP4HSfmJRMUn80"
+```
+
+### 2. Front end
+With the terminal in the root directory `RoamIt`, run
+```
+cd frontend
+npm ci
+```
+to install the frontend dependencies. Then run
+```
+npm run build
+```
+to build the static files.
+
+### 3. Back end
+Run
+```
+cd ..
+```
+to get back to the root directory `RoamIt`, then run
+```
+pip install -r requirements.txt
+```
+in to install the backend dependencies. Finally, run
+```
+python init_db.py
+```
+to initialize the database instance.
+
+### 4. Run the project
+Run
+```
+python run.py
+```
+and copy the link into your browser to run the web app.
+
+---
+
 ## Frontend
 ### Initial Project Setup
 *For information on setting up the project after cloning the repository, refer to the following section. This subsection documents how the project has been set up. Do not run these steps, they are only here for documentation.*
