@@ -3,6 +3,7 @@ from flask_login import current_user, login_required
 from geodistpy import geodist
 from sqlalchemy import or_
 
+from ..algorithm import listing_recommendations
 from ..extensions import db
 from ..models import Listing, Location, Swipe, Match
 from ..utilities import CustomHTTPError
@@ -39,31 +40,26 @@ def get_feasible_listing_recommendations(listing_id: int):
 @matches.get("/listings/<int:listing_id>/recommendations")
 @login_required
 def get_listing_recommendations(listing_id: int):
+    listing: Listing = db.session.execute(
+        db.select(Listing)
+        .filter_by(id = listing_id)
+    ).scalar_one_or_none()
+    
+    if not listing:
+        return jsonify({"error": f"Listing #{listing_id} not found."}), 404
+    
+    if listing.user_id != current_user.id:
+        return jsonify({"error": f"Listing #{listing_id} does not belong to user."}), 403
+    
     try:
-        listings = get_feasible_listing_recommendations(listing_id)
+        listing_ids = listing_recommendations(listing_id)
     except CustomHTTPError as error:
         return jsonify({"error": str(error)}), error.status_code
     
-    if not listings:
+    if not listing_ids:
         return "", 204
     
-    outgoing_swipes: list[Swipe] | None = db.session.execute(
-        db.select(Swipe)
-        .filter_by(swiped_by_listing_id = listing_id)
-    ).scalars().all()
-    
-    listing_ids = {listing.id for listing in listings}
-    liked_listing_ids = {swipe.swiped_on_listing_id for swipe in outgoing_swipes if swipe.is_like}
-    passed_listing_ids = {swipe.swiped_on_listing_id for swipe in outgoing_swipes if not swipe.is_like}
-    swiped_listing_ids = liked_listing_ids.union(passed_listing_ids)
-    
-    if listing_ids.issubset(liked_listing_ids):
-        return "", 204
-    
-    if listing_ids.issubset(swiped_listing_ids):
-        return jsonify({"data": list(listing_ids.intersection(passed_listing_ids))}), 200
-    
-    return jsonify({"data": list(listing_ids.difference(swiped_listing_ids))}), 200
+    return jsonify({"data": listing_ids}), 200
 
 @matches.post("/listings/<int:listing_id>/swipes")
 @login_required

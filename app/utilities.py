@@ -22,3 +22,7 @@ def can_convert_to_int(value):
 def string_to_bool(value: str):
     """Convert a string to a boolean (handles 'true', 'false', '1', '0')"""
     return value.lower() in ["true", "1"]
+
+def similarity(reference: list, target: list):
+    """Calculate asymmetric similarity of reference with target."""
+    return len(set(reference).intersection(set(target))) / len(reference)
