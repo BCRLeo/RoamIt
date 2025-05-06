@@ -1,11 +1,10 @@
-import { Grid2, Grid2Props, Box, AutocompleteChangeReason, Button } from "@mui/material";
+import { Box, AutocompleteChangeReason, Button, Stack, StackProps } from "@mui/material";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { NavLink } from "react-router";
 
 import { deleteListingTags, getListingData, uploadListingTags } from "../../listingsApi";
-import ListingImages from "../ListingImages";
 import usePublicUserData from "../../../accounts/hooks/usePublicUserData";
-import { SyntheticEvent, useState } from "react";
+import { ChangeEvent, Children, cloneElement, isValidElement, ReactNode, SyntheticEvent, useState } from "react";
 import useUnsavedStatus from "../../../../hooks/useUnsavedStatus";
 import { useToggleState } from "../../../../hooks/useToggleState";
 import Name from "./Name";
@@ -19,6 +18,7 @@ import Description from "./Description";
 import Profile from "./Profile";
 import Tags from "./Tags";
 import Images from "./Images";
+import { ListingData } from "../../listingsConstants";
 
 Listing.Budget = Budget;
 Listing.Category = Category;
@@ -32,8 +32,8 @@ Listing.Name = Name;
 Listing.Profile = Profile;
 Listing.Tags = Tags;
 
-export default function Listing({ listingId, gridProps }: { listingId: number, gridProps?: Grid2Props }) {
-    const { sx: gridPropsSx = {}, ...gridPropsRest } = gridProps ?? {};
+export default function Listing({ children, listingId, editable = true, stackProps }: { children?: ReactNode, listingId: number, editable?: boolean, stackProps?: StackProps }) {
+    const { sx: stackPropsSx = {}, ...stackPropsRest } = stackProps ?? {};
 
     const { data: listingData } = useSuspenseQuery({
         queryKey: [`getListingData`, listingId],
@@ -57,8 +57,13 @@ export default function Listing({ listingId, gridProps }: { listingId: number, g
         }
     });
 
+    const [updatedName, setUpdatedName] = useState<string | null>(null);
     const [updatedTags, setUpdatedTags] = useState<string[] | null>(null);
     const isUnsaved = useUnsavedStatus([updatedTags]);
+
+    function handleNameUpdate(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+        setUpdatedName(event.target.value);
+    }
 
     function handleUpdateTags(_event: SyntheticEvent, value: string[], _reason: AutocompleteChangeReason) {
         setUpdatedTags(value);
@@ -80,100 +85,157 @@ export default function Listing({ listingId, gridProps }: { listingId: number, g
         }
     }
 
-    if (isAuthenticated) return (
-        <>
-            <Name listingData = { listingData } />
-            <CategoryAndDates listingData = { listingData } />
-            <Budget listingData = { listingData } />
-            <GenderPreference listingData = { listingData } />
-
-            <Grid2
-                container
+    if (Children.count(children) == 0) {
+        if (isAuthenticated) return (
+            <Stack
                 spacing = { 2 }
                 sx = {{
                     width: "55%",
                     margin: "2rem auto",
-                    ...gridPropsSx
+                    alignItems: "center",
+                    ...stackPropsSx
                 }}
-                { ...gridPropsRest }
+                { ...stackPropsRest }
             >
-                <Grid2 size = { 12 }>
-                    <Tags listingData = { listingData } onEdit = { isEditing ? handleUpdateTags : undefined } />
-                </Grid2>
+                <Name listingData = { listingData } onEdit = { isEditing ? handleNameUpdate : undefined } />
+                <CategoryAndDates listingData = { listingData } />
+                <Budget listingData = { listingData } />
+                <GenderPreference listingData = { listingData } />
 
-                <Grid2 size = { 12 }>
-                    <Location listingData = { listingData } />
-                </Grid2>
+                <Tags listingData = { listingData } onEdit = { isEditing ? handleUpdateTags : undefined } />
+                <Location listingData = { listingData } />
+                <Description listingData = { listingData } />
+                <Images listingData = { listingData } />
 
-                <Grid2 size = { 12 }>
-                    <Description listingData = { listingData } />
-                </Grid2>
+                { editable && (
+                    <Box
+                        sx = {{
+                            display: "flex",
+                            width: "fit-content",
+                            mt: "1rem",
+                            mx: "auto"
+                        }}
+                        gap = "1rem">
+                        { isEditing ?
+                            <Button
+                                variant = "contained"
+                                onClick = { toggleIsEditing }
+                            >
+                                { isUnsaved ? "Save changes" : "Finish editing" }
+                            </Button>
+                        :
+                            <Button
+                                variant = "contained"
+                                onClick = { toggleIsEditing }
+                            >
+                                Edit listing
+                            </Button>
+                        }
+                        <Button
+                            component = { NavLink }
+                            to = "/listings"
+                            variant = "outlined"
+                        >
+                            Back to your listings
+                        </Button>
+                    </Box>
+                )}
+            </Stack>
+        );
+    
+        return (
+            <Stack
+                spacing = { 2 }
+                sx = {{
+                    width: "55%",
+                    margin: "2rem auto",
+                    alignItems: "center",
+                    ...stackPropsSx
+                }}
+                { ...stackPropsRest }
+            >
+                <Profile listingData = { listingData } />
+                <Dates listingData = { listingData } />
+                <Budget listingData = { listingData } />
+                <GenderPreference listingData = { listingData } />
+    
+                <Tags listingData = { listingData } />
+                <Location listingData = { listingData } />
+                <Description listingData = { listingData } />
+                <Images listingData = { listingData } />
+            </Stack>
+        );
+    }
 
-                <Grid2 size = { 12 }>
-                    <ListingImages listingId = { listingId } />
-                </Grid2>
-            </Grid2>
+    const childrenWithProps = Children.map(children, child => {
+        if (isValidElement<{ listingData: ListingData, [key: string]: any }>(child)) {
+            return cloneElement(child, { listingData: listingData });
+        }
+        return child;
+    });
 
-            <Box sx = {{ display: "flex", width: "fit-content", mt: "1rem", mx: "auto" }} gap = "1rem">
-                { isEditing ?
+    if (isAuthenticated) return (
+        <Stack
+            spacing = { 2 }
+            sx = {{
+                width: "55%",
+                margin: "2rem auto",
+                alignItems: "center",
+                ...stackPropsSx
+            }}
+            { ...stackPropsRest }
+        >
+            { childrenWithProps }
+
+            { editable && (
+                <Box sx = {{ display: "flex", width: "fit-content", mt: "1rem", mx: "auto" }} gap = "1rem">
+                    { isEditing ?
+                        <Button
+                            variant = "contained"
+                            onClick = { toggleIsEditing }
+                        >
+                            { isUnsaved ? "Save changes" : "Finish editing" }
+                        </Button>
+                    :
+                        <Button
+                            variant = "contained"
+                            onClick = { toggleIsEditing }
+                        >
+                            Edit listing
+                        </Button>
+                    }
                     <Button
-                        variant = "contained"
-                        onClick = { toggleIsEditing }
+                        component = { NavLink }
+                        to = "/listings"
+                        variant = "outlined"
                     >
-                        { isUnsaved ? "Save changes" : "Finish editing" }
+                        Back to your listings
                     </Button>
-                :
-                    <Button
-                        variant = "contained"
-                        onClick = { toggleIsEditing }
-                    >
-                        Edit listing
-                    </Button>
-                }
-                <Button
-                    component = { NavLink }
-                    to = "/listings"
-                    variant = "outlined"
-                >
-                    Back to your listings
-                </Button>
-            </Box>
-        </>
+                </Box>
+            )}
+        </Stack>
     );
 
     return (
-        <>
+        <Stack
+            spacing = { 2 }
+            sx = {{
+                width: "55%",
+                margin: "2rem auto",
+                alignItems: "center",
+                ...stackPropsSx
+            }}
+            { ...stackPropsRest }
+        >
             <Profile listingData = { listingData } />
             <Dates listingData = { listingData } />
             <Budget listingData = { listingData } />
             <GenderPreference listingData = { listingData } />
 
-            <Grid2
-                container
-                spacing = { 2 }
-                sx = {{
-                    width: "55%",
-                    margin: "2rem auto",
-                    ...gridPropsSx
-                }}
-                { ...gridPropsRest }
-            >
-                <Grid2 size = { 12 }>
-                    <Tags listingId = { listingId } />
-                </Grid2>
-
-                <Grid2 size = { 12 }>
-                    <Location listingData = { listingData } />
-                </Grid2>
-
-                <Grid2 size = { 12 }>
-                    <Description listingData = { listingData } />
-                </Grid2>
-
-                <Grid2 size = { 12 }>
-                    <ListingImages listingId = { listingId } />
-                </Grid2>
-            </Grid2>
-        </>
+            <Tags listingData = { listingData } />
+            <Location listingData = { listingData } />
+            <Description listingData = { listingData } />
+            <Images listingData = { listingData } />
+        </Stack>
     );
 }
