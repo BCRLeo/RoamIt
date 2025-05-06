@@ -1,41 +1,13 @@
 from flask import Blueprint, jsonify, request
 from flask_login import current_user, login_required
-from geodistpy import geodist
 from sqlalchemy import or_
 
 from ..algorithm import listing_recommendations
 from ..extensions import db
-from ..models import Listing, Location, Swipe, Match
+from ..models import Listing, Swipe, Match
 from ..utilities import CustomHTTPError
 
 matches = Blueprint("matches", __name__)
-
-@login_required
-def get_feasible_listing_recommendations(listing_id: int):
-    self_listing: Listing = db.session.execute(
-        db.select(Listing)
-        .filter_by(id = listing_id)
-    ).scalar_one_or_none()
-    
-    if not self_listing:
-        raise CustomHTTPError(f"Listing #{listing_id} not found.", 404)
-    
-    if self_listing.user_id != current_user.id:
-        raise CustomHTTPError(f"Listing #{listing_id} does not belong to user.", 403)
-    
-    locations: list[Location] = self_listing.location.get_locations_within_radius(self_listing.radius * 1000) # convert km to m
-    listings: list[Listing] = []
-    
-    for location in locations:
-        listings += location.listings
-    
-    listings = list(filter(
-        lambda listing: (
-            listing.id != self_listing.id and
-            geodist((self_listing.location.latitude, self_listing.location.longitude), (listing.location.latitude, listing.location.longitude), "km") <= listing.radius
-        ), listings))
-    
-    return listings
 
 @matches.get("/listings/<int:listing_id>/recommendations")
 @login_required

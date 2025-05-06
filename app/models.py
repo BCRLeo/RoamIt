@@ -70,12 +70,13 @@ class Swipe(db.Model):
         ).scalar_one_or_none()
         
         if existing:
-            if existing.is_like == is_like:
+            if existing.is_like == True:
                 return None
             
             try:
                 db.session.delete(existing)
                 db.session.commit()
+                
                 return cls.create_swipe(swiped_by_listing, swiped_on_listing, is_like)
             except Exception as error:
                 db.session.rollback()

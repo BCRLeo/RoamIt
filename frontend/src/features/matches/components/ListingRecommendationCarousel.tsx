@@ -42,7 +42,7 @@ export default function ListingRecommendationsCarousel({ listingIds, onChange }:
 
     return (
         <>
-            <Listing listingId = { listingIds[index] } />
+            <Listing key = { `listing${ listingIds[index] }` } listingId = { listingIds[index] } />
             <Box
                 sx = {{
                     display: "flex",

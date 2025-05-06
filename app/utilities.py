@@ -25,4 +25,7 @@ def string_to_bool(value: str):
 
 def similarity(reference: list, target: list):
     """Calculate asymmetric similarity of reference with target."""
+    if not len(reference):
+        return 0
+
     return len(set(reference).intersection(set(target))) / len(reference)

@@ -48,13 +48,9 @@ export default function DiscoverPage() {
 
         const matchData = response.data;
 
-        if (!matchData) {
-            console.log(`Swiped on listing #${ onListingId }.`);
-            return;
+        if (matchData) {
+            handleMatch(matchData);
         }
-
-        console.log(`Matched with listing #${ onListingId }!`, matchData);
-        handleMatch(matchData);
     }
 
     useEffect(() => {

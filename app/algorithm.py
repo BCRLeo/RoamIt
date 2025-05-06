@@ -48,7 +48,8 @@ def feasible_listings_in_range(listing_id: int):
                 (listing.location.latitude, listing.location.longitude),
                 (listing_x.location.latitude, listing_x.location.longitude),
                 "km"
-            ) <= listing_x.radius
+            ) <= listing_x.radius and
+            not listing.is_complete
         ), listings))
     
     return listings
@@ -102,6 +103,6 @@ def listing_recommendations(listing_id: int):
         return None
     
     tag_similarities = {id: listing_tag_similarity(listing_id, id) for id in listing_ids}
-    listing_ids_sorted_by_tag_similarity = [id for _, id in sorted(zip(tag_similarities, listing_ids), reverse = True)]
+    listing_ids_sorted_by_tag_similarity = sorted(tag_similarities, key = tag_similarities.get, reverse = True)
     
     return listing_ids_sorted_by_tag_similarity
