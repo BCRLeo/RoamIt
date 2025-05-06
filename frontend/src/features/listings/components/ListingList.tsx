@@ -6,8 +6,10 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import NotFoundPage from "../../../pages/NotFound/NotFoundPage";
 import { getUserListingData } from "../listingsApi";
 import ListingListItem from "./ListingListItem";
+import usePublicUserData from "../../accounts/hooks/usePublicUserData";
 
 export default function ListingList({ username, onClick, compact }: { username: string, onClick?: (event: MouseEvent<HTMLDivElement>, listingId: number) => void, compact?: boolean }) {
+    const { isAuthenticated } = usePublicUserData(username);
     const { data: listingResponse } = useSuspenseQuery({
         queryKey: ["getUserListingData", username],
         queryFn: () => getUserListingData(username)
@@ -20,7 +22,7 @@ export default function ListingList({ username, onClick, compact }: { username: 
     const listingData = listingResponse.data;
 
     if (!listingData) return (
-        <Typography variant = "h6">Looks like @{ username } doesn't have any listings yet...</Typography>
+        <Typography variant = "h6">Looks like { isAuthenticated ? "you don't" : `@${ username } doesn't` } have any listings yet...</Typography>
     );
     
     return (

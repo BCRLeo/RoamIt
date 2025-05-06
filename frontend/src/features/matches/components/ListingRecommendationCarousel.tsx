@@ -51,7 +51,8 @@ export default function ListingRecommendationsCarousel({ listingIds, onChange }:
                     left: "50%",
                     translate: "-50% calc(50% + 2rem)",
                     width: "63%",
-                    justifyContent: "space-between"
+                    justifyContent: "space-between",
+                    pointerEvents: "none"
                 }}
             >
                 <Fab
@@ -59,7 +60,8 @@ export default function ListingRecommendationsCarousel({ listingIds, onChange }:
                     aria-label = "pass"
                     sx = {{
                         height: "50dvh",
-                        borderRadius: 8
+                        borderRadius: 8,
+                        pointerEvents: "auto"
                     }}
                     onClick = { handlePass }
                 >
@@ -70,7 +72,8 @@ export default function ListingRecommendationsCarousel({ listingIds, onChange }:
                     aria-label = "like"
                     sx = {{
                         height: "50dvh",
-                        borderRadius: 8
+                        borderRadius: 8,
+                        pointerEvents: "auto"
                     }}
                     onClick = { handleLike }
                 >

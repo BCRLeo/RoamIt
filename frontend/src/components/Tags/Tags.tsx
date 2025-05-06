@@ -27,6 +27,7 @@ export default function Tags(props: {
 
     const tagSelector = (
         <Autocomplete
+            fullWidth
             multiple
             freeSolo
             options = { options }

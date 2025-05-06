@@ -33,7 +33,7 @@ export default function Message({
                     ? theme.palette.primary.main
                     : theme.palette.action.hover,
                     p: '1rem',
-                    borderRadius: theme.shape.borderRadius,
+                    borderRadius: 1,
                     color: isOwn
                     ? theme.palette.primary.contrastText
                     : theme.palette.text.primary,

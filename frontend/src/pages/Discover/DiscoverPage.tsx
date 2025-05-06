@@ -117,7 +117,9 @@ export default function DiscoverPage() {
             )}
 
             { match && (
-                <MatchModal matchId = { match.id } />
+                <Suspense fallback = { <CircularProgress sx = {{ position: "fixed", left: "50%", top: "50%", translate: "-50% -50%" }} /> } >
+                    <MatchModal matchId = { match.id } />
+                </Suspense>
             )}
         </Box>
     );

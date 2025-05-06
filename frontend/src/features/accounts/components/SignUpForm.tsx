@@ -319,11 +319,6 @@ export default function SignUpForm({ openLogIn }: { openLogIn?: () => void }) {
                     <TextField
                         label = "Password"
                         type = "password"
-                        slotProps = {{
-                            htmlInput: {
-                                pattern: PASSWORD_REGEX
-                            }
-                        }}
                         helperText = { passwordError ? passwordError : passwordRegExDescription }
                         variant = "filled"
                         fullWidth

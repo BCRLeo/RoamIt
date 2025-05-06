@@ -19,7 +19,7 @@ import {
 } from "../accountsApi";
 import { createChat, getChats } from "../../chats/chatsApi";
 import { getCurrentUser } from "../../auth/authApi"
-import { useNavigate } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 
 
 interface User {
@@ -234,8 +234,8 @@ export default function FriendsManager() {
                                 sx={{ width: 32, height: 32 }}
                             />
                             <Typography
-                                onClick={() => navigate(`/users/@${user.username}`)}  // view a friend's profile
-                                sx={{ cursor: "pointer" }}
+                                component = { NavLink }
+                                to = { `/users/${user.username}` }
                             >
                                 @{user.username}
                             </Typography>
