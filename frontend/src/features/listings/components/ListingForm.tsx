@@ -1,4 +1,4 @@
-import { ChangeEvent, FormEvent, useEffect, useState } from "react";
+import { ChangeEvent, FormEvent, useState } from "react";
 
 import { Close, Upload } from "@mui/icons-material";
 import { TextField, Badge, Button, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent, Grid2, FormControlLabel, Checkbox, ImageList, ImageListItem, IconButton, Grid2Props, Typography } from "@mui/material";
@@ -10,27 +10,16 @@ import UploadButton from "../../../components/UploadButton/UploadButton";
 import LocationPicker from "../../maps/components/LocationPicker";
 import { useToggleState } from "../../../hooks/useToggleState";
 import { Place } from "../../maps/mapsConstants";
-import { createListing, getListingData } from "../listingsApi";
-import { isListingCategory, ListingCategory, ListingData } from "../listingsConstants";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import NotFoundPage from "../../../pages/NotFound/NotFoundPage";
+import { createListing } from "../listingsApi";
+import { isListingCategory, ListingCategory } from "../listingsConstants";
 
-export default function ListingForm(props:
-    { mode?: "create", gridProps?: Grid2Props } |
-    { mode: "edit", listingId: number, gridProps?: Grid2Props }
-) {
-    const mode = props.mode ?? "create";
-    const gridProps = props.gridProps;
-    const listingId = props.mode === "edit" ? props.listingId : undefined;
-
+export default function ListingForm({ gridProps }: { gridProps?: Grid2Props }) {
     const { sx: gridPropsSx = {}, ...gridPropsRest } = gridProps ?? {};
-
     const navigate = useNavigate();
 
-    // replace with ListingData object?
     const [place, setPlace] = useState<Place | null>(null);
     const [radius, setRadius] = useState<number | null>(null);
-    const [locationName, setLocationName] = useState("");
+    const [locationName, setLocationName] = useState<string | null>(null);
     const [category, setCategory] = useState<ListingCategory | "">("");
     const [budget, setBudget] = useState<number | null>(null);
     const [startDate, setStartDate] = useState<Dayjs | null>(null);
@@ -39,42 +28,6 @@ export default function ListingForm(props:
     const [prefersSameGender, togglePrefersSameGender] = useToggleState(false);
     const [description, setDescription] = useState("");
     const [uploadedImages, setUploadedImages] = useState<File[]>([]);
-
-    const { data: listingResponse } = useSuspenseQuery({
-        queryKey: [`getListingData`, listingId],
-        queryFn: () => listingId ? getListingData(listingId) : null,
-    });
-
-    const [listingData, setListingData] = useState<ListingData | null | undefined>();
-
-    useEffect(() => {        
-        if (!listingResponse || listingResponse.status === "error") return;
-
-        setListingData(listingResponse.data);
-    }, [listingResponse]);
-
-    useEffect(() => {
-        if (!listingData) return;
-        
-        setPlace({
-            coordinates: listingData.location.coordinates,
-            country: listingData.location.country,
-            locality: listingData.location.locality
-        });
-        setRadius(listingData.radius);
-        setLocationName(listingData.location.name ?? "");
-        setCategory(listingData.category);
-        setBudget(listingData.nightlyBudget ?? null);
-        setStartDate(listingData.startDate);
-        setEndDate(listingData.endDate ?? null);
-        if (datesAreApproximate !== listingData.datesAreApproximate) {
-            toggleDatesAreApproximate();
-        }
-        if (prefersSameGender !== listingData.prefersSameGender) {
-            togglePrefersSameGender();
-        }
-        setDescription(listingData.description);
-    }, [listingData]);
 
     function handleLocationChange(place: Place | null, radius: number | null) {
         if (place) {
@@ -177,7 +130,7 @@ export default function ListingForm(props:
         const success = await createListing({
             coordinates: place.coordinates,
             radius: radius,
-            locationName: locationName,
+            locationName: locationName ?? undefined,
             category: category,
             nightlyBudget: budget ?? undefined,
             startDate: startDate,
@@ -193,13 +146,9 @@ export default function ListingForm(props:
         }
     }
 
-    if (mode === "edit" && !listingData) {
-        return <NotFoundPage />;
-    }
-
     return (
         <>
-            <Typography variant = "h2" pb = "1rem">{ mode === "create" ? "Create Listing" : `Listing #${ listingId }` }</Typography>
+            <Typography variant = "h2" pb = "1rem">New listing</Typography>
             <Grid2
                 container
                 component = "form"
@@ -391,7 +340,7 @@ export default function ListingForm(props:
 
                 <Grid2 size = { 12 }>
                     <Button variant = "contained" type = "submit" onClick = { handleSubmit }>
-                        { mode === "create" ? "Create Listing" : "Save Listing" }
+                        Create listing
                     </Button>
                 </Grid2>
             </Grid2>
