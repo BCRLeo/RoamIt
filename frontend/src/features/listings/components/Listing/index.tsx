@@ -4,7 +4,7 @@ import { NavLink } from "react-router";
 
 import { deleteListingTags, getListingData, uploadListingTags } from "../../listingsApi";
 import usePublicUserData from "../../../accounts/hooks/usePublicUserData";
-import { ChangeEvent, Children, cloneElement, isValidElement, ReactNode, SyntheticEvent, useState } from "react";
+import { Children, cloneElement, isValidElement, ReactNode, SyntheticEvent, useState } from "react";
 import useUnsavedStatus from "../../../../hooks/useUnsavedStatus";
 import { useToggleState } from "../../../../hooks/useToggleState";
 import Name from "./Name";
@@ -57,13 +57,8 @@ export default function Listing({ children, listingId, editable = true, stackPro
         }
     });
 
-    const [updatedName, setUpdatedName] = useState<string | null>(null);
     const [updatedTags, setUpdatedTags] = useState<string[] | null>(null);
     const isUnsaved = useUnsavedStatus([updatedTags]);
-
-    function handleNameUpdate(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
-        setUpdatedName(event.target.value);
-    }
 
     function handleUpdateTags(_event: SyntheticEvent, value: string[], _reason: AutocompleteChangeReason) {
         setUpdatedTags(value);
@@ -97,7 +92,7 @@ export default function Listing({ children, listingId, editable = true, stackPro
                 }}
                 { ...stackPropsRest }
             >
-                <Name listingData = { listingData } onEdit = { isEditing ? handleNameUpdate : undefined } />
+                <Name listingData = { listingData } />
                 <CategoryAndDates listingData = { listingData } />
                 <Budget listingData = { listingData } />
                 <GenderPreference listingData = { listingData } />
